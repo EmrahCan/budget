@@ -21,7 +21,7 @@ from subtitle_downloader import SubtitleDownloader
 class SRTTranslatorGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("🎬 SRT Altyazı Çevirici v1.1")
+        self.root.title("🎬 SRT Subtitle Translator v1.2")
         self.root.geometry("900x700")
         self.root.resizable(True, True)
         
@@ -124,30 +124,30 @@ class SRTTranslatorGUI:
         title_container = tk.Frame(title_frame, bg=self.colors['primary'])
         title_container.pack(side='left', fill='both', expand=True, pady=10)
         
-        title_label = tk.Label(title_container, text="SRT Altyazı Çevirici", 
+        title_label = tk.Label(title_container, text="SRT Subtitle Translator", 
                               font=('Helvetica', 24, 'bold'),
                               bg=self.colors['primary'], fg='white')
         title_label.pack(anchor='w')
         
-        subtitle_label = tk.Label(title_container, text="🌍 Film altyazılarını otomatik bul ve çevir", 
+        subtitle_label = tk.Label(title_container, text="🌍 Find and translate movie subtitles automatically", 
                                  font=('Helvetica', 12),
                                  bg=self.colors['primary'], fg='white')
         subtitle_label.pack(anchor='w')
         
         # Version badge
-        version_label = tk.Label(title_frame, text="v1.1", 
+        version_label = tk.Label(title_frame, text="v1.2", 
                                 font=('Helvetica', 10, 'bold'),
                                 bg=self.colors['warning'], fg='black',
                                 padx=8, pady=4)
         version_label.pack(side='right', padx=20, pady=20)
         
-        # Film arama bölümü
-        search_frame = ttk.LabelFrame(main_frame, text="🔍 Film Altyazısı Bul", 
+        # Movie search section
+        search_frame = ttk.LabelFrame(main_frame, text="🔍 Find Movie Subtitles", 
                                      padding="15", style='Modern.TLabelframe')
         search_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 15))
         
-        # Film adı girişi
-        movie_label = tk.Label(search_frame, text="🎭 Film Adı:", 
+        # Movie name input
+        movie_label = tk.Label(search_frame, text="🎭 Movie Name:", 
                               font=('Helvetica', 11, 'bold'),
                               bg=self.colors['surface'], fg=self.colors['text_dark'])
         movie_label.grid(row=0, column=0, sticky=tk.W, pady=8)
@@ -157,7 +157,7 @@ class SRTTranslatorGUI:
                                width=45, font=('Helvetica', 11), style='Modern.TEntry')
         movie_entry.grid(row=0, column=1, padx=(15, 10), pady=8, sticky=(tk.W, tk.E))
         
-        self.search_btn = tk.Button(search_frame, text="🚀 Altyazı Bul ve Çevir", 
+        self.search_btn = tk.Button(search_frame, text="🚀 Find & Translate", 
                                    command=self.search_and_translate,
                                    font=('Helvetica', 11, 'bold'),
                                    bg=self.colors['primary'], fg='black',
@@ -165,8 +165,8 @@ class SRTTranslatorGUI:
                                    cursor='hand2')
         self.search_btn.grid(row=0, column=2, padx=10, pady=8)
         
-        # Kayıt klasörü seçimi
-        folder_label = tk.Label(search_frame, text="📁 Kayıt Klasörü:", 
+        # Save folder selection
+        folder_label = tk.Label(search_frame, text="📁 Save Folder:", 
                                font=('Helvetica', 11, 'bold'),
                                bg=self.colors['surface'], fg=self.colors['text_dark'])
         folder_label.grid(row=1, column=0, sticky=tk.W, pady=8)
@@ -176,7 +176,7 @@ class SRTTranslatorGUI:
                                      width=45, font=('Helvetica', 11), style='Modern.TEntry')
         save_folder_entry.grid(row=1, column=1, padx=(15, 10), pady=8, sticky=(tk.W, tk.E))
         
-        save_folder_btn = tk.Button(search_frame, text="📂 Gözat", 
+        save_folder_btn = tk.Button(search_frame, text="📂 Browse", 
                                    command=self.browse_save_folder,
                                    font=('Helvetica', 10, 'bold'),
                                    bg=self.colors['secondary'], fg='black',
@@ -192,7 +192,7 @@ class SRTTranslatorGUI:
         line1 = tk.Frame(separator_frame, bg=self.colors['primary'], height=2)
         line1.place(relx=0, rely=0.5, relwidth=0.4)
         
-        or_label = tk.Label(separator_frame, text="VEYA", 
+        or_label = tk.Label(separator_frame, text="OR", 
                            font=('Helvetica', 12, 'bold'),
                            bg=self.colors['background'], fg=self.colors['primary'])
         or_label.place(relx=0.5, rely=0.5, anchor='center')
@@ -200,13 +200,13 @@ class SRTTranslatorGUI:
         line2 = tk.Frame(separator_frame, bg=self.colors['primary'], height=2)
         line2.place(relx=0.6, rely=0.5, relwidth=0.4)
         
-        # Dosya seçimi bölümü
-        file_frame = ttk.LabelFrame(main_frame, text="📄 Mevcut SRT Dosyası Çevir", 
+        # File selection section
+        file_frame = ttk.LabelFrame(main_frame, text="📄 Translate Existing SRT File", 
                                    padding="15", style='Modern.TLabelframe')
         file_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 15))
         
-        # Input dosyası
-        input_label = tk.Label(file_frame, text="📎 SRT Dosyası:", 
+        # Input file
+        input_label = tk.Label(file_frame, text="📎 SRT File:", 
                               font=('Helvetica', 11, 'bold'),
                               bg=self.colors['surface'], fg=self.colors['text_dark'])
         input_label.grid(row=0, column=0, sticky=tk.W, pady=8)
@@ -216,7 +216,7 @@ class SRTTranslatorGUI:
                                width=50, font=('Helvetica', 11), style='Modern.TEntry')
         input_entry.grid(row=0, column=1, padx=(15, 10), pady=8, sticky=(tk.W, tk.E))
         
-        input_browse_btn = tk.Button(file_frame, text="📁 Gözat", 
+        input_browse_btn = tk.Button(file_frame, text="📁 Browse", 
                                     command=self.browse_input_file,
                                     font=('Helvetica', 10, 'bold'),
                                     bg=self.colors['secondary'], fg='black',
@@ -224,8 +224,8 @@ class SRTTranslatorGUI:
                                     cursor='hand2')
         input_browse_btn.grid(row=0, column=2, padx=10, pady=8)
         
-        # Output dosyası
-        output_label = tk.Label(file_frame, text="💾 Çıktı Dosyası:", 
+        # Output file
+        output_label = tk.Label(file_frame, text="💾 Output File:", 
                                font=('Helvetica', 11, 'bold'),
                                bg=self.colors['surface'], fg=self.colors['text_dark'])
         output_label.grid(row=1, column=0, sticky=tk.W, pady=8)
@@ -235,7 +235,7 @@ class SRTTranslatorGUI:
                                 width=50, font=('Helvetica', 11), style='Modern.TEntry')
         output_entry.grid(row=1, column=1, padx=(15, 10), pady=8, sticky=(tk.W, tk.E))
         
-        output_browse_btn = tk.Button(file_frame, text="💾 Gözat", 
+        output_browse_btn = tk.Button(file_frame, text="💾 Browse", 
                                      command=self.browse_output_file,
                                      font=('Helvetica', 10, 'bold'),
                                      bg=self.colors['secondary'], fg='black',
@@ -243,8 +243,8 @@ class SRTTranslatorGUI:
                                      cursor='hand2')
         output_browse_btn.grid(row=1, column=2, padx=10, pady=8)
         
-        # Manuel çeviri için kayıt klasörü
-        manual_folder_label = tk.Label(file_frame, text="📁 Kayıt Klasörü:", 
+        # Manual translation save folder
+        manual_folder_label = tk.Label(file_frame, text="📁 Save Folder:", 
                                       font=('Helvetica', 11, 'bold'),
                                       bg=self.colors['surface'], fg=self.colors['text_dark'])
         manual_folder_label.grid(row=2, column=0, sticky=tk.W, pady=8)
@@ -254,7 +254,7 @@ class SRTTranslatorGUI:
                                      width=50, font=('Helvetica', 11), style='Modern.TEntry')
         manual_save_entry.grid(row=2, column=1, padx=(15, 10), pady=8, sticky=(tk.W, tk.E))
         
-        manual_save_btn = tk.Button(file_frame, text="📂 Gözat", 
+        manual_save_btn = tk.Button(file_frame, text="📂 Browse", 
                                    command=self.browse_manual_save_folder,
                                    font=('Helvetica', 10, 'bold'),
                                    bg=self.colors['secondary'], fg='black',
@@ -270,7 +270,7 @@ class SRTTranslatorGUI:
         manual_buttons_container = tk.Frame(manual_translate_frame, bg=self.colors['surface'])
         manual_buttons_container.pack()
         
-        self.manual_translate_btn = tk.Button(manual_buttons_container, text="🚀 SRT Dosyasını Çevir", 
+        self.manual_translate_btn = tk.Button(manual_buttons_container, text="🚀 Translate SRT File", 
                                              command=self.start_translation,
                                              font=('Helvetica', 12, 'bold'),
                                              bg=self.colors['success'], fg='black',
@@ -278,8 +278,8 @@ class SRTTranslatorGUI:
                                              cursor='hand2')
         self.manual_translate_btn.pack(side='left', padx=(0, 10))
         
-        # Stop butonu (başlangıçta gizli)
-        self.manual_stop_btn = tk.Button(manual_buttons_container, text="⏹️ Durdur", 
+        # Stop button (initially hidden)
+        self.manual_stop_btn = tk.Button(manual_buttons_container, text="⏹️ Stop", 
                                         command=self.stop_translation,
                                         font=('Helvetica', 12, 'bold'),
                                         bg=self.colors['danger'], fg='black',
@@ -288,8 +288,8 @@ class SRTTranslatorGUI:
         # Başlangıçta gizli
         self.manual_stop_btn.pack_forget()
         
-        # Dil seçimi
-        lang_frame = ttk.LabelFrame(main_frame, text="🌍 Dil Seçimi", 
+        # Language selection
+        lang_frame = ttk.LabelFrame(main_frame, text="🌍 Language Selection", 
                                    padding="15", style='Modern.TLabelframe')
         lang_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 15))
         
@@ -301,7 +301,7 @@ class SRTTranslatorGUI:
         source_frame = tk.Frame(lang_container, bg=self.colors['info'], padx=15, pady=10)
         source_frame.pack(side='left', padx=(0, 20))
         
-        tk.Label(source_frame, text="🔤 Kaynak Dil", font=('Helvetica', 11, 'bold'),
+        tk.Label(source_frame, text="🔤 Source Language", font=('Helvetica', 11, 'bold'),
                 bg=self.colors['info'], fg='white').pack()
         
         self.source_lang_var = tk.StringVar(value="en")
@@ -310,16 +310,16 @@ class SRTTranslatorGUI:
                                    font=('Helvetica', 10), style='Modern.TCombobox')
         source_combo.pack(pady=(5, 0))
         
-        # Ok işareti
+        # Arrow
         arrow_label = tk.Label(lang_container, text="➡️", font=('Arial', 20),
                               bg=self.colors['surface'])
         arrow_label.pack(side='left', padx=10)
         
-        # Hedef dil
+        # Target language
         target_frame = tk.Frame(lang_container, bg=self.colors['success'], padx=15, pady=10)
         target_frame.pack(side='left', padx=(20, 0))
         
-        tk.Label(target_frame, text="🎯 Hedef Dil", font=('Helvetica', 11, 'bold'),
+        tk.Label(target_frame, text="🎯 Target Language", font=('Helvetica', 11, 'bold'),
                 bg=self.colors['success'], fg='white').pack()
         
         self.target_lang_var = tk.StringVar(value="tr")
@@ -328,11 +328,11 @@ class SRTTranslatorGUI:
                                    font=('Helvetica', 10), style='Modern.TCombobox')
         target_combo.pack(pady=(5, 0))
         
-        # Hız ayarları
+        # Speed settings
         speed_frame = tk.Frame(lang_container, bg=self.colors['warning'], padx=15, pady=10)
         speed_frame.pack(side='left', padx=(20, 0))
         
-        tk.Label(speed_frame, text="⚡ Çeviri Hızı", font=('Helvetica', 11, 'bold'),
+        tk.Label(speed_frame, text="⚡ Translation Speed", font=('Helvetica', 11, 'bold'),
                 bg=self.colors['warning'], fg='black').pack()
         
         self.speed_var = tk.StringVar(value="normal")
@@ -343,13 +343,13 @@ class SRTTranslatorGUI:
         
 
         
-        # Progress bölümü
-        progress_frame = ttk.LabelFrame(main_frame, text="📊 İşlem Durumu", 
+        # Progress section
+        progress_frame = ttk.LabelFrame(main_frame, text="📊 Process Status", 
                                        padding="15", style='Modern.TLabelframe')
         progress_frame.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 15))
         
         # Status label
-        self.status_var = tk.StringVar(value="✅ Hazır")
+        self.status_var = tk.StringVar(value="✅ Ready")
         status_label = tk.Label(progress_frame, textvariable=self.status_var,
                                font=('Helvetica', 12, 'bold'),
                                bg=self.colors['surface'], fg=self.colors['primary'])
@@ -370,8 +370,8 @@ class SRTTranslatorGUI:
                                      bg=self.colors['surface'], fg=self.colors['primary'])
         self.progress_text.pack(pady=(5, 0))
         
-        # Log alanı - daha modern
-        log_frame = ttk.LabelFrame(main_frame, text="📝 İşlem Günlüğü", 
+        # Log area - modern
+        log_frame = ttk.LabelFrame(main_frame, text="📝 Process Log", 
                                   padding="15", style='Modern.TLabelframe')
         log_frame.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 0))
         
@@ -384,12 +384,12 @@ class SRTTranslatorGUI:
                                                  relief='solid', borderwidth=1)
         self.log_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Log'a başlangıç mesajı
-        self.log_text.insert(tk.END, "🎬 SRT Altyazı Çevirici v1.1 - TURBO EDİTİON başlatıldı\n")
-        self.log_text.insert(tk.END, "✨ Film adı girin veya SRT dosyası seçin\n")
-        self.log_text.insert(tk.END, "🌍 Desteklenen diller: EN, TR, FR, DE, ES, IT\n")
-        self.log_text.insert(tk.END, "⚡ Hız seçenekleri: SLOW, NORMAL, FAST, TURBO\n")
-        self.log_text.insert(tk.END, "🚀 Batch çeviri ile 5-10x daha hızlı!\n")
+        # Log startup message
+        self.log_text.insert(tk.END, "🎬 SRT Subtitle Translator v1.2 - TURBO EDITION started\n")
+        self.log_text.insert(tk.END, "✨ Enter movie name or select SRT file\n")
+        self.log_text.insert(tk.END, "🌍 Supported languages: EN, TR, FR, DE, ES, IT\n")
+        self.log_text.insert(tk.END, "⚡ Speed options: SLOW, NORMAL, FAST, TURBO\n")
+        self.log_text.insert(tk.END, "🚀 Batch translation - 5-10x faster!\n")
         self.log_text.insert(tk.END, "=" * 60 + "\n")
         
         # Grid weights
@@ -429,29 +429,29 @@ class SRTTranslatorGUI:
             self.output_file_var.set(filename)
     
     def browse_save_folder(self):
-        """Film arama için kayıt klasörü seçimi"""
+        """Save folder selection for movie search"""
         folder = filedialog.askdirectory(
-            title="Çevrilmiş Dosyaların Kaydedileceği Klasörü Seçin",
+            title="Select Folder to Save Translated Files",
             initialdir=self.save_folder_var.get()
         )
         if folder:
             self.save_folder_var.set(folder)
     
     def browse_manual_save_folder(self):
-        """Manuel çeviri için kayıt klasörü seçimi"""
+        """Save folder selection for manual translation"""
         folder = filedialog.askdirectory(
-            title="Çevrilmiş Dosyaların Kaydedileceği Klasörü Seçin",
+            title="Select Folder to Save Translated Files",
             initialdir=self.manual_save_folder_var.get()
         )
         if folder:
             self.manual_save_folder_var.set(folder)
     
     def stop_translation(self):
-        """Çeviri işlemini durdurur"""
+        """Stops the translation process"""
         self.stop_requested = True
-        self.status_var.set("⏹️ Durdurma isteği gönderildi...")
-        self.log_message("⏹️ Kullanıcı tarafından durdurma isteği gönderildi")
-        self.log_message("⏳ Mevcut işlem tamamlandıktan sonra durduruluyor...")
+        self.status_var.set("⏹️ Stop request sent...")
+        self.log_message("⏹️ Stop request sent by user")
+        self.log_message("⏳ Stopping after current operation completes...")
     
     def log_message(self, message):
         """Log alanına mesaj ekler"""
