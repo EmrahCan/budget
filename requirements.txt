@@ -1,0 +1,4 @@
+deep-translator
+requests
+beautifulsoup4
+python-opensubtitles

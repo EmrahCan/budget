@@ -1,0 +1,27 @@
+1
+00:00:01,000 --> 00:00:03,500
+Good morning, everyone!
+
+2
+00:00:04,000 --> 00:00:07,200
+Today we're going to learn something new.
+
+3
+00:00:08,000 --> 00:00:11,800
+Programming can be fun and exciting.
+
+4
+00:00:12,500 --> 00:00:15,300
+Let's start with the basics.
+
+5
+00:00:16,000 --> 00:00:19,500
+First, we need to understand variables.
+
+6
+00:00:20,200 --> 00:00:23,800
+Variables store data that we can use later.
+
+7
+00:00:24,500 --> 00:00:27,000
+Are you ready to begin?
