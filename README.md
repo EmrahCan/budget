@@ -1,30 +1,78 @@
-# Budget Management App v0.1
+# 💰 Budget Management App
 
-A comprehensive personal finance management application built with React.js and Node.js.
+A comprehensive budget management application with Turkish banking system integration, built with React.js and Node.js.
 
-## 🚀 Features
+## 🏦 Version 0.2 - Turkish Banking System
 
-### 💰 Financial Management
-- **Account Management** - Track multiple bank accounts
-- **Credit Card Tracking** - Monitor balances, payments, and interest
-- **Transaction Management** - Record income and expenses with categories
-- **Fixed Payments** - Manage recurring monthly payments
-- **Installment Tracking** - Track phone, car, education installments
-- **Land Payments** - Real estate installment management
+### ✨ Key Features
 
-### 📊 Analytics & Reports
-- **Interactive Charts** - Visual financial data with Chart.js
-- **Category Analysis** - Spending breakdown by category
-- **Monthly Trends** - Income/expense trends over time
-- **Net Worth Tracking** - Asset vs debt analysis
-- **Data Export** - CSV export for external analysis
+- **Turkish Bank Integration** - Support for 25+ major Turkish banks
+- **Smart Account Management** - IBAN support, bank selection, account tracking
+- **Credit Card Management** - Full credit card lifecycle with payment tracking
+- **Transaction System** - Income/expense tracking with categories
+- **Payment Systems** - Fixed, installment, and land payment tracking
+- **Financial Reports** - Interactive charts and analytics
+- **Admin Panel** - User management and system administration
 
-### 👥 User Management
-- **Authentication** - Secure JWT-based login system
-- **Admin Panel** - User management and password reset
-- **Profile Management** - User settings and preferences
+### 🏦 Supported Banks
 
-## 🛠️ Tech Stack
+**Public Banks**: Ziraat Bankası, Halkbank, VakıfBank
+**Private Banks**: Akbank, Garanti BBVA, İş Bankası, Yapı Kredi, QNB Finansbank, DenizBank, TEB, Şekerbank, ODEA Bank, Fibabanka, Alternatifbank, Anadolubank
+**Participation Banks**: Albaraka Türk, Kuveyt Türk, Türkiye Finans, Ziraat Katılım, Vakıf Katılım, Emlak Katılım
+**Foreign Banks**: HSBC, ING Bank, Citibank
+**Digital Banks**: Papara, İninal, Tosla
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- PostgreSQL (v12 or higher)
+- npm or yarn
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/EmrahCan/budget.git
+   cd budget
+   ```
+
+2. **Backend Setup**
+   ```bash
+   cd backend
+   npm install
+   
+   # Create .env file
+   cp .env.example .env
+   # Edit .env with your database credentials
+   
+   # Setup database
+   npm run migrate
+   npm run seed
+   
+   # Start backend server
+   npm run dev
+   ```
+
+3. **Frontend Setup**
+   ```bash
+   cd frontend
+   npm install
+   
+   # Start frontend development server
+   npm start
+   ```
+
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5001
+
+### Default Admin Account
+- Email: admin@budgetapp.com
+- Password: admin123
+
+## 🔧 Tech Stack
 
 ### Backend
 - **Node.js** - Runtime environment
@@ -38,164 +86,111 @@ A comprehensive personal finance management application built with React.js and 
 - **Material-UI** - Component library
 - **Chart.js** - Data visualization
 - **Axios** - HTTP client
-- **React Router** - Navigation
 
-## 📦 Installation
+## 📊 Features Overview
 
-### Prerequisites
-- Node.js (v16+)
-- PostgreSQL (v12+)
-- npm or yarn
+### 💳 Account Management
+- Link accounts to Turkish banks
+- IBAN support with validation
+- Account number storage
+- Balance tracking
+- Transaction history
 
-### Backend Setup
-```bash
-cd backend
-npm install
-cp .env.example .env  # Configure your database
-node database/migrate.js create
-node scripts/create-admin.js
-npm run dev
-```
+### 🏦 Credit Card System
+- Bank-specific credit cards
+- Credit limit and utilization tracking
+- Payment due date management
+- Interest calculation
+- Payment history
 
-### Frontend Setup
-```bash
-cd frontend
-npm install
-npm start
-```
+### 💸 Transaction Management
+- Income and expense tracking
+- Category-based organization
+- Date range filtering
+- Search and sort functionality
 
-## 🔧 Configuration
+### 📅 Payment Systems
+- **Fixed Payments**: Monthly recurring payments (rent, utilities)
+- **Installment Payments**: General installment tracking (phone, car, education)
+- **Land Payments**: Real estate installment management
 
-### Environment Variables (.env)
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=budget_app
-DB_USER=postgres
-DB_PASSWORD=your_password
-JWT_SECRET=your_jwt_secret
-PORT=5001
-FRONTEND_URL=http://localhost:3001
-```
+### 📈 Reports & Analytics
+- Financial overview dashboard
+- Interactive charts and graphs
+- Monthly/yearly summaries
+- Category-wise analysis
+- Export functionality (CSV)
 
-## 👤 Default Admin User
-- **Email**: admin@budgetapp.com
-- **Password**: admin123
+### 👥 Admin Panel
+- User management
+- Password reset functionality
+- System monitoring
+- Data management
 
-## 🎯 Usage
+## 🎨 UI Features
 
-1. **Register/Login** - Create account or use admin credentials
-2. **Add Accounts** - Set up your bank accounts
-3. **Record Transactions** - Track income and expenses
-4. **Manage Credit Cards** - Monitor balances and payments
-5. **Set Up Installments** - Track recurring payments
-6. **View Reports** - Analyze your financial data
+- **Responsive Design** - Works on all screen sizes
+- **Bank Color Coding** - Each bank has its distinctive colors
+- **Visual Avatars** - Bank letter avatars with brand colors
+- **Intuitive Navigation** - Easy-to-use sidebar navigation
+- **Real-time Updates** - Live data synchronization
 
-## 📱 Screenshots
+## 🔐 Security Features
 
-### Dashboard
-- Financial overview with summary cards
-- Recent transactions and upcoming payments
-- Quick action buttons
-
-### Reports
-- Interactive charts for income/expense trends
-- Category breakdown with pie charts
-- Net worth history tracking
-
-### Management Pages
-- Clean, intuitive interfaces for all financial data
-- Easy-to-use forms with validation
-- Responsive design for mobile devices
-
-## 🔒 Security Features
-
-- JWT token authentication
+- JWT-based authentication
 - Password hashing with bcrypt
 - Input validation and sanitization
 - SQL injection protection
 - CORS configuration
 - Rate limiting
 
-## 📊 API Endpoints
+## 📱 Browser Support
 
-### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/profile` - Get user profile
-
-### Accounts
-- `GET /api/accounts` - List accounts
-- `POST /api/accounts` - Create account
-- `PUT /api/accounts/:id` - Update account
-- `DELETE /api/accounts/:id` - Delete account
-
-### Transactions
-- `GET /api/transactions` - List transactions
-- `POST /api/transactions` - Create transaction
-- `GET /api/transactions/summary/monthly` - Monthly summary
-
-### Reports
-- `GET /api/reports/financial-overview` - Financial summary
-- `GET /api/reports/category-breakdown` - Category analysis
-- `GET /api/reports/monthly-trends` - Monthly trends
-- `GET /api/reports/export` - Export data to CSV
-
-## 🧪 Testing
-
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests
-cd frontend
-npm test
-```
-
-## 🚀 Deployment
-
-### Production Build
-```bash
-# Frontend
-cd frontend
-npm run build
-
-# Backend
-cd backend
-npm start
-```
-
-### Environment Setup
-- Set NODE_ENV=production
-- Configure production database
-- Set secure JWT secret
-- Enable HTTPS
-
-## 📝 Version History
-
-- **v0.1** (2025-10-27) - Initial stable release with all core features
+- Chrome (recommended)
+- Firefox
+- Safari
+- Edge
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 📝 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🐛 Bug Reports
+
+If you find a bug, please create an issue on GitHub with:
+- Bug description
+- Steps to reproduce
+- Expected behavior
+- Screenshots (if applicable)
+
+## 📞 Support
 
 For support and questions:
-- Check the documentation
-- Review the version history
-- Use the restore guide if needed
+- Create an issue on GitHub
+- Email: emrah@example.com
+
+## 🎯 Roadmap
+
+### Version 0.3 (Planned)
+- Dark mode support
+- Enhanced animations
+- Mobile app (React Native)
+- Advanced reporting
+- Budget alerts
+- Expense categorization AI
+- Bank statement import/export
+- Multi-currency support
 
 ---
 
-**Status**: ✅ Production Ready (v0.1)
-**Last Updated**: 2025-10-27
+**Made with ❤️ in Turkey**
+
+*This application is designed specifically for the Turkish banking system and Turkish users.*
