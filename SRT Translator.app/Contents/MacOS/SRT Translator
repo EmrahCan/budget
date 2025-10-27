@@ -1,0 +1,27 @@
+#!/bin/bash
+# SRT Translator Launcher
+
+# Get the directory where this script is located
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+RESOURCES_DIR="$DIR/../Resources"
+
+# Change to resources directory
+cd "$RESOURCES_DIR"
+
+# Find Python3 executable
+PYTHON_CMD=""
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+elif command -v python &> /dev/null; then
+    PYTHON_CMD="python"
+elif [ -f "/usr/bin/python3" ]; then
+    PYTHON_CMD="/usr/bin/python3"
+elif [ -f "/opt/anaconda3/bin/python" ]; then
+    PYTHON_CMD="/opt/anaconda3/bin/python"
+else
+    # Fallback: try system python
+    PYTHON_CMD="/usr/bin/python3"
+fi
+
+# Run the Python launcher
+exec "$PYTHON_CMD" launch_app.py 2>&1

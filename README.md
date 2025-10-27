@@ -1,116 +1,201 @@
-# 🎬 SRT Altyazı Çevirici v1.1
+# Budget Management App v0.1
 
-Film altyazılarını otomatik bulan ve çeviren Python uygulaması
+A comprehensive personal finance management application built with React.js and Node.js.
 
-[![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey.svg)](README.md)
+## 🚀 Features
 
-![SRT Translator Screenshot](screenshot.png)
+### 💰 Financial Management
+- **Account Management** - Track multiple bank accounts
+- **Credit Card Tracking** - Monitor balances, payments, and interest
+- **Transaction Management** - Record income and expenses with categories
+- **Fixed Payments** - Manage recurring monthly payments
+- **Installment Tracking** - Track phone, car, education installments
+- **Land Payments** - Real estate installment management
 
-## ✨ Özellikler
+### 📊 Analytics & Reports
+- **Interactive Charts** - Visual financial data with Chart.js
+- **Category Analysis** - Spending breakdown by category
+- **Monthly Trends** - Income/expense trends over time
+- **Net Worth Tracking** - Asset vs debt analysis
+- **Data Export** - CSV export for external analysis
 
-### 🎯 Ana Fonksiyonlar
-- **🔍 Film Arama**: Film adı yazarak otomatik altyazı bulma
-- **📝 Manuel Çeviri**: Mevcut SRT dosyalarını çevirme  
-- **🌍 Çoklu Dil**: 6 farklı dil desteği (EN, TR, FR, DE, ES, IT)
-- **📂 Kayıt Klasörü**: Çıktı dosyaları için klasör seçimi
+### 👥 User Management
+- **Authentication** - Secure JWT-based login system
+- **Admin Panel** - User management and password reset
+- **Profile Management** - User settings and preferences
 
-### 🔗 Altyazı Kaynakları
-- **OpenSubtitles.org**: Gerçek hesap entegrasyonu
-- **Subscene.com**: Web scraping ile arama
-- **YIFY Subtitles**: Alternatif kaynak
-- **Demo Altyazılar**: Test ve fallback
+## 🛠️ Tech Stack
 
-### 🎨 Kullanıcı Arayüzü
-- Modern GUI tasarım
-- İlerleme çubuğu ve canlı log
-- Altyazı seçim penceresi
-- Dosya konumu açma özelliği
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **PostgreSQL** - Database
+- **JWT** - Authentication
+- **bcrypt** - Password hashing
 
-## 🚀 Kurulum
+### Frontend
+- **React.js** - UI framework
+- **Material-UI** - Component library
+- **Chart.js** - Data visualization
+- **Axios** - HTTP client
+- **React Router** - Navigation
 
-1. **Gerekli kütüphaneleri yükleyin:**
+## 📦 Installation
+
+### Prerequisites
+- Node.js (v16+)
+- PostgreSQL (v12+)
+- npm or yarn
+
+### Backend Setup
 ```bash
-pip install -r requirements.txt
+cd backend
+npm install
+cp .env.example .env  # Configure your database
+node database/migrate.js create
+node scripts/create-admin.js
+npm run dev
 ```
 
-2. **GUI uygulamasını başlatın:**
+### Frontend Setup
 ```bash
-python srt_translator_gui.py
+cd frontend
+npm install
+npm start
 ```
 
-## 📖 Kullanım
+## 🔧 Configuration
 
-### 🎬 Film Altyazısı Bulma
-1. Film adını yazın (örn: "Inception")
-2. Kayıt klasörünü seçin
-3. "Altyazı Bul ve Çevir" butonuna tıklayın
-4. Listeden altyazı seçin
-5. Çeviri otomatik başlar
+### Environment Variables (.env)
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=budget_app
+DB_USER=postgres
+DB_PASSWORD=your_password
+JWT_SECRET=your_jwt_secret
+PORT=5001
+FRONTEND_URL=http://localhost:3001
+```
 
-### 📝 Manuel SRT Çevirisi
-1. "Mevcut SRT Dosyası Çevir" bölümünden dosya seçin
-2. Çıktı klasörünü belirleyin
-3. Dil seçimi yapın
-4. "Dosya Çevirisini Başlat" butonuna tıklayın
+## 👤 Default Admin User
+- **Email**: admin@budgetapp.com
+- **Password**: admin123
 
-### 🎛️ Komut Satırı (Opsiyonel)
+## 🎯 Usage
+
+1. **Register/Login** - Create account or use admin credentials
+2. **Add Accounts** - Set up your bank accounts
+3. **Record Transactions** - Track income and expenses
+4. **Manage Credit Cards** - Monitor balances and payments
+5. **Set Up Installments** - Track recurring payments
+6. **View Reports** - Analyze your financial data
+
+## 📱 Screenshots
+
+### Dashboard
+- Financial overview with summary cards
+- Recent transactions and upcoming payments
+- Quick action buttons
+
+### Reports
+- Interactive charts for income/expense trends
+- Category breakdown with pie charts
+- Net worth history tracking
+
+### Management Pages
+- Clean, intuitive interfaces for all financial data
+- Easy-to-use forms with validation
+- Responsive design for mobile devices
+
+## 🔒 Security Features
+
+- JWT token authentication
+- Password hashing with bcrypt
+- Input validation and sanitization
+- SQL injection protection
+- CORS configuration
+- Rate limiting
+
+## 📊 API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
+- `GET /api/auth/profile` - Get user profile
+
+### Accounts
+- `GET /api/accounts` - List accounts
+- `POST /api/accounts` - Create account
+- `PUT /api/accounts/:id` - Update account
+- `DELETE /api/accounts/:id` - Delete account
+
+### Transactions
+- `GET /api/transactions` - List transactions
+- `POST /api/transactions` - Create transaction
+- `GET /api/transactions/summary/monthly` - Monthly summary
+
+### Reports
+- `GET /api/reports/financial-overview` - Financial summary
+- `GET /api/reports/category-breakdown` - Category analysis
+- `GET /api/reports/monthly-trends` - Monthly trends
+- `GET /api/reports/export` - Export data to CSV
+
+## 🧪 Testing
+
 ```bash
-# Basit çeviri
-python srt_translator.py movie.srt
+# Backend tests
+cd backend
+npm test
 
-# Özel çıktı dosyası
-python srt_translator.py movie.srt turkce_altyazi.srt
+# Frontend tests
+cd frontend
+npm test
 ```
 
-## 📦 Dosya Yapısı
+## 🚀 Deployment
 
+### Production Build
+```bash
+# Frontend
+cd frontend
+npm run build
+
+# Backend
+cd backend
+npm start
 ```
-📂 SRT Translator v1.0
-├── 🎬 srt_translator_gui.py      # Ana GUI uygulaması
-├── ⚙️ srt_translator.py          # Çeviri motoru  
-├── 🔍 subtitle_downloader.py     # Altyazı arama/indirme
-├── 📋 requirements.txt           # Gerekli kütüphaneler
-├── 📖 README.md                  # Bu dosya
-├── 📝 VERSION.md                 # Version geçmişi
-└── 🧪 Örnek dosyalar             # Test SRT'leri
-```
 
-## 🔧 Gereksinimler
+### Environment Setup
+- Set NODE_ENV=production
+- Configure production database
+- Set secure JWT secret
+- Enable HTTPS
 
-- **Python**: 3.7 veya üzeri
-- **İnternet**: Çeviri ve altyazı indirme için
-- **Kütüphaneler**: requirements.txt'de listelenen
+## 📝 Version History
 
-## 🎯 Kullanım Senaryoları
+- **v0.1** (2025-10-27) - Initial stable release with all core features
 
-- **🎭 Film İzleyicisi**: Yabancı filmlere Türkçe altyazı
-- **📺 İçerik Üreticisi**: Mevcut altyazıları çevirme
-- **🌐 Çevirmen**: Farklı dil kombinasyonları
-- **📚 Arşiv Yöneticisi**: Toplu altyazı organizasyonu
+## 🤝 Contributing
 
-## 🐛 Bilinen Sınırlamalar
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-- Cloudflare koruması nedeniyle bazı siteler erişilemez
-- API rate limiting nedeniyle çeviri hızı sınırlı
-- İnternet bağlantısı gerekli
+## 📄 License
 
-## 🔮 Gelecek Planları (v2.0)
+This project is licensed under the MIT License.
 
-- Offline çeviri desteği
-- Toplu dosya işleme  
-- Çeviri kalitesi ayarları
-- Daha fazla altyazı kaynağı
-- Çeviri önizlemesi
+## 🆘 Support
 
-## 📊 Version 1.0 İstatistikleri
-
-- **Kod Satırı**: ~800 satır
-- **Desteklenen Dil**: 6 dil
-- **Altyazı Kaynağı**: 4 kaynak
-- **Test Dosyası**: 5 örnek
+For support and questions:
+- Check the documentation
+- Review the version history
+- Use the restore guide if needed
 
 ---
 
-**🎬 İyi seyirler! Artık hiçbir film altyazısız kalmayacak!**
+**Status**: ✅ Production Ready (v0.1)
+**Last Updated**: 2025-10-27
