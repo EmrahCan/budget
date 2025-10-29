@@ -62,12 +62,16 @@ const userValidation = {
       .optional()
       .trim()
       .isLength({ min: 2, max: 50 })
-      .withMessage('Ad 2-50 karakter arasında olmalıdır'),
+      .withMessage('Ad 2-50 karakter arasında olmalıdır')
+      .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]+$/)
+      .withMessage('Ad sadece harf içerebilir'),
     body('lastName')
       .optional()
       .trim()
       .isLength({ min: 2, max: 50 })
-      .withMessage('Soyad 2-50 karakter arasında olmalıdır'),
+      .withMessage('Soyad 2-50 karakter arasında olmalıdır')
+      .matches(/^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]+$/)
+      .withMessage('Soyad sadece harf içerebilir'),
     body('email')
       .optional()
       .isEmail()
@@ -101,8 +105,12 @@ const accountValidation = {
       .withMessage('Geçersiz hesap türü'),
     body('balance')
       .optional()
+      .isFloat()
+      .withMessage('Geçersiz bakiye tutarı'),
+    body('overdraftLimit')
+      .optional()
       .isFloat({ min: 0 })
-      .withMessage('Bakiye negatif olamaz'),
+      .withMessage('Esnek hesap limiti negatif olamaz'),
     body('currency')
       .optional()
       .isLength({ min: 3, max: 3 })
@@ -118,8 +126,12 @@ const accountValidation = {
       .withMessage('Hesap adı 2-100 karakter arasında olmalıdır'),
     body('balance')
       .optional()
+      .isFloat()
+      .withMessage('Geçersiz bakiye tutarı'),
+    body('overdraftLimit')
+      .optional()
       .isFloat({ min: 0 })
-      .withMessage('Bakiye negatif olamaz'),
+      .withMessage('Esnek hesap limiti negatif olamaz'),
     handleValidationErrors
   ]
 };

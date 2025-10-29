@@ -7,6 +7,7 @@ class Account {
     this.name = accountData.name;
     this.type = accountData.type;
     this.balance = parseFloat(accountData.balance);
+    this.overdraftLimit = parseFloat(accountData.overdraft_limit || 0);
     this.currency = accountData.currency;
     this.bankId = accountData.bank_id;
     this.bankName = accountData.bank_name;
@@ -24,6 +25,7 @@ class Account {
         name,
         type,
         balance = 0,
+        overdraftLimit = 0,
         currency = 'TRY',
         bankId,
         bankName,
@@ -32,8 +34,8 @@ class Account {
       } = accountData;
 
       const query = `
-        INSERT INTO accounts (user_id, name, type, balance, currency, bank_id, bank_name, iban, account_number)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO accounts (user_id, name, type, balance, overdraft_limit, currency, bank_id, bank_name, iban, account_number)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
@@ -42,6 +44,7 @@ class Account {
         name.trim(),
         type,
         balance,
+        overdraftLimit,
         currency.toUpperCase(),
         bankId || null,
         bankName?.trim() || null,
@@ -115,7 +118,7 @@ class Account {
   // Update account
   async update(updateData) {
     try {
-      const allowedFields = ['name', 'type', 'balance', 'currency', 'is_active'];
+      const allowedFields = ['name', 'type', 'balance', 'overdraft_limit', 'currency', 'is_active'];
       
       const updates = [];
       const params = [];
@@ -543,6 +546,39 @@ class Account {
   }
 
   // Convert to JSON
+  // Get available balance (balance + overdraft limit)
+  getAvailableBalance() {
+    return this.balance + this.overdraftLimit;
+  }
+
+  // Get displayed balance (shows negative if using overdraft)
+  getDisplayedBalance() {
+    if (this.balance >= 0) {
+      return this.balance;
+    } else {
+      return this.balance; // Shows negative amount
+    }
+  }
+
+  // Check if account is using overdraft
+  isUsingOverdraft() {
+    return this.balance < 0;
+  }
+
+  // Get overdraft usage amount
+  getOverdraftUsage() {
+    return this.balance < 0 ? Math.abs(this.balance) : 0;
+  }
+
+  // Get remaining overdraft limit
+  getRemainingOverdraftLimit() {
+    if (this.balance >= 0) {
+      return this.overdraftLimit;
+    } else {
+      return Math.max(0, this.overdraftLimit - Math.abs(this.balance));
+    }
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -551,6 +587,12 @@ class Account {
       type: this.type,
       typeDisplayName: this.getTypeDisplayName(),
       balance: this.balance,
+      overdraftLimit: this.overdraftLimit,
+      availableBalance: this.getAvailableBalance(),
+      displayedBalance: this.getDisplayedBalance(),
+      isUsingOverdraft: this.isUsingOverdraft(),
+      overdraftUsage: this.getOverdraftUsage(),
+      remainingOverdraftLimit: this.getRemainingOverdraftLimit(),
       currency: this.currency,
       bankId: this.bankId,
       bankName: this.bankName,

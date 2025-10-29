@@ -157,20 +157,6 @@ export const fixedPaymentsAPI = {
   getByCategory: (category) => api.get(`/fixed-payments/category/${category}`),
 };
 
-// Land Payments API
-export const landPaymentsAPI = {
-  getAll: (params) => api.get('/land-payments', { params }),
-  getById: (id) => api.get(`/land-payments/${id}`),
-  create: (data) => api.post('/land-payments', data),
-  update: (id, data) => api.put(`/land-payments/${id}`, data),
-  delete: (id) => api.delete(`/land-payments/${id}`),
-  recordPayment: (id, data) => api.post(`/land-payments/${id}/payment`, data),
-  getPaymentHistory: (id) => api.get(`/land-payments/${id}/history`),
-  getUpcomingPayments: (params) => api.get('/land-payments/upcoming', { params }),
-  getOverduePayments: () => api.get('/land-payments/overdue'),
-  getSummary: () => api.get('/land-payments/summary'),
-};
-
 // Installment Payments API
 export const installmentPaymentsAPI = {
   getAll: (params) => api.get('/installment-payments', { params }),

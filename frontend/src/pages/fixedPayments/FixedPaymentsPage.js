@@ -40,36 +40,51 @@ import {
   Schedule,
   Warning,
   CheckCircle,
+  Tv,
+  Movie,
+  MusicNote,
+  SportsEsports,
+  LocalGroceryStore,
+  Restaurant,
+  Coffee,
+  ShoppingCart,
+  AccountBalance,
+  CreditCard,
+  Security,
+  Pets,
+  ChildCare,
+  CleaningServices,
+  Build,
+  LocalLaundryService,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
-import { formatCurrency, formatDate, handleApiError } from '../../services/api';
+import { fixedPaymentsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 
 // Sabit ödeme kategorileri ve ikonları
 const PAYMENT_CATEGORIES = [
   { value: 'Konut', label: 'Konut (Kira, Aidat)', icon: <Home /> },
-  { value: 'Faturalar', label: 'Faturalar', icon: <ElectricBolt /> },
+  { value: 'Faturalar', label: 'Faturalar (Elektrik, Su, Doğalgaz)', icon: <ElectricBolt /> },
   { value: 'İletişim', label: 'İletişim (Telefon, İnternet)', icon: <Phone /> },
-  { value: 'Ulaşım', label: 'Ulaşım', icon: <DirectionsCar /> },
+  { value: 'Eğlence', label: 'Eğlence & Medya', icon: <Tv /> },
+  { value: 'Streaming', label: 'Streaming (Netflix, Spotify)', icon: <Movie /> },
   { value: 'Sağlık', label: 'Sağlık & Spor', icon: <HealthAndSafety /> },
-  { value: 'Eğitim', label: 'Eğitim', icon: <School /> },
+  { value: 'Eğitim', label: 'Eğitim & Kurslar', icon: <School /> },
+  { value: 'Ulaşım', label: 'Ulaşım & Yakıt', icon: <DirectionsCar /> },
+  { value: 'Finans', label: 'Finans & Bankacılık', icon: <AccountBalance /> },
+  { value: 'Sigorta', label: 'Sigorta & Güvenlik', icon: <Security /> },
+  { value: 'Alışveriş', label: 'Alışveriş & Market', icon: <ShoppingCart /> },
+  { value: 'Yemek', label: 'Yemek & İçecek', icon: <Restaurant /> },
+  { value: 'Temizlik', label: 'Temizlik & Bakım', icon: <CleaningServices /> },
+  { value: 'Çocuk', label: 'Çocuk & Bakım', icon: <ChildCare /> },
+  { value: 'Evcil Hayvan', label: 'Evcil Hayvan', icon: <Pets /> },
   { value: 'Diğer', label: 'Diğer', icon: <Schedule /> },
-];
-
-// Örnek sabit ödemeler (demo için)
-const SAMPLE_PAYMENTS = [
-  { name: 'Kira', amount: 2500, category: 'Konut', dueDay: 1 },
-  { name: 'Elektrik Faturası', amount: 150, category: 'Faturalar', dueDay: 15 },
-  { name: 'İnternet', amount: 100, category: 'İletişim', dueDay: 10 },
-  { name: 'Telefon', amount: 80, category: 'İletişim', dueDay: 20 },
-  { name: 'Doğalgaz', amount: 120, category: 'Faturalar', dueDay: 25 },
-  { name: 'Spor Salonu', amount: 150, category: 'Sağlık', dueDay: 5 },
 ];
 
 const FixedPaymentsPage = () => {
   const { showSuccess, showError } = useNotification();
   
-  const [payments, setPayments] = useState(SAMPLE_PAYMENTS); // Demo için örnek veri
-  const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [formData, setFormData] = useState({
@@ -80,6 +95,22 @@ const FixedPaymentsPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      const response = await fixedPaymentsAPI.getAll();
+      setPayments(response.data.data || response.data);
+    } catch (error) {
+      showError(handleApiError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenDialog = (payment = null) => {
     if (payment) {
@@ -146,33 +177,34 @@ const FixedPaymentsPage = () => {
         amount: parseFloat(formData.amount),
         category: formData.category,
         dueDay: parseInt(formData.dueDay),
-        isActive: true,
       };
 
       if (editingPayment) {
-        // Demo için array güncelleme
-        setPayments(prev => prev.map(p => 
-          p.name === editingPayment.name ? { ...paymentData } : p
-        ));
+        await fixedPaymentsAPI.update(editingPayment.id, paymentData);
         showSuccess('Sabit ödeme başarıyla güncellendi');
       } else {
-        // Demo için array'e ekleme
-        setPayments(prev => [...prev, paymentData]);
+        await fixedPaymentsAPI.create(paymentData);
         showSuccess('Sabit ödeme başarıyla eklendi');
       }
 
       handleCloseDialog();
+      loadPayments(); // Listeyi yenile
     } catch (error) {
-      showError('İşlem sırasında hata oluştu');
+      showError(handleApiError(error));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeletePayment = (payment) => {
+  const handleDeletePayment = async (payment) => {
     if (window.confirm(`"${payment.name}" ödemesini silmek istediğinizden emin misiniz?`)) {
-      setPayments(prev => prev.filter(p => p.name !== payment.name));
-      showSuccess('Sabit ödeme başarıyla silindi');
+      try {
+        await fixedPaymentsAPI.delete(payment.id);
+        showSuccess('Sabit ödeme başarıyla silindi');
+        loadPayments(); // Listeyi yenile
+      } catch (error) {
+        showError(handleApiError(error));
+      }
     }
   };
 
@@ -239,11 +271,7 @@ const FixedPaymentsPage = () => {
         </Box>
 
         {/* Alert */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Not:</strong> Bu sayfa demo modunda çalışıyor. Gerçek API entegrasyonu için backend geliştirmesi gerekiyor.
-          </Typography>
-        </Alert>
+
 
         {/* Summary Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -320,7 +348,31 @@ const FixedPaymentsPage = () => {
         </Grid>
 
         {/* Payments by Category */}
-        {getPaymentsByCategory().map((categoryGroup) => (
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : payments.length === 0 ? (
+          <Card>
+            <CardContent sx={{ textAlign: 'center', py: 8 }}>
+              <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Henüz sabit ödeme eklenmemiş
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                İlk sabit ödemenizi eklemek için "Sabit Ödeme Ekle" butonuna tıklayın
+              </Typography>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog()}
+              >
+                Sabit Ödeme Ekle
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          getPaymentsByCategory().map((categoryGroup) => (
           <Card key={categoryGroup.category} sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
@@ -385,28 +437,7 @@ const FixedPaymentsPage = () => {
               </Grid>
             </CardContent>
           </Card>
-        ))}
-
-        {payments.length === 0 && (
-          <Card>
-            <CardContent sx={{ textAlign: 'center', py: 8 }}>
-              <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Henüz sabit ödeme eklenmemiş
-              </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                Kira, faturalar ve aboneliklerinizi ekleyerek başlayın
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => handleOpenDialog()}
-              >
-                İlk Sabit Ödemeyi Ekle
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        )))}
 
         {/* Payment Form Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

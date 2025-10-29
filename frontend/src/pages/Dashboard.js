@@ -29,7 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
-import { accountsAPI, creditCardsAPI, transactionsAPI, fixedPaymentsAPI, landPaymentsAPI, installmentPaymentsAPI, formatCurrency, formatDate } from '../services/api';
+import { accountsAPI, creditCardsAPI, transactionsAPI, fixedPaymentsAPI, installmentPaymentsAPI, formatCurrency, formatDate } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -47,11 +47,6 @@ const Dashboard = () => {
     fixedPayments: {
       totalMonthly: 0,
       dueThisMonth: [],
-      overdue: []
-    },
-    landPayments: {
-      summary: null,
-      upcoming: [],
       overdue: []
     },
     installmentPayments: {
@@ -78,9 +73,6 @@ const Dashboard = () => {
         fixedPaymentsTotalRes,
         fixedPaymentsDueRes,
         fixedPaymentsOverdueRes,
-        landPaymentsSummaryRes,
-        landPaymentsUpcomingRes,
-        landPaymentsOverdueRes,
         installmentPaymentsSummaryRes,
         installmentPaymentsUpcomingRes,
         installmentPaymentsOverdueRes,
@@ -93,9 +85,6 @@ const Dashboard = () => {
         fixedPaymentsAPI.getTotalMonthlyAmount(),
         fixedPaymentsAPI.getPaymentsDueThisMonth(),
         fixedPaymentsAPI.getOverduePayments(),
-        landPaymentsAPI.getSummary(),
-        landPaymentsAPI.getUpcomingPayments({ days_ahead: 30 }),
-        landPaymentsAPI.getOverduePayments(),
         installmentPaymentsAPI.getSummary(),
         installmentPaymentsAPI.getUpcomingPayments({ days_ahead: 30 }),
         installmentPaymentsAPI.getOverduePayments(),
@@ -111,11 +100,6 @@ const Dashboard = () => {
           totalMonthly: fixedPaymentsTotalRes.status === 'fulfilled' ? fixedPaymentsTotalRes.value.data.data.totalAmount : 0,
           dueThisMonth: fixedPaymentsDueRes.status === 'fulfilled' ? fixedPaymentsDueRes.value.data.data : [],
           overdue: fixedPaymentsOverdueRes.status === 'fulfilled' ? fixedPaymentsOverdueRes.value.data.data : []
-        },
-        landPayments: {
-          summary: landPaymentsSummaryRes.status === 'fulfilled' ? landPaymentsSummaryRes.value.data.data : null,
-          upcoming: landPaymentsUpcomingRes.status === 'fulfilled' ? landPaymentsUpcomingRes.value.data.data : [],
-          overdue: landPaymentsOverdueRes.status === 'fulfilled' ? landPaymentsOverdueRes.value.data.data : []
         },
         installmentPayments: {
           summary: installmentPaymentsSummaryRes.status === 'fulfilled' ? installmentPaymentsSummaryRes.value.data.data : null,
@@ -695,17 +679,7 @@ const Dashboard = () => {
                 Sabit Ödeme Ekle
               </Button>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Add />}
-                onClick={() => navigate('/land-payments')}
-                sx={{ py: 2 }}
-              >
-                Arsa Ekle
-              </Button>
-            </Grid>
+
             <Grid item xs={12} sm={6} md={3}>
               <Button
                 fullWidth

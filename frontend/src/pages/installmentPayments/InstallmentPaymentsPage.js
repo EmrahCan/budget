@@ -45,12 +45,14 @@ import {
   Home,
   Computer,
   Category,
+  Landscape,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 import { installmentPaymentsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 
 // Category icons mapping
 const categoryIcons = {
+  'Arsa': <Landscape />,
   'Teknoloji': <PhoneIphone />,
   'Araba': <DirectionsCar />,
   'Eğitim': <School />,
@@ -97,6 +99,7 @@ const InstallmentPaymentsPage = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const categories = [
+    'Arsa',
     'Teknoloji',
     'Araba', 
     'Eğitim',

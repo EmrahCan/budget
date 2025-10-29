@@ -63,6 +63,7 @@ const AccountsPage = () => {
     name: '',
     type: 'checking',
     balance: '',
+    overdraftLimit: '',
     currency: 'TRY',
     bankId: '',
     bankName: '',
@@ -95,6 +96,7 @@ const AccountsPage = () => {
         name: account.name,
         type: account.type,
         balance: account.balance.toString(),
+        overdraftLimit: account.overdraftLimit?.toString() || '0',
         currency: account.currency,
         bankId: account.bankId || '',
         bankName: account.bankName || '',
@@ -107,6 +109,7 @@ const AccountsPage = () => {
         name: '',
         type: 'checking',
         balance: '0',
+        overdraftLimit: '0',
         currency: 'TRY',
         bankId: '',
         bankName: '',
@@ -125,6 +128,7 @@ const AccountsPage = () => {
       name: '',
       type: 'checking',
       balance: '0',
+      overdraftLimit: '0',
       currency: 'TRY',
     });
     setFormErrors({});
@@ -148,6 +152,10 @@ const AccountsPage = () => {
       errors.balance = 'Geçerli bir bakiye giriniz';
     }
 
+    if (formData.overdraftLimit && isNaN(parseFloat(formData.overdraftLimit))) {
+      errors.overdraftLimit = 'Geçerli bir esnek hesap limiti giriniz';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -162,6 +170,7 @@ const AccountsPage = () => {
         name: formData.name.trim(),
         type: formData.type,
         balance: parseFloat(formData.balance),
+        overdraftLimit: parseFloat(formData.overdraftLimit || 0),
         currency: formData.currency,
         bankId: formData.bankId || null,
         bankName: formData.bankName.trim() || null,
@@ -323,11 +332,31 @@ const AccountsPage = () => {
                       <Typography
                         variant="h4"
                         component="div"
-                        color={account.balance >= 0 ? 'success.main' : 'error.main'}
-                        sx={{ mb: 2 }}
+                        color={account.displayedBalance >= 0 ? 'success.main' : 'error.main'}
+                        sx={{ mb: 1 }}
                       >
-                        {formatCurrency(account.balance)}
+                        Ana Hesap: {formatCurrency(account.displayedBalance)}
                       </Typography>
+
+                      {account.overdraftLimit > 0 && (
+                        <>
+                          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                            Esnek Hesap: {formatCurrency(account.overdraftLimit)}
+                          </Typography>
+                          <Typography 
+                            variant="h6" 
+                            color="primary.main"
+                            sx={{ mb: 1 }}
+                          >
+                            Kullanılabilir: {formatCurrency(account.availableBalance)}
+                          </Typography>
+                          {account.isUsingOverdraft && (
+                            <Typography variant="body2" color="error.main" sx={{ mb: 1 }}>
+                              Kullanılan Esnek: {formatCurrency(account.overdraftUsage)}
+                            </Typography>
+                          )}
+                        </>
+                      )}
 
                       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                         {!account.isActive && (
@@ -338,6 +367,9 @@ const AccountsPage = () => {
                         )}
                         {account.isOverdrawn && (
                           <Chip label="Eksi Bakiye" color="error" size="small" />
+                        )}
+                        {account.isUsingOverdraft && (
+                          <Chip label="Esnek Hesap Kullanımda" color="warning" size="small" />
                         )}
                       </Box>
 
@@ -478,6 +510,20 @@ const AccountsPage = () => {
                 onChange={(e) => handleFormChange('balance', e.target.value)}
                 error={!!formErrors.balance}
                 helperText={formErrors.balance}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
+                }}
+                sx={{ mb: 3 }}
+              />
+
+              <TextField
+                fullWidth
+                label="Esnek Hesap Limiti"
+                type="number"
+                value={formData.overdraftLimit}
+                onChange={(e) => handleFormChange('overdraftLimit', e.target.value)}
+                error={!!formErrors.overdraftLimit}
+                helperText={formErrors.overdraftLimit || 'Kredili hesap kullanım limiti (isteğe bağlı)'}
                 InputProps={{
                   startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
                 }}
