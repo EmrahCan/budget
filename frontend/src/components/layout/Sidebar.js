@@ -42,6 +42,11 @@ const getMenuItems = (userRole) => {
       path: '/accounts',
     },
     {
+      text: 'Esnek Hesaplar',
+      icon: <CreditCard />,
+      path: '/overdrafts',
+    },
+    {
       text: 'Kredi Kartlarım',
       icon: <CreditCard />,
       path: '/credit-cards',

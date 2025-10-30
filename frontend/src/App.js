@@ -11,6 +11,7 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import AccountsPage from './pages/accounts/AccountsPage';
+import OverdraftsPage from './pages/overdrafts/OverdraftsPage';
 import CreditCardsPage from './pages/creditCards/CreditCardsPage';
 import TransactionsPage from './pages/transactions/TransactionsPage';
 import ReportsPage from './pages/reports/ReportsPage';
@@ -101,6 +102,7 @@ function App() {
               }>
                 <Route index element={<Dashboard />} />
                 <Route path="accounts" element={<AccountsPage />} />
+                <Route path="overdrafts" element={<OverdraftsPage />} />
                 <Route path="credit-cards" element={<CreditCardsPage />} />
                 <Route path="transactions" element={<TransactionsPage />} />
                 <Route path="fixed-payments" element={<FixedPaymentsPage />} />

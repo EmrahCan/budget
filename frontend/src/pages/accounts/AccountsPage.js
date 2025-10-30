@@ -28,6 +28,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Divider,
 } from '@mui/material';
 import {
   Add,
@@ -46,10 +47,10 @@ import { accountsAPI, formatCurrency, formatDate, handleApiError } from '../../s
 import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
 const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Vadesiz Hesap', icon: <AccountBalance /> },
-  { value: 'savings', label: 'Vadeli Hesap', icon: <Savings /> },
-  { value: 'cash', label: 'Nakit', icon: <AccountBalanceWallet /> },
-  { value: 'investment', label: 'Yatırım Hesabı', icon: <TrendingUp /> },
+  { value: 'checking', label: 'Vadesiz Hesap', icon: <AccountBalance />, description: 'Günlük işlemler için' },
+  { value: 'savings', label: 'Vadeli Hesap', icon: <Savings />, description: 'Tasarruf amaçlı' },
+  { value: 'cash', label: 'Nakit', icon: <AccountBalanceWallet />, description: 'Nakit para takibi' },
+  { value: 'investment', label: 'Yatırım Hesabı', icon: <TrendingUp />, description: 'Yatırım portföyü' },
 ];
 
 const AccountsPage = () => {
@@ -72,6 +73,8 @@ const AccountsPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+
 
   useEffect(() => {
     loadAccounts();
@@ -135,7 +138,14 @@ const AccountsPage = () => {
   };
 
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+
+      
+      return newData;
+    });
+    
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -150,10 +160,6 @@ const AccountsPage = () => {
 
     if (!formData.balance || isNaN(parseFloat(formData.balance))) {
       errors.balance = 'Geçerli bir bakiye giriniz';
-    }
-
-    if (formData.overdraftLimit && isNaN(parseFloat(formData.overdraftLimit))) {
-      errors.overdraftLimit = 'Geçerli bir esnek hesap limiti giriniz';
     }
 
     setFormErrors(errors);
@@ -177,6 +183,8 @@ const AccountsPage = () => {
         iban: formData.iban.trim() || null,
         accountNumber: formData.accountNumber.trim() || null,
       };
+
+      console.log('Gönderilen hesap verisi:', accountData);
 
       if (editingAccount) {
         await accountsAPI.update(editingAccount.id, accountData);
@@ -214,6 +222,24 @@ const AccountsPage = () => {
   const getTotalBalance = () => {
     return accounts.reduce((total, account) => total + account.balance, 0);
   };
+
+  const getTotalOverdraftDebt = () => {
+    return accounts
+      .filter(account => account.type === 'overdraft' && account.balance < 0)
+      .reduce((total, account) => total + Math.abs(account.balance), 0);
+  };
+
+  const getTotalOverdraftLimit = () => {
+    return accounts
+      .filter(account => account.type === 'overdraft')
+      .reduce((total, account) => total + (account.overdraftLimit || 0), 0);
+  };
+
+  const getNetBalance = () => {
+    return getTotalBalance() - getTotalOverdraftDebt();
+  };
+
+
 
   if (loading) {
     return (
@@ -265,20 +291,24 @@ const AccountsPage = () => {
               <Grid item xs={12} md={4}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Aktif Hesap Sayısı
+                    Esnek Hesap Borcu
                   </Typography>
-                  <Typography variant="h3" component="div">
-                    {accounts.filter(a => a.isActive).length}
+                  <Typography variant="h3" component="div" color="error.main">
+                    {formatCurrency(getTotalOverdraftDebt())}
                   </Typography>
                 </Box>
               </Grid>
               <Grid item xs={12} md={4}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Hesap Türleri
+                    Net Durum
                   </Typography>
-                  <Typography variant="h3" component="div">
-                    {new Set(accounts.map(a => a.type)).size}
+                  <Typography 
+                    variant="h3" 
+                    component="div" 
+                    color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    {formatCurrency(getNetBalance())}
                   </Typography>
                 </Box>
               </Grid>
@@ -302,7 +332,7 @@ const AccountsPage = () => {
                             mr: 2 
                           }}
                         >
-                          {account.bankId ? getBankById(account.bankId)?.name?.charAt(0) || typeInfo.icon : typeInfo.icon}
+                          {account.bankId && getBankById(account.bankId)?.name ? getBankById(account.bankId).name.charAt(0) : typeInfo.icon}
                         </Avatar>
                         <Box sx={{ flexGrow: 1 }}>
                           <Typography variant="h6" noWrap>
@@ -329,34 +359,48 @@ const AccountsPage = () => {
                         </Box>
                       </Box>
 
-                      <Typography
-                        variant="h4"
-                        component="div"
-                        color={account.displayedBalance >= 0 ? 'success.main' : 'error.main'}
-                        sx={{ mb: 1 }}
-                      >
-                        Ana Hesap: {formatCurrency(account.displayedBalance)}
-                      </Typography>
-
-                      {account.overdraftLimit > 0 && (
-                        <>
-                          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                            Esnek Hesap: {formatCurrency(account.overdraftLimit)}
+                      {/* Normal hesaplar için gösterim */}
+                        /* Normal ve diğer hesaplar için gösterim */
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                            Hesap Bakiyesi
                           </Typography>
-                          <Typography 
-                            variant="h6" 
-                            color="primary.main"
-                            sx={{ mb: 1 }}
+                          <Typography
+                            variant="h4"
+                            component="div"
+                            color={account.balance >= 0 ? 'success.main' : 'error.main'}
                           >
-                            Kullanılabilir: {formatCurrency(account.availableBalance)}
+                            {formatCurrency(account.balance)}
                           </Typography>
-                          {account.isUsingOverdraft && (
-                            <Typography variant="body2" color="error.main" sx={{ mb: 1 }}>
-                              Kullanılan Esnek: {formatCurrency(account.overdraftUsage)}
-                            </Typography>
+                          
+                          {/* Hesap türüne göre bütçe önerileri */}
+                          {account.type === 'checking' && account.balance > 0 && (
+                            <Alert severity="success" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                💡 <strong>Öneri:</strong> Aylık gelirinizin %20'sini tasarruf etmeyi hedefleyin. 
+                                Sabit giderlerinizi optimize edebiliriz.
+                              </Typography>
+                            </Alert>
                           )}
-                        </>
-                      )}
+                          
+                          {account.type === 'savings' && account.balance > 0 && (
+                            <Alert severity="success" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                🎯 <strong>Hedef:</strong> Tasarruf hesabınız büyüyor! Yıllık faiz oranınızı 
+                                kontrol edin ve daha iyi alternatifler araştıralım.
+                              </Typography>
+                            </Alert>
+                          )}
+                          
+                          {account.type === 'investment' && (
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                📈 <strong>Yatırım:</strong> Portföy performansınızı takip edelim. 
+                                Risk dağılımınızı analiz edebilirim.
+                              </Typography>
+                            </Alert>
+                          )}
+                        </Box>
 
                       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                         {!account.isActive && (
@@ -446,18 +490,18 @@ const AccountsPage = () => {
                     <ListItemAvatar>
                       <Avatar 
                         sx={{ 
-                          bgcolor: option.color,
+                          bgcolor: option?.color || 'primary.main',
                           width: 32, 
                           height: 32,
                           fontSize: '0.75rem'
                         }}
                       >
-                        {option.name.charAt(0)}
+                        {option?.name?.charAt(0) || '?'}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={option.name}
-                      secondary={option.fullName}
+                      primary={option?.name || 'Bilinmeyen Banka'}
+                      secondary={option?.fullName || ''}
                     />
                   </Box>
                 )}
@@ -465,7 +509,7 @@ const AccountsPage = () => {
                   if (!inputValue) {
                     // Popüler bankaları önce göster
                     const popular = popularBanks.map(id => getBankById(id)).filter(Boolean).slice(0, 6);
-                    const others = options.filter(bank => !popular.find(p => p.id === bank.id));
+                    const others = options.filter(bank => !popular.find(p => p && p.id === bank.id));
                     return [...popular, ...others];
                   }
                   return searchBanks(inputValue);
@@ -494,9 +538,14 @@ const AccountsPage = () => {
               >
                 {ACCOUNT_TYPES.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {type.icon}
-                      {type.label}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {type.icon}
+                        {type.label}
+                      </Box>
+                      <Typography variant="caption" color="textSecondary">
+                        {type.description}
+                      </Typography>
                     </Box>
                   </MenuItem>
                 ))}
@@ -516,19 +565,8 @@ const AccountsPage = () => {
                 sx={{ mb: 3 }}
               />
 
-              <TextField
-                fullWidth
-                label="Esnek Hesap Limiti"
-                type="number"
-                value={formData.overdraftLimit}
-                onChange={(e) => handleFormChange('overdraftLimit', e.target.value)}
-                error={!!formErrors.overdraftLimit}
-                helperText={formErrors.overdraftLimit || 'Kredili hesap kullanım limiti (isteğe bağlı)'}
-                InputProps={{
-                  startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
-                }}
-                sx={{ mb: 3 }}
-              />
+              {/* Esnek Hesap Limiti sadece esnek hesap türü için */}
+
 
               <TextField
                 fullWidth
@@ -575,6 +613,8 @@ const AccountsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+
       </Box>
     </Container>
   );
