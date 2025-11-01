@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useMediaQuery, useTheme } from '@mui/material';
 import {
@@ -11,69 +11,73 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Divider,
-  Chip,
-  Paper,
-  IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   List,
   ListItem,
   ListItemText,
-  ListItemButton,
   ListItemIcon,
-  Menu,
-  MenuItem,
 } from '@mui/material';
 import {
   Assessment,
-  Download,
   Refresh,
-  PictureAsPdf,
-  TableChart,
-  TrendingUp,
-  TrendingDown,
-  AccountBalance,
-  Category,
-  DateRange,
-  FilterList,
-  Share,
-  Bookmark,
-  BookmarkBorder,
-  Link,
   History,
+  Bookmark,
+  TrendingUp,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 import { reportsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
-import { reportCache, cacheMonitor } from '../../services/cacheManager';
 import DateRangePicker from '../../components/reports/DateRangePicker';
 import CategorySelector from '../../components/reports/CategorySelector';
 import ReportTypeSelector from '../../components/reports/ReportTypeSelector';
-
 import PDFExportButton from '../../components/reports/PDFExportButton';
 import ExcelExportButton from '../../components/reports/ExcelExportButton';
 import ReportContentDisplay from '../../components/reports/ReportContentDisplay';
-import usePerformanceMonitor from '../../hooks/usePerformanceMonitor';
-
-// Memoized components for performance
-const MemoizedReportContentDisplay = memo(ReportContentDisplay);
+import MobileExportButton from '../../components/reports/MobileExportButton';
+import useTouchGestures from '../../hooks/useTouchGestures';
+import useMobileOptimization from '../../hooks/useMobileOptimization';
+import { TouchButton, TouchFab } from '../../components/common/TouchFriendlyControls';
 
 const ReportsPage = () => {
   const { showSuccess, showError } = useNotification();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  // Performance monitoring - temporarily disabled
-  // const { metrics: performanceHookMetrics, getPerformanceReport } = usePerformanceMonitor('ReportsPage');
 
-  // URL state management utilities
+  // Mobile optimization
+  const { 
+    touchSupport, 
+    getMobileConfig, 
+    createTouchHandlers,
+    isSmallScreen 
+  } = useMobileOptimization();
+  
+  const mobileConfig = getMobileConfig();
+
+  // Touch gestures for mobile navigation
+  const touchGestures = useTouchGestures({
+    onSwipeLeft: () => {
+      if (isMobile && reportType === 'summary') {
+        setReportType('detailed');
+      } else if (isMobile && reportType === 'detailed') {
+        setReportType('comparison');
+      }
+    },
+    onSwipeRight: () => {
+      if (isMobile && reportType === 'comparison') {
+        setReportType('detailed');
+      } else if (isMobile && reportType === 'detailed') {
+        setReportType('summary');
+      }
+    },
+    enableSwipe: isMobile,
+    swipeThreshold: 50
+  });
+
+  // URL state management
   const getInitialFiltersFromURL = useCallback(() => {
     const reportType = searchParams.get('reportType') || 'summary';
     const startDate = searchParams.get('startDate') || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
@@ -83,20 +87,17 @@ const ReportsPage = () => {
     return {
       reportType,
       dateRange: { start: startDate, end: endDate },
-      selectedCategories: categories,
-      customFilters: {}
+      selectedCategories: categories
     };
   }, [searchParams]);
 
   const updateURLFromFilters = useCallback((filters) => {
     const newParams = new URLSearchParams();
     
-    // Set report type
     if (filters.reportType && filters.reportType !== 'summary') {
       newParams.set('reportType', filters.reportType);
     }
     
-    // Set date range if not default (current month)
     const defaultStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
     const defaultEnd = new Date().toISOString().split('T')[0];
     
@@ -107,124 +108,39 @@ const ReportsPage = () => {
       newParams.set('endDate', filters.dateRange.end);
     }
     
-    // Set categories if any selected
     if (filters.selectedCategories && filters.selectedCategories.length > 0) {
       newParams.set('categories', filters.selectedCategories.join(','));
     }
     
-    // Update URL without causing navigation
     setSearchParams(newParams, { replace: true });
   }, [setSearchParams]);
 
-  const generateShareableURL = useCallback((filters) => {
-    const baseURL = window.location.origin + window.location.pathname;
-    const params = new URLSearchParams();
-    
-    params.set('reportType', filters.reportType);
-    params.set('startDate', filters.dateRange.start);
-    params.set('endDate', filters.dateRange.end);
-    
-    if (filters.selectedCategories && filters.selectedCategories.length > 0) {
-      params.set('categories', filters.selectedCategories.join(','));
-    }
-    
-    return `${baseURL}?${params.toString()}`;
-  }, []);
-  
-  // Enhanced State management with better organization
+  // State management
   const [reportState, setReportState] = useState({
-    // Filter states - initialized from URL
     filters: getInitialFiltersFromURL(),
-    
-    // Data states
-    data: {
-      current: null,
-      previous: null,
-      history: [], // Keep last 5 reports for comparison
-      lastFetchTime: null,
-      dataVersion: 0 // Increment on each successful fetch
-    },
-    
-    // Loading states
-    loading: {
-      initial: true,
-      refresh: false,
-      filter: false, // When filters change
-      export: { pdf: false, excel: false },
-      cache: false
-    },
-    
-    // Error states
-    errors: {
-      current: null,
-      history: [], // Keep error history for debugging
-      retryCount: 0,
-      lastRetryTime: null
-    },
-    
-    // Cache states
-    cache: {
-      stats: null,
-      enabled: true,
-      fromCache: false,
-      lastClearTime: null,
-      hitRate: 0
-    },
-    
-    // UI states
-    ui: {
-      filtersExpanded: !isMobile, // Collapse on mobile by default
-      autoRefresh: false,
-      autoRefreshInterval: 5 * 60 * 1000, // 5 minutes
-      compactView: isMobile,
-      sidebarOpen: false,
-      shareDialogOpen: false,
-      bookmarkDialogOpen: false
-    },
-    
-    // Performance states
-    performance: {
-      loadTime: null,
-      dataSize: null,
-      renderTime: null,
-      memoryUsage: null,
-      slowQueryWarning: false
-    },
-    
-    // Analytics states
-    analytics: {
-      pageViews: 0,
-      reportGenerations: 0,
-      exportCount: { pdf: 0, excel: 0 },
-      filterChanges: 0,
-      sessionStartTime: Date.now()
+    data: { current: null, previous: null },
+    loading: { initial: true, refresh: false, export: { pdf: false, excel: false } },
+    errors: { current: null },
+    ui: { 
+      shareDialogOpen: false, 
+      bookmarkDialogOpen: false,
+      recentReportsOpen: false,
+      templatesOpen: false,
+      filtersExpanded: !isMobile
     }
   });
 
-  // Derived state selectors with better organization
-  const {
-    filters: { reportType, dateRange, selectedCategories },
-    data: { current: reportData, previous: previousReportData },
-    loading,
-    errors: { current: error },
-    cache: { stats: cacheStats, fromCache: dataFromCache },
-    ui: { filtersExpanded, autoRefresh },
-    performance,
-    analytics
-  } = reportState;
+  const { filters: { reportType, dateRange, selectedCategories }, data: { current: reportData }, loading, errors: { current: error }, ui } = reportState;
 
-  // Computed state values
-  const isLoading = loading.initial || loading.refresh || loading.filter;
+  const isLoading = loading.initial || loading.refresh;
   const hasError = !!error;
   const hasData = !!reportData;
   const canExport = hasData && !isLoading && !hasError;
 
-  // Enhanced state update helpers with better organization
+  // State update helpers
   const updateReportState = useCallback((updates) => {
     setReportState(prev => {
-      // Deep merge for nested objects
       const newState = { ...prev };
-      
       Object.keys(updates).forEach(key => {
         if (typeof updates[key] === 'object' && updates[key] !== null && !Array.isArray(updates[key])) {
           newState[key] = { ...prev[key], ...updates[key] };
@@ -232,55 +148,16 @@ const ReportsPage = () => {
           newState[key] = updates[key];
         }
       });
-      
       return newState;
     });
   }, []);
 
   const updateFilters = useCallback((filterUpdates) => {
     const newFilters = { ...reportState.filters, ...filterUpdates };
-    
-    updateReportState({
-      filters: newFilters,
-      analytics: { filterChanges: analytics.filterChanges + 1 }
-    });
-    
-    // Update URL to reflect new filters
+    updateReportState({ filters: newFilters });
     updateURLFromFilters(newFilters);
-  }, [updateReportState, analytics.filterChanges, reportState.filters, updateURLFromFilters]);
+  }, [reportState.filters, updateReportState, updateURLFromFilters]);
 
-  const updateLoadingState = useCallback((loadingUpdates) => {
-    updateReportState({ loading: loadingUpdates });
-  }, [updateReportState]);
-
-  const updateErrorState = useCallback((errorUpdates) => {
-    updateReportState({ 
-      errors: {
-        ...errorUpdates,
-        history: errorUpdates.current ? 
-          [...reportState.errors.history.slice(-4), { error: errorUpdates.current, timestamp: Date.now() }] :
-          reportState.errors.history
-      }
-    });
-  }, [updateReportState, reportState.errors.history]);
-
-  const updateCacheState = useCallback((cacheUpdates) => {
-    updateReportState({ cache: cacheUpdates });
-  }, [updateReportState]);
-
-  const updateUIState = useCallback((uiUpdates) => {
-    updateReportState({ ui: uiUpdates });
-  }, [updateReportState]);
-
-  const updatePerformanceState = useCallback((performanceUpdates) => {
-    updateReportState({ performance: performanceUpdates });
-  }, [updateReportState]);
-
-  const updateAnalytics = useCallback((analyticsUpdates) => {
-    updateReportState({ analytics: analyticsUpdates });
-  }, [updateReportState]);
-
-  // Filter-specific setters
   const setReportType = useCallback((type) => {
     updateFilters({ reportType: type });
   }, [updateFilters]);
@@ -293,264 +170,62 @@ const ReportsPage = () => {
     updateFilters({ selectedCategories: categories });
   }, [updateFilters]);
 
-  // Load report data function - defined before useEffects to avoid initialization errors
-  const loadReportData = useCallback(async (forceRefresh = false) => {
-    const startTime = Date.now();
-    
+  const updateUIState = useCallback((uiUpdates) => {
+    updateReportState({ ui: uiUpdates });
+  }, [updateReportState]);
+
+  // Data loading
+  const loadReportData = useCallback(async (showLoading = true) => {
     try {
-      // Update loading states
-      updateLoadingState({
-        initial: !reportState.data.current,
-        refresh: forceRefresh,
-        filter: false
-      });
-      
-      updateErrorState({ current: null });
-      
-      // Prepare filters for API call
-      const filters = {
+      if (showLoading) {
+        updateReportState({ loading: { initial: true } });
+      } else {
+        updateReportState({ loading: { refresh: true } });
+      }
+
+      const response = await reportsAPI.generateReport({
+        reportType,
         dateRange,
-        categories: selectedCategories,
-        reportType
-      };
-      
-      // Call the appropriate API based on refresh type
-      const response = forceRefresh ? 
-        await reportsAPI.refreshReport(filters) :
-        await reportsAPI.generateReport(filters);
-      
-      const loadTime = Date.now() - startTime;
-      const dataSize = JSON.stringify(response.data.data).length;
-      
-      // Update data state with history tracking
-      const newDataHistory = reportState.data.history.length >= 5 ? 
-        reportState.data.history.slice(1) : 
-        reportState.data.history;
-      
-      if (reportState.data.current) {
-        newDataHistory.push({
-          data: reportState.data.current,
-          timestamp: reportState.data.lastFetchTime,
-          filters: { reportType, dateRange, selectedCategories }
-        });
-      }
-      
-      updateReportState({
-        data: {
-          previous: reportState.data.current,
-          current: response.data.data,
-          history: newDataHistory,
-          dataVersion: reportState.data.dataVersion + 1
-        },
-        cache: {
-          fromCache: response.data.fromCache || false,
-          hitRate: response.data.cacheHitRate || reportState.cache.hitRate
-        },
-        performance: {
-          loadTime,
-          dataSize,
-          slowQueryWarning: loadTime > 10000
-        },
-        analytics: {
-          reportGenerations: analytics.reportGenerations + 1
-        }
+        categories: selectedCategories
       });
-      
-      // Update cache stats
-      try {
-        const statsResponse = await reportsAPI.getCacheStats();
-        updateCacheState({
-          stats: statsResponse.data.data
-        });
-      } catch (cacheError) {
-        console.warn('Cache stats could not be loaded:', cacheError);
-      }
-      
+
+      updateReportState({
+        data: { current: response.data },
+        loading: { initial: false, refresh: false },
+        errors: { current: null }
+      });
     } catch (error) {
       const errorMessage = handleApiError(error);
-      
-      updateErrorState({
-        current: errorMessage,
-        retryCount: reportState.errors.retryCount + 1,
-        lastRetryTime: new Date()
-      });
-      
-      showError('Rapor verileri yüklenirken hata oluştu');
-    } finally {
-      updateLoadingState({
-        initial: false,
-        refresh: false,
-        filter: false
-      });
-    }
-  }, [dateRange, selectedCategories, reportType, showError]);
-
-  // Load initial data - simplified to avoid loops
-  useEffect(() => {
-    // Just log page view, don't update state
-    console.log('ReportsPage loaded');
-    
-    // Initial load with a flag to prevent loops
-    if (!reportState.data.current && !initialLoadDone) {
-      loadReportData().then(() => {
-        setInitialLoadDone(true);
-      });
-    }
-  }, []); // Empty dependency array for initial load only
-
-  // URL synchronization effect - listen for URL changes (back/forward navigation)
-  useEffect(() => {
-    const urlFilters = getInitialFiltersFromURL();
-    const currentFilters = reportState.filters;
-    
-    // Check if URL filters are different from current state
-    const filtersChanged = 
-      urlFilters.reportType !== currentFilters.reportType ||
-      urlFilters.dateRange.start !== currentFilters.dateRange.start ||
-      urlFilters.dateRange.end !== currentFilters.dateRange.end ||
-      JSON.stringify(urlFilters.selectedCategories.sort()) !== JSON.stringify(currentFilters.selectedCategories.sort());
-    
-    if (filtersChanged) {
-      // Update state without triggering URL update (to avoid infinite loop)
       updateReportState({
-        filters: urlFilters
+        errors: { current: errorMessage },
+        loading: { initial: false, refresh: false }
       });
+      showError('Rapor verileri yüklenirken hata oluştu');
     }
-  }, [searchParams]);
+  }, [dateRange, selectedCategories, reportType, reportData, showError, updateReportState]);
 
-  // Auto-refresh functionality with better control
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      // Only auto-refresh if not currently loading and no errors
-      if (!isLoading && !hasError) {
-        loadReportData(false);
-      }
-    }, reportState.ui.autoRefreshInterval);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, isLoading, hasError, reportState.ui.autoRefreshInterval]);
-
-  // Enhanced filter change effect - reload data when filters change
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  
-  useEffect(() => {
-    if (initialLoadDone) { // Skip initial load
-      updateLoadingState({ filter: true });
-      
-      const timeoutId = setTimeout(() => {
-        loadReportData(false);
-      }, 300); // Debounce filter changes
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [reportType, dateRange, selectedCategories, initialLoadDone]);
-
-  // Browser navigation handling (back/forward buttons)
-  useEffect(() => {
-    const handlePopState = (event) => {
-      // The URL synchronization effect will handle the state update
-      console.log('Browser navigation detected, syncing filters from URL');
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // Responsive UI updates
-  useEffect(() => {
-    updateUIState({ 
-      compactView: isMobile,
-      filtersExpanded: !isMobile // Remove dependency on reportState.ui.filtersExpanded
-    });
-  }, [isMobile]);
-
-  // Enhanced performance monitoring - simplified to avoid loops
-  useEffect(() => {
-    if (performance.loadTime && performance.dataSize) {
-      console.log(`Report loaded in ${performance.loadTime}ms, data size: ${(performance.dataSize / 1024).toFixed(2)}KB`);
-      
-      // Just log warnings, don't update state to avoid loops
-      if (performance.loadTime > 10000) {
-        console.warn('Report load time is high, consider optimizing');
-      }
-      if (performance.dataSize > 1024 * 1024) {
-        console.warn('Report data size is large, consider pagination');
-      }
-    }
-  }, [performance.loadTime, performance.dataSize]);
-
-  // Memory usage monitoring - simplified to avoid loops
-  useEffect(() => {
-    if (window.performance && window.performance.memory) {
-      const memoryInfo = window.performance.memory;
-      const usagePercentage = (memoryInfo.usedJSHeapSize / memoryInfo.jsHeapSizeLimit) * 100;
-      
-      // Just log high memory usage, don't update state
-      if (usagePercentage > 80) {
-        console.warn(`High memory usage: ${usagePercentage.toFixed(1)}%`);
-      }
-    }
-  }, [reportData]); // Update when data changes
-
-
-
+  // Export handlers
   const handleExportPDF = async () => {
     try {
-      updateLoadingState({ export: { ...loading.export, pdf: true } });
-      
-      if (!canExport) {
-        showError('Önce rapor verilerini yükleyin');
-        return;
-      }
-      
-      const response = await reportsAPI.exportToPDF(reportData, 'standard');
+      updateReportState({ loading: { export: { ...loading.export, pdf: true } } });
+      await reportsAPI.exportToPDF(reportData, 'standard');
       showSuccess('PDF raporu başarıyla oluşturuldu');
-      
-      updateAnalytics({
-        exportCount: { 
-          ...analytics.exportCount, 
-          pdf: analytics.exportCount.pdf + 1 
-        }
-      });
-      
-      // In a real implementation, this would trigger a download
-      console.log('PDF Export:', response.data);
-      
     } catch (error) {
       showError('PDF oluşturulurken hata oluştu');
     } finally {
-      updateLoadingState({ export: { ...loading.export, pdf: false } });
+      updateReportState({ loading: { export: { ...loading.export, pdf: false } } });
     }
   };
 
   const handleExportExcel = async () => {
     try {
-      updateLoadingState({ export: { ...loading.export, excel: true } });
-      
-      if (!canExport) {
-        showError('Önce rapor verilerini yükleyin');
-        return;
-      }
-      
-      const response = await reportsAPI.exportToExcel(reportData);
+      updateReportState({ loading: { export: { ...loading.export, excel: true } } });
+      await reportsAPI.exportToExcel(reportData);
       showSuccess('Excel raporu başarıyla oluşturuldu');
-      
-      updateAnalytics({
-        exportCount: { 
-          ...analytics.exportCount, 
-          excel: analytics.exportCount.excel + 1 
-        }
-      });
-      
-      // In a real implementation, this would trigger a download
-      console.log('Excel Export:', response.data);
-      
     } catch (error) {
       showError('Excel oluşturulurken hata oluştu');
     } finally {
-      updateLoadingState({ export: { ...loading.export, excel: false } });
+      updateReportState({ loading: { export: { ...loading.export, excel: false } } });
     }
   };
 
@@ -558,187 +233,35 @@ const ReportsPage = () => {
     loadReportData(false);
   }, [loadReportData]);
 
-  const handleForceRefresh = useCallback(() => {
-    loadReportData(true);
-  }, [loadReportData]);
+  // Effects
+  useEffect(() => {
+    loadReportData();
+  }, []);
 
-  const handleClearCache = useCallback(async () => {
-    try {
-      updateLoadingState({ cache: true });
-      
-      await reportsAPI.clearCache();
-      showSuccess('Cache temizlendi');
-      
-      updateCacheState({
-        lastClearTime: new Date(),
-        hitRate: 0,
-        fromCache: false
-      });
-      
-      // Reload data after clearing cache
-      await loadReportData(true);
-    } catch (error) {
-      showError('Cache temizlenirken hata oluştu');
-      updateLoadingState({ cache: false });
+  useEffect(() => {
+    if (reportData) {
+      const timeoutId = setTimeout(() => {
+        loadReportData(false);
+      }, 300);
+      return () => clearTimeout(timeoutId);
     }
-  }, [loadReportData, showSuccess, showError]);
+  }, [reportType, dateRange, selectedCategories]);
 
-  const handleToggleFilters = useCallback(() => {
-    updateUIState({ filtersExpanded: !filtersExpanded });
-  }, [filtersExpanded]);
-
-  const handleToggleAutoRefresh = useCallback(() => {
-    updateUIState({ autoRefresh: !autoRefresh });
-  }, [autoRefresh]);
-
-  const handleRetryLastOperation = useCallback(() => {
-    if (hasError) {
-      loadReportData(false);
-    }
-  }, [hasError, loadReportData]);
-
-  const handleResetFilters = useCallback(() => {
-    updateFilters({
-      reportType: 'summary',
-      dateRange: { 
-        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0]
-      },
-      selectedCategories: []
-    });
-  }, [updateFilters]);
-
-  const handleCompareWithPrevious = useCallback(() => {
-    if (previousReportData) {
-      // This would open a comparison view
-      console.log('Comparing current with previous data');
-    }
-  }, [previousReportData]);
-
-  const handleExportHistory = useCallback(() => {
-    if (reportState.data.history.length > 0) {
-      // Export historical data
-      console.log('Exporting report history');
-    }
-  }, [reportState.data.history]);
-
-  // URL and bookmark management functions
-  const handleShareReport = useCallback(() => {
-    const shareableURL = generateShareableURL(reportState.filters);
-    
-    if (navigator.share) {
-      // Use native sharing if available
-      navigator.share({
-        title: 'Finansal Rapor',
-        text: `${reportType === 'summary' ? 'Özet' : reportType === 'detailed' ? 'Detaylı' : 'Karşılaştırmalı'} finansal rapor`,
-        url: shareableURL
-      }).catch(console.error);
-    } else {
-      // Fallback to clipboard
-      navigator.clipboard.writeText(shareableURL).then(() => {
-        showSuccess('Rapor linki panoya kopyalandı');
-      }).catch(() => {
-        // Fallback for older browsers
-        updateUIState({ shareDialogOpen: true });
-      });
-    }
-  }, [generateShareableURL, reportState.filters, reportType, showSuccess, updateUIState]);
-
-  const handleBookmarkReport = useCallback(() => {
-    const bookmarkData = {
-      url: generateShareableURL(reportState.filters),
-      title: `Finansal Rapor - ${reportType === 'summary' ? 'Özet' : reportType === 'detailed' ? 'Detaylı' : 'Karşılaştırmalı'}`,
-      filters: reportState.filters,
-      createdAt: new Date().toISOString()
-    };
-    
-    // Save to localStorage for now (could be enhanced with backend storage)
-    const existingBookmarks = JSON.parse(localStorage.getItem('reportBookmarks') || '[]');
-    const newBookmarks = [bookmarkData, ...existingBookmarks.slice(0, 9)]; // Keep last 10
-    localStorage.setItem('reportBookmarks', JSON.stringify(newBookmarks));
-    
-    showSuccess('Rapor yer imlerine eklendi');
-  }, [generateShareableURL, reportState.filters, reportType, showSuccess]);
-
-  const handleLoadBookmark = useCallback((bookmark) => {
-    // Update filters from bookmark
-    updateFilters(bookmark.filters);
-    showSuccess('Yer imi yüklendi');
-  }, [updateFilters, showSuccess]);
-
-  const handleCopyCurrentURL = useCallback(() => {
-    const currentURL = generateShareableURL(reportState.filters);
-    navigator.clipboard.writeText(currentURL).then(() => {
-      showSuccess('Mevcut rapor linki kopyalandı');
-    }).catch(() => {
-      showError('Link kopyalanamadı');
-    });
-  }, [generateShareableURL, reportState.filters, showSuccess, showError]);
-
-  const handleResetToDefaults = useCallback(() => {
-    const defaultFilters = {
-      reportType: 'summary',
-      dateRange: { 
-        start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0]
-      },
-      selectedCategories: [],
-      customFilters: {}
-    };
-    
-    updateFilters(defaultFilters);
-    showSuccess('Filtreler varsayılan değerlere sıfırlandı');
-  }, [updateFilters, showSuccess]);
-
-  // Enhanced memoized calculations for performance
+  // Memoized calculations
   const summaryMetrics = useMemo(() => {
     if (!reportData?.summary) return null;
     
     const { totalIncome, totalExpense, netIncome } = reportData.summary;
     const savingsRate = totalIncome > 0 ? ((netIncome / totalIncome) * 100).toFixed(1) : 0;
-    const healthScore = reportData.financialMetrics?.healthScore || 0;
     
     return {
       totalIncome,
       totalExpense,
       netIncome,
-      savingsRate: parseFloat(savingsRate),
-      healthScore: parseFloat(healthScore.toFixed(1))
+      savingsRate: parseFloat(savingsRate)
     };
-  }, [reportData?.summary, reportData?.financialMetrics?.healthScore]);
+  }, [reportData?.summary]);
 
-  // Memoized filter state for performance
-  const filterState = useMemo(() => ({
-    reportType,
-    dateRange,
-    selectedCategories,
-    hasFilters: reportType !== 'summary' || 
-                selectedCategories.length > 0 ||
-                dateRange.start !== new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] ||
-                dateRange.end !== new Date().toISOString().split('T')[0]
-  }), [reportType, dateRange, selectedCategories]);
-
-  // Memoized UI state for performance
-  const uiState = useMemo(() => ({
-    isLoading,
-    hasError,
-    hasData,
-    canExport,
-    compactView: reportState.ui.compactView,
-    filtersExpanded: reportState.ui.filtersExpanded
-  }), [isLoading, hasError, hasData, canExport, reportState.ui.compactView, reportState.ui.filtersExpanded]);
-
-  // Memoized performance metrics
-  const performanceMetrics = useMemo(() => ({
-    loadTime: performance.loadTime,
-    dataSize: performance.dataSize,
-    isSlowQuery: performance.slowQueryWarning,
-    isLargeData: performance.dataSize > 1024 * 1024,
-    memoryUsage: performance.memoryUsage,
-    isHighMemory: performance.memoryUsage?.used > performance.memoryUsage?.limit * 0.8
-  }), [performance]);
-
-  // Enhanced loading state with better UX
   if (loading.initial && !hasData) {
     return (
       <Container maxWidth="xl">
@@ -747,14 +270,6 @@ const ReportsPage = () => {
           <Typography variant="h6" color="textSecondary">
             Rapor verileri yükleniyor...
           </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Bu işlem birkaç saniye sürebilir
-          </Typography>
-          {performance.loadTime && (
-            <Typography variant="caption" color="textSecondary">
-              Önceki yükleme: {performance.loadTime}ms
-            </Typography>
-          )}
         </Box>
       </Container>
     );
@@ -762,49 +277,179 @@ const ReportsPage = () => {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
-        {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: 'space-between', 
-          alignItems: isMobile ? 'flex-start' : 'center', 
-          mb: 4,
-          gap: isMobile ? 2 : 0
-        }}>
-          <Box>
-            <Typography variant={isMobile ? "h5" : "h4"} component="h1" gutterBottom>
-              Finansal Raporlar
+      <Box 
+        ref={touchGestures.elementRef}
+        sx={{ py: 3 }}
+      >
+        {/* Professional Header */}
+        <Box sx={{ mb: 4 }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Assessment sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Box>
+                  <Typography variant={isMobile ? "h5" : "h4"} component="h1" gutterBottom sx={{ mb: 0.5 }}>
+                    Finansal Raporlar
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    {isMobile ? 'Finansal analiz ve raporlar' : 'Detaylı finansal analizler ve profesyonel raporlar oluşturun'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', gap: 1, justifyContent: isMobile ? 'center' : 'flex-end', flexWrap: 'wrap' }}>
+                <TouchButton
+                  variant="outlined"
+                  startIcon={<History />}
+                  onClick={() => updateUIState({ recentReportsOpen: true })}
+                  size={isMobile ? 'small' : 'medium'}
+                  minTouchTarget={mobileConfig.minTouchTarget}
+                  hapticFeedback={touchSupport}
+                >
+                  {isMobile ? 'Geçmiş' : 'Son Raporlar'}
+                </TouchButton>
+                <TouchButton
+                  variant="outlined"
+                  startIcon={<Bookmark />}
+                  onClick={() => updateUIState({ templatesOpen: true })}
+                  size={isMobile ? 'small' : 'medium'}
+                  minTouchTarget={mobileConfig.minTouchTarget}
+                  hapticFeedback={touchSupport}
+                >
+                  {isMobile ? 'Şablon' : 'Şablonlar'}
+                </TouchButton>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Quick Stats Summary */}
+        {summaryMetrics && (
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+              Özet İstatistikler
             </Typography>
-            <Typography variant="body1" color="textSecondary">
-              {isMobile ? 'Finansal analiz ve raporlar' : 'Gelir, gider ve finansal performansınızın detaylı analizi'}
-            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={6} sm={3}>
+                <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+                  <Typography variant={isMobile ? "body1" : "h6"} color="success.contrastText" fontWeight="bold">
+                    {formatCurrency(summaryMetrics.totalIncome)}
+                  </Typography>
+                  <Typography variant="caption" color="success.contrastText">
+                    Toplam Gelir
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'error.light', borderRadius: 2 }}>
+                  <Typography variant={isMobile ? "body1" : "h6"} color="error.contrastText" fontWeight="bold">
+                    {formatCurrency(summaryMetrics.totalExpense)}
+                  </Typography>
+                  <Typography variant="caption" color="error.contrastText">
+                    Toplam Gider
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card sx={{ 
+                  textAlign: 'center', 
+                  p: 2, 
+                  bgcolor: summaryMetrics.netIncome >= 0 ? 'primary.light' : 'warning.light',
+                  borderRadius: 2
+                }}>
+                  <Typography variant={isMobile ? "body1" : "h6"} color="primary.contrastText" fontWeight="bold">
+                    {formatCurrency(summaryMetrics.netIncome)}
+                  </Typography>
+                  <Typography variant="caption" color="primary.contrastText">
+                    Net Gelir
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card sx={{ textAlign: 'center', p: 2, bgcolor: 'info.light', borderRadius: 2 }}>
+                  <Typography variant={isMobile ? "body1" : "h6"} color="info.contrastText" fontWeight="bold">
+                    %{summaryMetrics.savingsRate}
+                  </Typography>
+                  <Typography variant="caption" color="info.contrastText">
+                    Tasarruf Oranı
+                  </Typography>
+                </Card>
+              </Grid>
+            </Grid>
           </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: isMobile ? 'column' : 'row',
-            gap: 1,
-            width: isMobile ? '100%' : 'auto'
-          }}>
-            <Button
-              variant="outlined"
-              startIcon={isLoading ? <CircularProgress size={16} /> : <Refresh />}
-              onClick={handleRefresh}
-              disabled={isLoading}
-              fullWidth={isMobile}
-            >
-              {isMobile ? 'Yenile' : 'Raporları Yenile'}
-            </Button>
-            
+        )}
+
+        {/* Filters Section */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                  disabled={isLoading}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <CategorySelector
+                  value={selectedCategories}
+                  onChange={setSelectedCategories}
+                  disabled={isLoading}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={4}>
+                <ReportTypeSelector
+                  value={reportType}
+                  onChange={setReportType}
+                  disabled={isLoading}
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1, 
+              mt: 2, 
+              flexWrap: 'wrap', 
+              alignItems: 'center',
+              flexDirection: isMobile ? 'column' : 'row'
+            }}>
+              <TouchButton
+                variant="contained"
+                onClick={() => loadReportData(false)}
+                disabled={isLoading}
+                startIcon={isLoading ? <CircularProgress size={16} /> : <Assessment />}
+                fullWidth={isMobile}
+                minTouchTarget={mobileConfig.minTouchTarget}
+                hapticFeedback={touchSupport}
+              >
+                {isMobile ? 'Oluştur' : 'Raporu Oluştur'}
+              </TouchButton>
+              
+              <TouchButton
+                variant="outlined"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                fullWidth={isMobile}
+                minTouchTarget={mobileConfig.minTouchTarget}
+                hapticFeedback={touchSupport}
+              >
+                {isMobile ? 'Yenile' : 'Zorla Yenile'}
+              </TouchButton>
+            </Box>
+          </CardContent>
+        </Card>
+
+        {/* Export Actions */}
+        {!isMobile && canExport && (
+          <Box sx={{ mb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
             <PDFExportButton
               reportData={reportData}
               disabled={!canExport || loading.export.pdf}
               variant="outlined"
-              fullWidth={isMobile}
-              showTemplateSelector={true}
-              defaultTemplate={reportType === 'comparison' ? 'comparison' : 
-                              reportType === 'detailed' ? 'detailed' : 'standard'}
               loading={loading.export.pdf}
             />
             
@@ -812,596 +457,130 @@ const ReportsPage = () => {
               reportData={reportData}
               disabled={!canExport || loading.export.excel}
               variant="contained"
-              fullWidth={isMobile}
-              showAdvancedOptions={true}
               loading={loading.export.excel}
             />
           </Box>
-        </Box>
-
-        {/* Enhanced Error Display with better context */}
-        {hasError && (
-          <Alert 
-            severity="error" 
-            sx={{ mb: 3 }}
-            action={
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button size="small" onClick={handleRetryLastOperation}>
-                  Tekrar Dene ({reportState.errors.retryCount})
-                </Button>
-                <Button size="small" onClick={handleForceRefresh}>
-                  Zorla Yenile
-                </Button>
-                <Button size="small" onClick={handleResetFilters}>
-                  Filtreleri Sıfırla
-                </Button>
-              </Box>
-            }
-          >
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Hata:</strong> {error}
-            </Typography>
-            {reportState.data.lastFetchTime && (
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                Son başarılı yükleme: {reportState.data.lastFetchTime.toLocaleString('tr-TR')}
-              </Typography>
-            )}
-            {reportState.errors.retryCount > 0 && (
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                Deneme sayısı: {reportState.errors.retryCount}
-              </Typography>
-            )}
-            {reportState.errors.history.length > 0 && (
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                Son hatalar: {reportState.errors.history.length} hata kaydedildi
-              </Typography>
-            )}
-          </Alert>
         )}
 
-        {/* Enhanced Loading States Info */}
-        {isLoading && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CircularProgress size={20} />
-              <Typography variant="body2">
-                {loading.refresh ? 'Veriler yenileniyor...' : 
-                 loading.filter ? 'Filtreler uygulanıyor...' :
-                 loading.initial ? 'İlk veriler yükleniyor...' : 'Rapor oluşturuluyor...'}
-              </Typography>
-            </Box>
-            {performance.loadTime && (
-              <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
-                Önceki yükleme süresi: {performance.loadTime}ms
-              </Typography>
-            )}
-            {loading.cache && (
-              <Typography variant="caption" color="textSecondary" sx={{ display: 'block' }}>
-                Cache işlemi devam ediyor...
-              </Typography>
-            )}
-            {performance.slowQueryWarning && (
-              <Typography variant="caption" color="warning.main" sx={{ display: 'block' }}>
-                ⚠️ Yavaş sorgu tespit edildi, lütfen bekleyin
-              </Typography>
-            )}
-          </Alert>
-        )}
-
-        {/* Filter Section */}
-        <Box sx={{ mb: 4 }}>
-          {/* Date Range Picker */}
-          <DateRangePicker
-            value={filterState.dateRange}
-            onChange={setDateRange}
-            disabled={uiState.isLoading}
-          />
-          
-          {/* Category Selector */}
-          <CategorySelector
-            value={filterState.selectedCategories}
-            onChange={setSelectedCategories}
-            disabled={uiState.isLoading}
-          />
-          
-          {/* Report Type Selector */}
-          <ReportTypeSelector
-            value={filterState.reportType}
-            onChange={setReportType}
-            disabled={uiState.isLoading}
-          />
-          
-          {/* Filter Summary and Actions */}
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <FilterList color="primary" />
-                <Typography variant="h6">
-                  Aktif Filtreler
-                </Typography>
-              </Box>
-              
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                <Chip 
-                  icon={<DateRange />}
-                  label={`${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`}
-                  variant="outlined"
-                />
-                <Chip 
-                  icon={<Category />}
-                  label={selectedCategories.length > 0 ? `${selectedCategories.length} kategori` : 'Tüm kategoriler'}
-                  variant="outlined"
-                />
-                <Chip 
-                  icon={<Assessment />}
-                  label={reportType === 'summary' ? 'Özet Rapor' : reportType === 'detailed' ? 'Detaylı Rapor' : 'Karşılaştırmalı Rapor'}
-                  color="primary"
-                />
-                {dataFromCache && (
-                  <Chip 
-                    label="Cache'den yüklendi"
-                    size="small"
-                    color="success"
-                    variant="outlined"
-                  />
-                )}
-                {performanceMetrics.isSlowQuery && (
-                  <Chip 
-                    label="Yavaş sorgu"
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                  />
-                )}
-                {performanceMetrics.isHighMemory && (
-                  <Chip 
-                    label="Yüksek bellek kullanımı"
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                  />
-                )}
-                {performanceMetrics.isLargeData && (
-                  <Chip 
-                    label="Büyük veri seti"
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                  />
-                )}
-                {reportState.data.dataVersion > 1 && (
-                  <Chip 
-                    label={`v${reportState.data.dataVersion}`}
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                  />
-                )}
-                {searchParams.toString() && (
-                  <Tooltip title="Bu rapor URL parametreleri ile yüklendi - paylaşılabilir">
-                    <Chip 
-                      label="URL Senkronize"
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                      icon={<Link />}
-                    />
-                  </Tooltip>
-                )}
-              </Box>
-              
-              <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => loadReportData(false)}
-                  disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={16} /> : <Assessment />}
-                >
-                  Raporu Oluştur
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={handleForceRefresh}
-                  disabled={isLoading}
-                >
-                  Zorla Yenile
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="warning"
-                  onClick={handleClearCache}
-                  disabled={loading.cache}
-                >
-                  Cache Temizle
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="secondary"
-                  onClick={handleResetToDefaults}
-                  disabled={isLoading}
-                >
-                  Varsayılana Sıfırla
-                </Button>
-                
-                {/* URL and Bookmark Actions */}
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="info"
-                  onClick={handleShareReport}
-                  startIcon={<Share />}
-                  disabled={isLoading}
-                >
-                  Paylaş
-                </Button>
-                
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="success"
-                  onClick={handleBookmarkReport}
-                  startIcon={<BookmarkBorder />}
-                  disabled={isLoading}
-                >
-                  Yer İmi Ekle
-                </Button>
-                
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="success"
-                  onClick={() => updateUIState({ bookmarkDialogOpen: true })}
-                  startIcon={<History />}
-                  disabled={isLoading}
-                >
-                  Kaydedilenler
-                </Button>
-                
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={handleCopyCurrentURL}
-                  startIcon={<Link />}
-                  disabled={isLoading}
-                >
-                  Link Kopyala
-                </Button>
-                
-                {/* Cache Stats */}
-                {cacheStats && (
-                  <Tooltip title={`Cache boyutu: ${cacheStats.reportCache?.size || 0} öğe, Hit rate: %${Math.round(reportState.cache.hitRate * 100)}`}>
-                    <Chip 
-                      label={`Cache: ${cacheStats.reportCache?.size || 0}`}
-                      size="small"
-                      variant="outlined"
-                      color={reportState.cache.hitRate > 0.7 ? 'success' : 'default'}
-                    />
-                  </Tooltip>
-                )}
-                
-                {/* Performance Stats */}
-                {performance.loadTime && (
-                  <Tooltip title={`Son yükleme: ${performance.loadTime}ms, Veri boyutu: ${Math.round(performance.dataSize / 1024)}KB`}>
-                    <Chip 
-                      label={`${performance.loadTime}ms`}
-                      size="small"
-                      variant="outlined"
-                      color={performance.loadTime > 5000 ? 'warning' : 'success'}
-                    />
-                  </Tooltip>
-                )}
-                
-                {/* Data History */}
-                {reportState.data.history.length > 0 && (
-                  <Tooltip title={`${reportState.data.history.length} geçmiş rapor mevcut`}>
-                    <Chip 
-                      label={`Geçmiş: ${reportState.data.history.length}`}
-                      size="small"
-                      variant="outlined"
-                      onClick={handleExportHistory}
-                      clickable
-                    />
-                  </Tooltip>
-                )}
-                
-                {/* Compare with Previous */}
-                {previousReportData && (
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    color="info"
-                    onClick={handleCompareWithPrevious}
-                    disabled={isLoading}
-                  >
-                    Önceki ile Karşılaştır
-                  </Button>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        {/* Summary Metrics */}
-        {summaryMetrics && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TrendingUp color="success" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Toplam Gelir
-                    </Typography>
-                  </Box>
-                  <Typography variant="h5" color="success.main" fontWeight="bold">
-                    {formatCurrency(summaryMetrics.totalIncome)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TrendingDown color="error" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Toplam Gider
-                    </Typography>
-                  </Box>
-                  <Typography variant="h5" color="error.main" fontWeight="bold">
-                    {formatCurrency(summaryMetrics.totalExpense)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <AccountBalance color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Net Gelir
-                    </Typography>
-                  </Box>
-                  <Typography 
-                    variant="h5" 
-                    color={summaryMetrics.netIncome >= 0 ? 'success.main' : 'error.main'}
-                    fontWeight="bold"
-                  >
-                    {formatCurrency(summaryMetrics.netIncome)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Assessment color="info" sx={{ mr: 1 }} />
-                    <Typography variant="subtitle2" color="textSecondary">
-                      Finansal Sağlık
-                    </Typography>
-                  </Box>
-                  <Typography 
-                    variant="h5" 
-                    color={
-                      summaryMetrics.healthScore >= 70 ? 'success.main' : 
-                      summaryMetrics.healthScore >= 40 ? 'warning.main' : 'error.main'
-                    }
-                    fontWeight="bold"
-                  >
-                    {summaryMetrics.healthScore}/100
-                  </Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    Tasarruf: %{summaryMetrics.savingsRate}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
-
-        {/* Dynamic Report Content Display */}
-        <MemoizedReportContentDisplay
+        {/* Dynamic Report Content */}
+        <ReportContentDisplay
           reportData={reportData}
-          reportType={filterState.reportType}
-          loading={uiState.isLoading}
+          reportType={reportType}
+          loading={isLoading}
           error={error}
-          compactView={uiState.compactView}
-          showAdvancedMetrics={true}
+          compactView={isMobile}
+          showAdvancedMetrics={!isMobile}
+          enableVirtualization={true}
+          enablePagination={true}
+          maxRowsBeforeVirtualization={100}
+          mobileOptimized={isMobile}
+          touchSupport={touchSupport}
+          mobileConfig={mobileConfig}
           onViewModeChange={(mode) => {
             if (mode === 'advancedMetrics') {
-              // Toggle advanced metrics
               console.log('Advanced metrics toggled');
             }
           }}
         />
 
-
-
-        {/* Enhanced Loading Overlay */}
-        {isLoading && hasData && (
-          <Box sx={{ 
-            position: 'fixed', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
-            bgcolor: 'rgba(255,255,255,0.8)', 
-            display: 'flex', 
-            flexDirection: 'column',
-            alignItems: 'center', 
-            justifyContent: 'center',
-            zIndex: 9999,
-            gap: 2
-          }}>
-            <CircularProgress size={60} />
-            <Typography variant="h6" color="textSecondary">
-              {loading.refresh ? 'Veriler yenileniyor...' : 
-               loading.filter ? 'Filtreler uygulanıyor...' :
-               loading.cache ? 'Cache işlemi...' : 'İşlem devam ediyor...'}
-            </Typography>
-            {performance.loadTime && (
-              <Typography variant="body2" color="textSecondary">
-                Tahmini süre: ~{Math.round(performance.loadTime / 1000)}s
-              </Typography>
-            )}
-          </Box>
+        {/* Mobile Export Button */}
+        {isMobile && reportData && (
+          <TouchFab
+            icon={<Assessment />}
+            label="Hızlı Rapor"
+            onClick={() => loadReportData(false)}
+            position="bottom-right"
+            color="primary"
+            hapticFeedback={touchSupport}
+          />
         )}
 
-        {/* Performance Warning */}
-        {performance.memoryUsage?.used > performance.memoryUsage?.limit * 0.9 && (
-          <Alert severity="warning" sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 1000 }}>
-            <Typography variant="body2">
-              Yüksek bellek kullanımı tespit edildi. Sayfayı yenilemeyi düşünün.
-            </Typography>
-          </Alert>
-        )}
-
-        {/* Share Dialog */}
-        <Dialog 
-          open={reportState.ui.shareDialogOpen} 
-          onClose={() => updateUIState({ shareDialogOpen: false })}
-          maxWidth="sm"
+        {/* Recent Reports Dialog */}
+        <Dialog
+          open={ui.recentReportsOpen}
+          onClose={() => updateUIState({ recentReportsOpen: false })}
+          maxWidth="md"
           fullWidth
+          fullScreen={isMobile}
         >
-          <DialogTitle>Raporu Paylaş</DialogTitle>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <History />
+              Son Raporlar
+            </Box>
+          </DialogTitle>
           <DialogContent>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              value={generateShareableURL(reportState.filters)}
-              label="Paylaşılabilir Link"
-              variant="outlined"
-              InputProps={{
-                readOnly: true,
-              }}
-              sx={{ mt: 2 }}
-            />
-            <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-              Bu link ile raporu başkalarıyla paylaşabilir veya daha sonra erişmek için kaydedebilirsiniz.
-              Link mevcut filtre ayarlarınızı içerir.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Son oluşturulan raporlarınız burada görünecek.
             </Typography>
+            <List>
+              <ListItem>
+                <ListItemIcon>
+                  <Assessment />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Aylık Özet Raporu"
+                  secondary="15 Aralık 2024 - PDF"
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon>
+                  <TrendingUp />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Kategori Analizi"
+                  secondary="10 Aralık 2024 - Excel"
+                />
+              </ListItem>
+            </List>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => updateUIState({ shareDialogOpen: false })}>
+            <TouchButton onClick={() => updateUIState({ recentReportsOpen: false })}>
               Kapat
-            </Button>
-            <Button 
-              onClick={() => {
-                navigator.clipboard.writeText(generateShareableURL(reportState.filters));
-                showSuccess('Link kopyalandı');
-                updateUIState({ shareDialogOpen: false });
-              }}
-              variant="contained"
-            >
-              Kopyala
-            </Button>
+            </TouchButton>
           </DialogActions>
         </Dialog>
 
-        {/* Bookmark Dialog */}
-        <Dialog 
-          open={reportState.ui.bookmarkDialogOpen} 
-          onClose={() => updateUIState({ bookmarkDialogOpen: false })}
-          maxWidth="sm"
+        {/* Templates Dialog */}
+        <Dialog
+          open={ui.templatesOpen}
+          onClose={() => updateUIState({ templatesOpen: false })}
+          maxWidth="md"
           fullWidth
+          fullScreen={isMobile}
         >
-          <DialogTitle>Kaydedilmiş Raporlar</DialogTitle>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Bookmark />
+              Rapor Şablonları
+            </Box>
+          </DialogTitle>
           <DialogContent>
-            <BookmarkList onLoadBookmark={handleLoadBookmark} />
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Önceden hazırlanmış rapor şablonlarını kullanarak hızlıca rapor oluşturun.
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Card sx={{ p: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Assessment color="primary" />
+                    <Typography variant="subtitle1">Aylık Özet</Typography>
+                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Aylık gelir-gider özeti ve temel analizler
+                  </Typography>
+                </Card>
+              </Grid>
+            </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => updateUIState({ bookmarkDialogOpen: false })}>
+            <TouchButton onClick={() => updateUIState({ templatesOpen: false })}>
               Kapat
-            </Button>
+            </TouchButton>
           </DialogActions>
         </Dialog>
       </Box>
     </Container>
-  );
-};
-
-// Bookmark List Component
-const BookmarkList = ({ onLoadBookmark }) => {
-  const [bookmarks, setBookmarks] = useState([]);
-
-  useEffect(() => {
-    const savedBookmarks = JSON.parse(localStorage.getItem('reportBookmarks') || '[]');
-    setBookmarks(savedBookmarks);
-  }, []);
-
-  const handleDeleteBookmark = (index) => {
-    const updatedBookmarks = bookmarks.filter((_, i) => i !== index);
-    setBookmarks(updatedBookmarks);
-    localStorage.setItem('reportBookmarks', JSON.stringify(updatedBookmarks));
-  };
-
-  if (bookmarks.length === 0) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <BookmarkBorder sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-        <Typography variant="body1" color="textSecondary">
-          Henüz kaydedilmiş rapor bulunmuyor
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Bir rapor oluşturduktan sonra "Yer İmi" butonunu kullanarak kaydedin
-        </Typography>
-      </Box>
-    );
-  }
-
-  return (
-    <List>
-      {bookmarks.map((bookmark, index) => (
-        <ListItem key={index} divider>
-          <ListItemIcon>
-            <Bookmark color="primary" />
-          </ListItemIcon>
-          <ListItemText
-            primary={bookmark.title}
-            secondary={
-              <Box>
-                <Typography variant="caption" display="block">
-                  {new Date(bookmark.createdAt).toLocaleString('tr-TR')}
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  {bookmark.filters.dateRange.start} - {bookmark.filters.dateRange.end}
-                  {bookmark.filters.selectedCategories.length > 0 && 
-                    ` • ${bookmark.filters.selectedCategories.length} kategori`
-                  }
-                </Typography>
-              </Box>
-            }
-          />
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              size="small"
-              onClick={() => onLoadBookmark(bookmark)}
-              variant="outlined"
-            >
-              Yükle
-            </Button>
-            <Button
-              size="small"
-              onClick={() => handleDeleteBookmark(index)}
-              color="error"
-              variant="outlined"
-            >
-              Sil
-            </Button>
-          </Box>
-        </ListItem>
-      ))}
-    </List>
   );
 };
 

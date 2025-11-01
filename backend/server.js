@@ -4,6 +4,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// Import performance services
+const reportPerformanceService = require('./services/reportPerformanceService');
+const logger = require('./utils/logger');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -32,6 +36,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Request logging middleware
+app.use(logger.requestMiddleware);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
@@ -49,6 +56,7 @@ const transactionRoutes = require('./routes/transactions');
 const fixedPaymentRoutes = require('./routes/fixedPayments');
 const installmentPaymentRoutes = require('./routes/installmentPayments');
 const reportRoutes = require('./routes/reports');
+const optimizedReportRoutes = require('./routes/optimizedReports');
 const adminRoutes = require('./routes/admin');
 
 app.use('/api/auth', authRoutes);
@@ -58,6 +66,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/fixed-payments', fixedPaymentRoutes);
 app.use('/api/installment-payments', installmentPaymentRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/reports/optimized', optimizedReportRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Catch-all for undefined API routes
@@ -70,7 +79,12 @@ app.use('/api/*', (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.errorWithContext('Unhandled error', err, {
+    url: req.url,
+    method: req.method,
+    userId: req.user ? req.user.id : null
+  });
+  
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',
@@ -86,7 +100,45 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
+// Initialize performance services
+async function initializeServices() {
+  try {
+    await reportPerformanceService.initialize();
+    logger.info('All performance services initialized successfully');
+  } catch (error) {
+    logger.errorWithContext('Failed to initialize performance services', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully');
+  await reportPerformanceService.shutdown();
+  process.exit(0);
 });
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, shutting down gracefully');
+  await reportPerformanceService.shutdown();
+  process.exit(0);
+});
+
+// Start server
+async function startServer() {
+  try {
+    await initializeServices();
+    
+    app.listen(PORT, () => {
+      logger.info(`Server is running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV}`);
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV}`);
+    });
+  } catch (error) {
+    logger.errorWithContext('Failed to start server', error);
+    process.exit(1);
+  }
+}
+
+startServer();
