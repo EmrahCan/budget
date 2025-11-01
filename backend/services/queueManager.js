@@ -10,6 +10,58 @@ class QueueManager extends EventEmitter {
     this.maxConcurrentJobs = 5;
     this.retryAttempts = 3;
     this.retryDelay = 1000; // 1 second
+    this.initialized = false;
+  }
+
+  /**
+   * Initialize the queue manager
+   */
+  async initialize() {
+    try {
+      // Create default queues
+      this.createQueue('reports', { concurrency: 3 });
+      this.createQueue('cache', { concurrency: 2 });
+      this.createQueue('aggregation', { concurrency: 1 });
+      
+      this.initialized = true;
+      logger.info('Queue Manager initialized successfully');
+    } catch (error) {
+      logger.error('Failed to initialize Queue Manager:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Health check
+   */
+  async healthCheck() {
+    return {
+      status: this.initialized ? 'healthy' : 'unhealthy',
+      queues: this.queues.size,
+      processing: this.isProcessing
+    };
+  }
+
+  /**
+   * Get statistics
+   */
+  async getStats() {
+    const stats = {};
+    for (const [name, queue] of this.queues) {
+      stats[name] = { ...queue.stats };
+    }
+    return stats;
+  }
+
+  /**
+   * Shutdown
+   */
+  async shutdown() {
+    this.isProcessing = false;
+    this.queues.clear();
+    this.workers.clear();
+    this.initialized = false;
+    logger.info('Queue Manager shutdown completed');
   }
 
   /**

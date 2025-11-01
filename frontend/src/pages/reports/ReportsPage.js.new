@@ -1,0 +1,505 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useMediaQuery, useTheme, Alert } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  IconButton
+} from '@mui/material';
+import {
+  Assessment,
+  Refresh,
+  History as HistoryIcon,
+  Bookmark as BookmarkIcon,
+  TrendingUp,
+  Close as CloseIcon,
+  Tune as TuneIcon
+} from '@mui/icons-material';
+import { useNotification } from '../../contexts/NotificationContext';
+import { reportsAPI, formatCurrency } from '../../services/api';
+import DateRangePicker from '../../components/reports/DateRangePicker';
+import CategorySelector from '../../components/reports/CategorySelector';
+import ReportTypeSelector from '../../components/reports/ReportTypeSelector';
+import PDFExportButton from '../../components/reports/PDFExportButton';
+import ExcelExportButton from '../../components/reports/ExcelExportButton';
+import ReportContentDisplay from '../../components/reports/ReportContentDisplay';
+import useTouchGestures from '../../hooks/useTouchGestures';
+import useMobileOptimization from '../../hooks/useMobileOptimization';
+import { TouchButton, TouchFab } from '../../components/common/TouchFriendlyControls';
+
+const ReportsPage = () => {
+  const { showSuccess, showError } = useNotification();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  // State for UI
+  const [ui, setUi] = useState({
+    recentReportsOpen: false,
+    templatesOpen: false,
+    filtersExpanded: !isMobile
+  });
+  
+  // State for report data
+  const [reportData, setReportData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // State for filters
+  const [reportType, setReportType] = useState('summary');
+  const [dateRange, setDateRange] = useState({
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    end: new Date()
+  });
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  
+  // Initialize hooks
+  const touchGestures = useTouchGestures();
+  const mobileConfig = useMobileOptimization();
+  const touchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  // Load report data
+  const loadReportData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Mock data for demonstration
+      setTimeout(() => {
+        setReportData({
+          summary: {
+            totalIncome: 12500,
+            totalExpense: 8500,
+            netIncome: 4000,
+            savingsRate: 32,
+            categories: [
+              { name: 'Gıda', amount: 2500, color: 'primary.main' },
+              { name: 'Ulaşım', amount: 1500, color: 'secondary.main' },
+              { name: 'Kira', amount: 3000, color: 'success.main' },
+              { name: 'Faturalar', amount: 1500, color: 'warning.main' }
+            ]
+          }
+        });
+        setIsLoading(false);
+      }, 1000);
+      
+    } catch (err) {
+      setError('Rapor yüklenirken bir hata oluştu.');
+      showError('Rapor yüklenemedi');
+      setIsLoading(false);
+    }
+  }, [reportType, dateRange, selectedCategories, showError]);
+  
+  // Handle refresh
+  const handleRefresh = useCallback(() => {
+    loadReportData();
+  }, [loadReportData]);
+
+  // Load initial data
+  useEffect(() => {
+    loadReportData();
+  }, [loadReportData]);
+
+  // URL state management
+  const getInitialFiltersFromURL = useCallback(() => {
+    const reportType = searchParams.get('reportType') || 'summary';
+    const startDate = searchParams.get('startDate') || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+    const endDate = searchParams.get('endDate') || new Date().toISOString().split('T')[0];
+    const categories = searchParams.get('categories') ? searchParams.get('categories').split(',') : [];
+    
+    return {
+      reportType,
+      dateRange: { start: new Date(startDate), end: new Date(endDate) },
+      selectedCategories: categories
+    };
+  }, [searchParams]);
+
+  // Update URL when filters change
+  const updateURL = useCallback(() => {
+    const params = new URLSearchParams();
+    params.set('reportType', reportType);
+    params.set('startDate', dateRange.start.toISOString().split('T')[0]);
+    params.set('endDate', dateRange.end.toISOString().split('T')[0]);
+    if (selectedCategories.length > 0) {
+      params.set('categories', selectedCategories.join(','));
+    }
+    setSearchParams(params);
+  }, [reportType, dateRange, selectedCategories, setSearchParams]);
+
+  // Handle filter changes
+  const handleReportTypeChange = (newReportType) => {
+    setReportType(newReportType);
+  };
+
+  const handleDateRangeChange = (newDateRange) => {
+    setDateRange(newDateRange);
+  };
+
+  const handleCategoryChange = (newCategories) => {
+    setSelectedCategories(newCategories);
+  };
+
+  // Memoized summary metrics
+  const summaryMetrics = useMemo(() => {
+    if (!reportData?.summary) return [];
+    
+    const { totalIncome, totalExpense, netIncome, savingsRate } = reportData.summary;
+    
+    return [
+      { 
+        title: 'Toplam Gelir', 
+        value: formatCurrency(totalIncome), 
+        color: 'success.main',
+        icon: <TrendingUp />
+      },
+      { 
+        title: 'Toplam Gider', 
+        value: formatCurrency(totalExpense), 
+        color: 'error.main',
+        icon: <TrendingUp />
+      },
+      { 
+        title: 'Net Gelir', 
+        value: formatCurrency(netIncome), 
+        color: 'primary.main',
+        icon: <Assessment />
+      },
+      { 
+        title: 'Tasarruf Oranı', 
+        value: `${savingsRate}%`, 
+        color: 'info.main',
+        icon: <Assessment />
+      }
+    ];
+  }, [reportData]);
+
+  // Export handlers
+  const handleExportPDF = useCallback(() => {
+    // PDF export logic here
+    showSuccess('PDF olarak dışa aktarılıyor...');
+  }, [showSuccess]);
+
+  const handleExportExcel = useCallback(() => {
+    // Excel export logic here
+    showSuccess('Excel olarak dışa aktarılıyor...');
+  }, [showSuccess]);
+
+  return (
+    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      <Box ref={touchGestures?.elementRef}>
+        {/* Header Section */}
+        <Box sx={{ 
+          mb: 4, 
+          p: { xs: 2, md: 3 },
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.05)'
+        }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Assessment sx={{ fontSize: 40, color: 'primary.main' }} />
+                <Box>
+                  <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+                    Raporlar
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Hesaplamalarınızı ve analizlerinizi görüntüleyin
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 1.5, 
+                justifyContent: { xs: 'center', md: 'flex-end' },
+                flexWrap: 'wrap',
+                mt: { xs: 2, md: 0 }
+              }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<HistoryIcon />}
+                  onClick={() => setUi(prev => ({ ...prev, recentReportsOpen: true }))}
+                >
+                  {isMobile ? 'Geçmiş' : 'Son Raporlar'}
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<BookmarkIcon />}
+                  onClick={() => setUi(prev => ({ ...prev, templatesOpen: true }))}
+                  sx={{
+                    px: 2,
+                    boxShadow: '0 4px 14px rgba(25, 118, 210, 0.2)'
+                  }}
+                >
+                  {isMobile ? 'Şablon' : 'Şablonlar'}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Loading State */}
+        {isLoading && !reportData && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+            <CircularProgress />
+          </Box>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <Box sx={{ mb: 4 }}>
+            <Alert severity="error">
+              {error}
+            </Alert>
+          </Box>
+        )}
+
+        {/* Summary Cards */}
+        {reportData?.summary && (
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TrendingUp /> Özet İstatistikler
+            </Typography>
+            <Grid container spacing={2}>
+              {summaryMetrics.map((metric, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Card sx={{ 
+                    p: 2, 
+                    height: '100%',
+                    borderLeft: `4px solid ${theme.palette[metric.color.split('.')[0]].main}`,
+                    '&:hover': {
+                      boxShadow: theme.shadows[4],
+                      transform: 'translateY(-2px)',
+                      transition: 'all 0.3s ease-in-out'
+                    }
+                  }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          {metric.title}
+                        </Typography>
+                        <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 600 }}>
+                          {metric.value}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        color: theme.palette[metric.color.split('.')[0]].main,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        bgcolor: `${theme.palette[metric.color.split('.')[0]].main}15`
+                      }}>
+                        {metric.icon}
+                      </Box>
+                    </Box>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
+
+        {/* Filters Section */}
+        <Card sx={{ mb: 4, p: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TuneIcon /> Filtreler
+            </Typography>
+            <Button 
+              size="small" 
+              onClick={() => setUi(prev => ({ ...prev, filtersExpanded: !ui.filtersExpanded }))}
+              endIcon={ui.filtersExpanded ? <CloseIcon /> : null}
+            >
+              {ui.filtersExpanded ? 'Kapat' : 'Filtreleri Göster'}
+            </Button>
+          </Box>
+          
+          {ui.filtersExpanded && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={4}>
+                <ReportTypeSelector 
+                  value={reportType}
+                  onChange={handleReportTypeChange}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DateRangePicker 
+                  value={dateRange}
+                  onChange={handleDateRangeChange}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <CategorySelector 
+                  selectedCategories={selectedCategories}
+                  onChange={handleCategoryChange}
+                />
+              </Grid>
+              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={handleRefresh}
+                  disabled={isLoading}
+                  startIcon={<Refresh />}
+                >
+                  Yenile
+                </Button>
+                <Button 
+                  variant="contained" 
+                  onClick={loadReportData}
+                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress size={20} /> : <Assessment />}
+                >
+                  Raporu Görüntüle
+                </Button>
+              </Grid>
+            </Grid>
+          )}
+        </Card>
+
+        {/* Report Content */}
+        {reportData && (
+          <Box sx={{ mb: 4 }}>
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">
+                Rapor Detayları
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <PDFExportButton onClick={handleExportPDF} />
+                <ExcelExportButton onClick={handleExportExcel} />
+              </Box>
+            </Box>
+            <ReportContentDisplay data={reportData} reportType={reportType} />
+          </Box>
+        )}
+
+        {/* Recent Reports Dialog */}
+        <Dialog 
+          open={ui.recentReportsOpen} 
+          onClose={() => setUi(prev => ({ ...prev, recentReportsOpen: false }))}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <HistoryIcon />
+              Son Raporlar
+              <Box sx={{ flexGrow: 1 }} />
+              <IconButton 
+                edge="end" 
+                onClick={() => setUi(prev => ({ ...prev, recentReportsOpen: false }))}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <List>
+              {[1, 2, 3].map((item) => (
+                <ListItem 
+                  key={item} 
+                  button
+                  onClick={() => {
+                    // Load report logic here
+                    setUi(prev => ({ ...prev, recentReportsOpen: false }));
+                  }}
+                >
+                  <ListItemIcon>
+                    <Assessment />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={`${item} Ağustos 2023 Raporu`}
+                    secondary="05.08.2023 - 05.09.2023"
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </DialogContent>
+        </Dialog>
+
+        {/* Templates Dialog */}
+        <Dialog 
+          open={ui.templatesOpen} 
+          onClose={() => setUi(prev => ({ ...prev, templatesOpen: false }))}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <BookmarkIcon />
+              Rapor Şablonları
+              <Box sx={{ flexGrow: 1 }} />
+              <IconButton 
+                edge="end" 
+                onClick={() => setUi(prev => ({ ...prev, templatesOpen: false }))}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2}>
+              {[
+                { title: 'Aylık Özet', description: 'Aylık gelir-gider özeti ve temel analizler' },
+                { title: 'Kategori Analizi', description: 'Kategorilere göre harcama dağılımı' },
+                { title: 'Yıllık Karşılaştırma', description: 'Yıllık gelir-gider karşılaştırması' },
+                { title: 'Tasarruf Analizi', description: 'Aylık tasarruf oranı ve eğilimler' }
+              ].map((template, index) => (
+                <Grid item xs={12} sm={6} key={index}>
+                  <Card 
+                    sx={{ 
+                      p: 2, 
+                      height: '100%',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        boxShadow: theme.shadows[4],
+                        borderColor: 'primary.main'
+                      }
+                    }}
+                    variant="outlined"
+                    onClick={() => {
+                      // Apply template logic here
+                      setUi(prev => ({ ...prev, templatesOpen: false }));
+                    }}
+                  >
+                    <Typography variant="subtitle1">{template.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {template.description}
+                    </Typography>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setUi(prev => ({ ...prev, templatesOpen: false }))}>
+              Kapat
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Container>
+  );
+};
+
+export default ReportsPage;

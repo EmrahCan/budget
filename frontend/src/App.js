@@ -10,6 +10,7 @@ import Layout from './components/layout/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import Dashboard from './pages/Dashboard';
+import DashboardNew from './pages/DashboardNew';
 import AccountsPage from './pages/accounts/AccountsPage';
 import OverdraftsPage from './pages/overdrafts/OverdraftsPage';
 import CreditCardsPage from './pages/creditCards/CreditCardsPage';
@@ -101,6 +102,7 @@ function App() {
                 </ProtectedRoute>
               }>
                 <Route index element={<Dashboard />} />
+                <Route path="dashboard-new" element={<DashboardNew />} />
                 <Route path="accounts" element={<AccountsPage />} />
                 <Route path="overdrafts" element={<OverdraftsPage />} />
                 <Route path="credit-cards" element={<CreditCardsPage />} />

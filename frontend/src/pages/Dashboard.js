@@ -771,8 +771,8 @@ const Dashboard = () => {
 
   return (
     <Container maxWidth={isMobile ? 'sm' : 'xl'}>
-      <Box sx={{ py: isMobile ? 2 : 3 }}>
-        <Box sx={{ mb: 4 }}>
+      <Box sx={{ py: isMobile ? 1 : 2 }}>
+        <Box sx={{ mb: 2 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Hoş geldiniz, {user?.firstName}!
           </Typography>
@@ -782,7 +782,7 @@ const Dashboard = () => {
         </Box>
         
         {/* Summary Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6} lg={3}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
@@ -869,7 +869,7 @@ const Dashboard = () => {
         </Grid>
 
         {/* Additional Financial Metrics */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6} lg={3}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
@@ -992,7 +992,7 @@ const Dashboard = () => {
         </Grid>
 
         {/* Net Worth Card */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <Card>
               <CardContent>
@@ -1034,7 +1034,7 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {/* Recent Transactions */}
           <Grid item xs={12} md={6}>
             <Card sx={{ height: '100%' }}>
@@ -1306,7 +1306,7 @@ const Dashboard = () => {
           </Box>
         ) : (
           /* Desktop Widget Grid */
-          <Grid container spacing={3} sx={{ mt: 2 }}>
+          <Grid container spacing={2} sx={{ mt: 2 }}>
             {/* Payment Calendar Widget */}
             <Grid item xs={12} md={6} lg={4}>
               {errors.calendar && retryCount.calendar >= 3 ? (
@@ -1459,11 +1459,11 @@ const Dashboard = () => {
         )}
 
         {/* Quick Actions */}
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom>
             Hızlı İşlemler
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={1}>
             <Grid item xs={12} sm={6} md={3}>
               <Button
                 fullWidth

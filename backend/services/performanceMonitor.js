@@ -44,7 +44,135 @@ class PerformanceMonitor {
       errorRate: 0.1 // 10%
     };
     
+    this.alerts = new Map();
+    this.isMonitoring = false;
+    
     this.initializePerformanceObserver();
+  }
+
+  /**
+   * Set alert callback
+   */
+  setAlert(name, config) {
+    this.alerts.set(name, config);
+    logger.info(`Alert configured: ${name}`);
+  }
+
+  /**
+   * Start monitoring
+   */
+  startMonitoring() {
+    if (this.isMonitoring) return;
+    
+    this.isMonitoring = true;
+    this.monitoringInterval = setInterval(() => {
+      this.collectSystemMetrics();
+    }, 30000); // Every 30 seconds
+    
+    logger.info('Performance monitoring started');
+  }
+
+  /**
+   * Stop monitoring
+   */
+  stopMonitoring() {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+    this.isMonitoring = false;
+    logger.info('Performance monitoring stopped');
+  }
+
+  /**
+   * Record metric
+   */
+  recordMetric(type, value) {
+    switch (type) {
+      case 'query_execution':
+        this.metrics.database.queries++;
+        this.metrics.database.totalQueryTime += value;
+        this.metrics.database.averageQueryTime = 
+          this.metrics.database.totalQueryTime / this.metrics.database.queries;
+        if (value > 5000) this.metrics.database.slowQueries++;
+        break;
+      case 'cache_hit':
+        this.metrics.cache.hits++;
+        this.updateCacheHitRate();
+        break;
+      case 'cache_miss':
+        this.metrics.cache.misses++;
+        this.updateCacheHitRate();
+        break;
+      case 'query_error':
+        this.metrics.errors.total++;
+        break;
+    }
+  }
+
+  /**
+   * Get system metrics
+   */
+  getSystemMetrics() {
+    return {
+      ...this.metrics.system,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Get system health
+   */
+  getSystemHealth() {
+    const memUsage = process.memoryUsage();
+    const totalMem = os.totalmem();
+    const freeMem = os.freemem();
+    const memoryUsage = (totalMem - freeMem) / totalMem;
+    
+    return {
+      status: memoryUsage > 0.9 ? 'critical' : memoryUsage > 0.7 ? 'warning' : 'healthy',
+      memory: {
+        usage: memoryUsage,
+        total: totalMem,
+        free: freeMem,
+        process: memUsage
+      },
+      cpu: {
+        usage: this.metrics.system.cpuUsage,
+        loadAverage: os.loadavg()
+      },
+      uptime: process.uptime()
+    };
+  }
+
+  /**
+   * Get active alerts
+   */
+  getActiveAlerts() {
+    return Array.from(this.alerts.keys());
+  }
+
+  /**
+   * Collect system metrics
+   */
+  collectSystemMetrics() {
+    const memUsage = process.memoryUsage();
+    const totalMem = os.totalmem();
+    const freeMem = os.freeMem();
+    
+    this.metrics.system = {
+      cpuUsage: process.cpuUsage().user / 1000000, // Convert to seconds
+      memoryUsage: (totalMem - freeMem) / totalMem,
+      uptime: process.uptime()
+    };
+  }
+
+  /**
+   * Update cache hit rate
+   */
+  updateCacheHitRate() {
+    const total = this.metrics.cache.hits + this.metrics.cache.misses;
+    this.metrics.cache.hitRate = total > 0 ? this.metrics.cache.hits / total : 0;
   }
 
   /**
