@@ -13,6 +13,16 @@ class Account {
     this.iban = accountData.iban;
     this.accountNumber = accountData.account_number;
     this.isActive = accountData.is_active;
+    // Flexible account fields
+    this.isFlexible = accountData.is_flexible || false;
+    this.accountLimit = accountData.account_limit ? parseFloat(accountData.account_limit) : null;
+    this.currentDebt = parseFloat(accountData.current_debt || 0);
+    this.interestRate = accountData.interest_rate ? parseFloat(accountData.interest_rate) : null;
+    this.minimumPaymentRate = parseFloat(accountData.minimum_payment_rate || 5);
+    this.paymentDueDate = accountData.payment_due_date;
+    // Computed fields
+    this.availableLimit = accountData.available_limit ? parseFloat(accountData.available_limit) : null;
+    this.utilizationPercentage = accountData.utilization_percentage ? parseFloat(accountData.utilization_percentage) : null;
     this.createdAt = accountData.created_at;
     this.updatedAt = accountData.updated_at;
   }
@@ -28,12 +38,22 @@ class Account {
         bankId,
         bankName,
         iban,
-        accountNumber
+        accountNumber,
+        // Flexible account fields
+        isFlexible = false,
+        accountLimit,
+        currentDebt = 0,
+        interestRate,
+        minimumPaymentRate = 5,
+        paymentDueDate
       } = accountData;
 
       const query = `
-        INSERT INTO accounts (user_id, name, type, balance, currency, bank_id, bank_name, iban, account_number)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO accounts (
+          user_id, name, type, balance, currency, bank_id, bank_name, iban, account_number,
+          is_flexible, account_limit, current_debt, interest_rate, minimum_payment_rate, payment_due_date
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING *
       `;
 
@@ -46,7 +66,13 @@ class Account {
         bankId || null,
         bankName?.trim() || null,
         iban?.trim() || null,
-        accountNumber?.trim() || null
+        accountNumber?.trim() || null,
+        isFlexible,
+        accountLimit || null,
+        currentDebt,
+        interestRate || null,
+        minimumPaymentRate,
+        paymentDueDate || null
       ]);
 
       return new Account(result.rows[0]);
@@ -115,7 +141,11 @@ class Account {
   // Update account
   async update(updateData) {
     try {
-      const allowedFields = ['name', 'type', 'balance', 'currency', 'is_active'];
+      const allowedFields = [
+        'name', 'type', 'balance', 'currency', 'is_active', 'bank_id', 'bank_name', 
+        'iban', 'account_number', 'is_flexible', 'account_limit', 'current_debt', 
+        'interest_rate', 'minimum_payment_rate', 'payment_due_date'
+      ];
       
       const updates = [];
       const params = [];
@@ -526,7 +556,10 @@ class Account {
       'checking': 'Vadesiz Hesap',
       'savings': 'Vadeli Hesap',
       'cash': 'Nakit',
-      'investment': 'Yatırım Hesabı'
+      'investment': 'Yatırım Hesabı',
+      'overdraft': 'Overdraft Hesabı',
+      'credit_line': 'Kredi Limiti',
+      'spending_limit': 'Harcama Limiti'
     };
     
     return typeNames[this.type] || this.type;
@@ -544,7 +577,7 @@ class Account {
 
   // Convert to JSON
   toJSON() {
-    return {
+    const baseData = {
       id: this.id,
       userId: this.userId,
       name: this.name,
@@ -562,6 +595,29 @@ class Account {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };
+
+    // Add flexible account fields if applicable
+    if (this.isFlexible) {
+      baseData.isFlexible = this.isFlexible;
+      baseData.accountLimit = this.accountLimit;
+      baseData.currentDebt = this.currentDebt;
+      baseData.interestRate = this.interestRate;
+      baseData.minimumPaymentRate = this.minimumPaymentRate;
+      baseData.paymentDueDate = this.paymentDueDate;
+      
+      // Computed fields
+      if (this.accountLimit) {
+        baseData.availableLimit = this.availableLimit || (this.accountLimit - this.currentDebt);
+        baseData.utilizationPercentage = this.utilizationPercentage || Math.round((this.currentDebt / this.accountLimit) * 100 * 100) / 100;
+      }
+      
+      // Calculate minimum payment if needed
+      if (this.currentDebt > 0 && this.minimumPaymentRate) {
+        baseData.minimumPayment = Math.round(this.currentDebt * (this.minimumPaymentRate / 100) * 100) / 100;
+      }
+    }
+
+    return baseData;
   }
 }
 

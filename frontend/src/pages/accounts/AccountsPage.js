@@ -16,6 +16,7 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  LinearProgress,
   Avatar,
   Chip,
   List,
@@ -50,6 +51,9 @@ const ACCOUNT_TYPES = [
   { value: 'savings', label: 'Vadeli Hesap', icon: <Savings /> },
   { value: 'cash', label: 'Nakit', icon: <AccountBalanceWallet /> },
   { value: 'investment', label: 'Yatırım Hesabı', icon: <TrendingUp /> },
+  { value: 'overdraft', label: 'Overdraft Hesabı', icon: <TrendingDown />, isFlexible: true },
+  { value: 'credit_line', label: 'Kredi Limiti', icon: <CreditCardIcon />, isFlexible: true },
+  { value: 'spending_limit', label: 'Harcama Limiti', icon: <SwapHoriz />, isFlexible: true },
 ];
 
 const AccountsPage = () => {
@@ -68,6 +72,13 @@ const AccountsPage = () => {
     bankName: '',
     iban: '',
     accountNumber: '',
+    // Flexible account fields
+    isFlexible: false,
+    accountLimit: '',
+    currentDebt: '0',
+    interestRate: '',
+    minimumPaymentRate: '5',
+    paymentDueDate: '',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -91,6 +102,7 @@ const AccountsPage = () => {
   const handleOpenDialog = (account = null) => {
     if (account) {
       setEditingAccount(account);
+      const accountType = ACCOUNT_TYPES.find(t => t.value === account.type);
       setFormData({
         name: account.name,
         type: account.type,
@@ -100,6 +112,13 @@ const AccountsPage = () => {
         bankName: account.bankName || '',
         iban: account.iban || '',
         accountNumber: account.accountNumber || '',
+        // Flexible account fields
+        isFlexible: account.isFlexible || false,
+        accountLimit: account.accountLimit?.toString() || '',
+        currentDebt: account.currentDebt?.toString() || '0',
+        interestRate: account.interestRate?.toString() || '',
+        minimumPaymentRate: account.minimumPaymentRate?.toString() || '5',
+        paymentDueDate: account.paymentDueDate?.toString() || '',
       });
     } else {
       setEditingAccount(null);
@@ -112,6 +131,13 @@ const AccountsPage = () => {
         bankName: '',
         iban: '',
         accountNumber: '',
+        // Flexible account fields
+        isFlexible: false,
+        accountLimit: '',
+        currentDebt: '0',
+        interestRate: '',
+        minimumPaymentRate: '5',
+        paymentDueDate: '',
       });
     }
     setFormErrors({});
@@ -126,12 +152,43 @@ const AccountsPage = () => {
       type: 'checking',
       balance: '0',
       currency: 'TRY',
+      bankId: '',
+      bankName: '',
+      iban: '',
+      accountNumber: '',
+      // Flexible account fields
+      isFlexible: false,
+      accountLimit: '',
+      currentDebt: '0',
+      interestRate: '',
+      minimumPaymentRate: '5',
+      paymentDueDate: '',
     });
     setFormErrors({});
   };
 
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Auto-set flexible account feature based on account type
+      if (field === 'type') {
+        const accountType = ACCOUNT_TYPES.find(t => t.value === value);
+        newData.isFlexible = accountType?.isFlexible || false;
+        
+        // Reset flexible fields if switching to non-flexible type
+        if (!newData.isFlexible) {
+          newData.accountLimit = '';
+          newData.currentDebt = '0';
+          newData.interestRate = '';
+          newData.minimumPaymentRate = '5';
+          newData.paymentDueDate = '';
+        }
+      }
+      
+      return newData;
+    });
+    
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -167,6 +224,13 @@ const AccountsPage = () => {
         bankName: formData.bankName.trim() || null,
         iban: formData.iban.trim() || null,
         accountNumber: formData.accountNumber.trim() || null,
+        // Flexible account fields
+        isFlexible: formData.isFlexible,
+        accountLimit: formData.isFlexible && formData.accountLimit ? parseFloat(formData.accountLimit) : null,
+        currentDebt: formData.isFlexible ? parseFloat(formData.currentDebt) : 0,
+        interestRate: formData.isFlexible && formData.interestRate ? parseFloat(formData.interestRate) : null,
+        minimumPaymentRate: formData.isFlexible ? parseFloat(formData.minimumPaymentRate) : 5,
+        paymentDueDate: formData.isFlexible && formData.paymentDueDate ? parseInt(formData.paymentDueDate) : null,
       };
 
       if (editingAccount) {
@@ -341,6 +405,78 @@ const AccountsPage = () => {
                         )}
                       </Box>
 
+                      {/* Flexible Account Info */}
+                      {account.isFlexible && (
+                        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'grey.50', borderRadius: 1 }}>
+                          <Typography variant="body2" color="primary" fontWeight="bold" gutterBottom>
+                            Esnek Hesap Bilgileri
+                          </Typography>
+                          
+                          {account.accountLimit && (
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                              <Typography variant="body2" color="textSecondary">
+                                Toplam Limit
+                              </Typography>
+                              <Typography variant="body2" fontWeight="bold">
+                                {formatCurrency(account.accountLimit)}
+                              </Typography>
+                            </Box>
+                          )}
+                          
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                            <Typography variant="body2" color="textSecondary">
+                              Mevcut Borç
+                            </Typography>
+                            <Typography variant="body2" fontWeight="bold" color="error.main">
+                              {formatCurrency(account.currentDebt || 0)}
+                            </Typography>
+                          </Box>
+                          
+                          {account.accountLimit && (
+                            <>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" color="textSecondary">
+                                  Kullanılabilir Limit
+                                </Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main">
+                                  {formatCurrency(account.availableLimit || (account.accountLimit - (account.currentDebt || 0)))}
+                                </Typography>
+                              </Box>
+                              
+                              {/* Utilization Progress Bar */}
+                              <Box sx={{ mb: 1 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                  <Typography variant="caption" color="textSecondary">
+                                    Kullanım Oranı
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    %{account.utilizationPercentage || Math.round(((account.currentDebt || 0) / account.accountLimit) * 100)}
+                                  </Typography>
+                                </Box>
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={Math.min(account.utilizationPercentage || ((account.currentDebt || 0) / account.accountLimit) * 100, 100)}
+                                  color={
+                                    (account.utilizationPercentage || ((account.currentDebt || 0) / account.accountLimit) * 100) > 70 
+                                      ? 'error' 
+                                      : (account.utilizationPercentage || ((account.currentDebt || 0) / account.accountLimit) * 100) > 50 
+                                        ? 'warning' 
+                                        : 'success'
+                                  }
+                                  sx={{ height: 6, borderRadius: 3 }}
+                                />
+                              </Box>
+                            </>
+                          )}
+                          
+                          {account.paymentDueDate && (
+                            <Typography variant="caption" color="textSecondary">
+                              Ödeme Günü: Her ayın {account.paymentDueDate}. günü
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
+
                       {account.iban && (
                         <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
                           IBAN: {account.iban.replace(/(.{4})/g, '$1 ').trim()}
@@ -511,11 +647,92 @@ const AccountsPage = () => {
                 label="Para Birimi"
                 value={formData.currency}
                 onChange={(e) => handleFormChange('currency', e.target.value)}
+                sx={{ mb: 3 }}
               >
                 <MenuItem value="TRY">Türk Lirası (₺)</MenuItem>
                 <MenuItem value="USD">Amerikan Doları ($)</MenuItem>
                 <MenuItem value="EUR">Euro (€)</MenuItem>
               </TextField>
+
+              {/* Flexible Account Fields */}
+              {formData.isFlexible && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    Esnek Hesap Özellikleri
+                  </Typography>
+                  
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Hesap Limiti"
+                        type="number"
+                        value={formData.accountLimit}
+                        onChange={(e) => handleFormChange('accountLimit', e.target.value)}
+                        error={!!formErrors.accountLimit}
+                        helperText={formErrors.accountLimit || 'Maksimum kullanılabilir limit'}
+                        InputProps={{
+                          startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Mevcut Borç"
+                        type="number"
+                        value={formData.currentDebt}
+                        onChange={(e) => handleFormChange('currentDebt', e.target.value)}
+                        error={!!formErrors.currentDebt}
+                        helperText={formErrors.currentDebt || 'Şu anki borç miktarı'}
+                        InputProps={{
+                          startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <Grid container spacing={2} sx={{ mb: 2 }}>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Faiz Oranı (%)"
+                        type="number"
+                        value={formData.interestRate}
+                        onChange={(e) => handleFormChange('interestRate', e.target.value)}
+                        error={!!formErrors.interestRate}
+                        helperText={formErrors.interestRate || 'Yıllık faiz oranı'}
+                        InputProps={{
+                          endAdornment: <Typography sx={{ ml: 1 }}>%</Typography>,
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={6}>
+                      <TextField
+                        fullWidth
+                        label="Min. Ödeme Oranı (%)"
+                        type="number"
+                        value={formData.minimumPaymentRate}
+                        onChange={(e) => handleFormChange('minimumPaymentRate', e.target.value)}
+                        helperText="Minimum ödeme yüzdesi"
+                        InputProps={{
+                          endAdornment: <Typography sx={{ ml: 1 }}>%</Typography>,
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  <TextField
+                    fullWidth
+                    label="Ödeme Günü (Ayın Kaçı)"
+                    type="number"
+                    value={formData.paymentDueDate}
+                    onChange={(e) => handleFormChange('paymentDueDate', e.target.value)}
+                    inputProps={{ min: 1, max: 31 }}
+                    helperText="Aylık ödeme tarihi (1-31 arası)"
+                  />
+                </Box>
+              )}
             </Box>
           </DialogContent>
           <DialogActions>
