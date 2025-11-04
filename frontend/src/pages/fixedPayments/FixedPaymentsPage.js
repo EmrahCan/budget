@@ -46,23 +46,81 @@ import { formatCurrency, formatDate, handleApiError } from '../../services/api';
 
 // Sabit ödeme kategorileri ve ikonları
 const PAYMENT_CATEGORIES = [
-  { value: 'Konut', label: 'Konut (Kira, Aidat)', icon: <Home /> },
-  { value: 'Faturalar', label: 'Faturalar', icon: <ElectricBolt /> },
-  { value: 'İletişim', label: 'İletişim (Telefon, İnternet)', icon: <Phone /> },
-  { value: 'Ulaşım', label: 'Ulaşım', icon: <DirectionsCar /> },
-  { value: 'Sağlık', label: 'Sağlık & Spor', icon: <HealthAndSafety /> },
-  { value: 'Eğitim', label: 'Eğitim', icon: <School /> },
-  { value: 'Diğer', label: 'Diğer', icon: <Schedule /> },
+  // Konut ve Barınma
+  { value: 'Kira', label: 'Kira', icon: <Home />, color: '#FF6B6B' },
+  { value: 'Aidat', label: 'Site/Apartman Aidatı', icon: <Home />, color: '#FF8E8E' },
+  { value: 'Emlak_Vergisi', label: 'Emlak Vergisi', icon: <Home />, color: '#FFB3B3' },
+  
+  // Faturalar - Temel İhtiyaçlar
+  { value: 'Elektrik', label: 'Elektrik Faturası', icon: <ElectricBolt />, color: '#4ECDC4' },
+  { value: 'Dogalgaz', label: 'Doğalgaz Faturası', icon: <LocalGasStation />, color: '#45B7D1' },
+  { value: 'Su', label: 'Su Faturası', icon: <ElectricBolt />, color: '#96CEB4' },
+  { value: 'Isitma', label: 'Isıtma/Soğutma', icon: <ElectricBolt />, color: '#FFEAA7' },
+  
+  // İletişim ve Teknoloji
+  { value: 'Telefon', label: 'Telefon Faturası', icon: <Phone />, color: '#DDA0DD' },
+  { value: 'Internet', label: 'İnternet Faturası', icon: <Wifi />, color: '#98D8C8' },
+  { value: 'Kablo_TV', label: 'Kablo TV/Dijital Platform', icon: <Phone />, color: '#F7DC6F' },
+  { value: 'Mobil_Hat', label: 'Mobil Hat Faturası', icon: <Phone />, color: '#BB8FCE' },
+  
+  // Ulaşım
+  { value: 'Arac_Kredisi', label: 'Araç Kredisi', icon: <DirectionsCar />, color: '#85C1E9' },
+  { value: 'Arac_Sigortasi', label: 'Araç Sigortası', icon: <DirectionsCar />, color: '#7FB3D3' },
+  { value: 'Yakit', label: 'Yakıt (Sabit Tutar)', icon: <LocalGasStation />, color: '#F8C471' },
+  { value: 'Otopark', label: 'Otopark Ücreti', icon: <DirectionsCar />, color: '#AED6F1' },
+  { value: 'Toplu_Tasima', label: 'Toplu Taşıma Kartı', icon: <DirectionsCar />, color: '#A9DFBF' },
+  
+  // Sağlık ve Kişisel Bakım
+  { value: 'Saglik_Sigortasi', label: 'Sağlık Sigortası', icon: <HealthAndSafety />, color: '#F1948A' },
+  { value: 'Spor_Salonu', label: 'Spor Salonu/Fitness', icon: <FitnessCenter />, color: '#82E0AA' },
+  { value: 'Doktor_Kontrolu', label: 'Düzenli Doktor Kontrolü', icon: <HealthAndSafety />, color: '#F8D7DA' },
+  { value: 'Ilac', label: 'Düzenli İlaç Gideri', icon: <HealthAndSafety />, color: '#D5DBDB' },
+  
+  // Eğitim ve Gelişim
+  { value: 'Okul_Ucreti', label: 'Okul Ücreti', icon: <School />, color: '#D2B4DE' },
+  { value: 'Kurs', label: 'Kurs/Eğitim Ücreti', icon: <School />, color: '#C39BD3' },
+  { value: 'Kitap_Dergi', label: 'Kitap/Dergi Aboneliği', icon: <School />, color: '#BB8FCE' },
+  { value: 'Online_Egitim', label: 'Online Eğitim Platformu', icon: <School />, color: '#A569BD' },
+  
+  // Finansal Yükümlülükler
+  { value: 'Kredi_Karti', label: 'Kredi Kartı Asgari Ödeme', icon: <Schedule />, color: '#F7DC6F' },
+  { value: 'Banka_Kredisi', label: 'Banka Kredisi', icon: <Schedule />, color: '#F4D03F' },
+  { value: 'Hayat_Sigortasi', label: 'Hayat Sigortası', icon: <HealthAndSafety />, color: '#F8C471' },
+  { value: 'Emeklilik', label: 'Bireysel Emeklilik', icon: <Schedule />, color: '#FADBD8' },
+  
+  // Eğlence ve Sosyal
+  { value: 'Streaming', label: 'Streaming Servisleri', icon: <Phone />, color: '#AED6F1' },
+  { value: 'Muzik', label: 'Müzik Platformu', icon: <Phone />, color: '#A9DFBF' },
+  { value: 'Dernek_Uyelik', label: 'Dernek/Kulüp Üyeliği', icon: <FitnessCenter />, color: '#D5A6BD' },
+  
+  // Aile ve Çocuk
+  { value: 'Cocuk_Bakimi', label: 'Çocuk Bakımı/Kreş', icon: <School />, color: '#F9E79F' },
+  { value: 'Oyuncak_Oyun', label: 'Çocuk Oyun/Aktivite', icon: <School />, color: '#F7DC6F' },
+  
+  // Ev Bakımı ve Temizlik
+  { value: 'Temizlik', label: 'Temizlik Hizmeti', icon: <Home />, color: '#A3E4D7' },
+  { value: 'Bahce_Bakim', label: 'Bahçe Bakımı', icon: <Home />, color: '#85C1E9' },
+  { value: 'Ev_Bakimi', label: 'Ev Bakım/Onarım', icon: <Home />, color: '#D2B4DE' },
+  
+  // Diğer
+  { value: 'Bagis', label: 'Düzenli Bağış', icon: <HealthAndSafety />, color: '#F8D7DA' },
+  { value: 'Diger', label: 'Diğer Sabit Giderler', icon: <Schedule />, color: '#D5DBDB' },
 ];
 
 // Örnek sabit ödemeler (demo için)
 const SAMPLE_PAYMENTS = [
-  { name: 'Kira', amount: 2500, category: 'Konut', dueDay: 1 },
-  { name: 'Elektrik Faturası', amount: 150, category: 'Faturalar', dueDay: 15 },
-  { name: 'İnternet', amount: 100, category: 'İletişim', dueDay: 10 },
-  { name: 'Telefon', amount: 80, category: 'İletişim', dueDay: 20 },
-  { name: 'Doğalgaz', amount: 120, category: 'Faturalar', dueDay: 25 },
-  { name: 'Spor Salonu', amount: 150, category: 'Sağlık', dueDay: 5 },
+  { name: 'Ev Kirası', amount: 2500, category: 'Kira', dueDay: 1 },
+  { name: 'Site Aidatı', amount: 200, category: 'Aidat', dueDay: 1 },
+  { name: 'Elektrik Faturası', amount: 150, category: 'Elektrik', dueDay: 15 },
+  { name: 'Doğalgaz Faturası', amount: 120, category: 'Dogalgaz', dueDay: 25 },
+  { name: 'Su Faturası', amount: 80, category: 'Su', dueDay: 20 },
+  { name: 'İnternet Faturası', amount: 100, category: 'Internet', dueDay: 10 },
+  { name: 'Telefon Faturası', amount: 80, category: 'Telefon', dueDay: 20 },
+  { name: 'Netflix Aboneliği', amount: 45, category: 'Streaming', dueDay: 5 },
+  { name: 'Spor Salonu', amount: 150, category: 'Spor_Salonu', dueDay: 5 },
+  { name: 'Araç Sigortası', amount: 200, category: 'Arac_Sigortasi', dueDay: 12 },
+  { name: 'Sağlık Sigortası', amount: 300, category: 'Saglik_Sigortasi', dueDay: 8 },
+  { name: 'Bireysel Emeklilik', amount: 250, category: 'Emeklilik', dueDay: 3 },
 ];
 
 const FixedPaymentsPage = () => {
@@ -180,6 +238,33 @@ const FixedPaymentsPage = () => {
     return PAYMENT_CATEGORIES.find(c => c.value === category) || PAYMENT_CATEGORIES[0];
   };
 
+  // Kategori gruplarını oluştur
+  const getCategoryGroups = () => {
+    const groups = {};
+    PAYMENT_CATEGORIES.forEach(category => {
+      const groupName = getCategoryGroupName(category.value);
+      if (!groups[groupName]) {
+        groups[groupName] = [];
+      }
+      groups[groupName].push(category);
+    });
+    return groups;
+  };
+
+  const getCategoryGroupName = (categoryValue) => {
+    if (['Kira', 'Aidat', 'Emlak_Vergisi'].includes(categoryValue)) return 'Konut ve Barınma';
+    if (['Elektrik', 'Dogalgaz', 'Su', 'Isitma'].includes(categoryValue)) return 'Temel Faturalar';
+    if (['Telefon', 'Internet', 'Kablo_TV', 'Mobil_Hat'].includes(categoryValue)) return 'İletişim ve Teknoloji';
+    if (['Arac_Kredisi', 'Arac_Sigortasi', 'Yakit', 'Otopark', 'Toplu_Tasima'].includes(categoryValue)) return 'Ulaşım';
+    if (['Saglik_Sigortasi', 'Spor_Salonu', 'Doktor_Kontrolu', 'Ilac'].includes(categoryValue)) return 'Sağlık ve Kişisel Bakım';
+    if (['Okul_Ucreti', 'Kurs', 'Kitap_Dergi', 'Online_Egitim'].includes(categoryValue)) return 'Eğitim ve Gelişim';
+    if (['Kredi_Karti', 'Banka_Kredisi', 'Hayat_Sigortasi', 'Emeklilik'].includes(categoryValue)) return 'Finansal Yükümlülükler';
+    if (['Streaming', 'Muzik', 'Dernek_Uyelik'].includes(categoryValue)) return 'Eğlence ve Sosyal';
+    if (['Cocuk_Bakimi', 'Oyuncak_Oyun'].includes(categoryValue)) return 'Aile ve Çocuk';
+    if (['Temizlik', 'Bahce_Bakim', 'Ev_Bakimi'].includes(categoryValue)) return 'Ev Bakımı';
+    return 'Diğer';
+  };
+
   const getTotalMonthlyPayments = () => {
     return payments.reduce((total, payment) => total + payment.amount, 0);
   };
@@ -278,7 +363,11 @@ const FixedPaymentsPage = () => {
                   {getUpcomingPayments().slice(0, 3).map((payment, index) => (
                     <ListItem key={index} sx={{ px: 0 }}>
                       <ListItemIcon>
-                        <Avatar sx={{ bgcolor: 'warning.main', width: 32, height: 32 }}>
+                        <Avatar sx={{ 
+                          bgcolor: getCategoryInfo(payment.category).color || 'warning.main', 
+                          width: 32, 
+                          height: 32 
+                        }}>
                           {getCategoryInfo(payment.category).icon}
                         </Avatar>
                       </ListItemIcon>
@@ -303,7 +392,11 @@ const FixedPaymentsPage = () => {
                   {getPaymentsByCategory().slice(0, 3).map((item, index) => (
                     <ListItem key={index} sx={{ px: 0 }}>
                       <ListItemIcon>
-                        <Avatar sx={{ bgcolor: 'success.main', width: 32, height: 32 }}>
+                        <Avatar sx={{ 
+                          bgcolor: getCategoryInfo(item.category).color || 'success.main', 
+                          width: 32, 
+                          height: 32 
+                        }}>
                           {getCategoryInfo(item.category).icon}
                         </Avatar>
                       </ListItemIcon>
@@ -324,7 +417,10 @@ const FixedPaymentsPage = () => {
           <Card key={categoryGroup.category} sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                <Avatar sx={{ 
+                  bgcolor: getCategoryInfo(categoryGroup.category).color || 'primary.main', 
+                  mr: 2 
+                }}>
                   {getCategoryInfo(categoryGroup.category).icon}
                 </Avatar>
                 <Box sx={{ flexGrow: 1 }}>
@@ -433,15 +529,48 @@ const FixedPaymentsPage = () => {
                 value={formData.category}
                 onChange={(e) => handleFormChange('category', e.target.value)}
                 sx={{ mb: 3 }}
+                SelectProps={{
+                  MenuProps: {
+                    PaperProps: {
+                      style: {
+                        maxHeight: 400,
+                      },
+                    },
+                  },
+                }}
               >
-                {PAYMENT_CATEGORIES.map((category) => (
-                  <MenuItem key={category.value} value={category.value}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {category.icon}
-                      {category.label}
-                    </Box>
-                  </MenuItem>
-                ))}
+                {Object.entries(getCategoryGroups()).map(([groupName, categories]) => [
+                  <MenuItem key={`group-${groupName}`} disabled sx={{ 
+                    fontWeight: 'bold', 
+                    color: 'primary.main',
+                    backgroundColor: 'grey.100',
+                    fontSize: '0.875rem'
+                  }}>
+                    {groupName}
+                  </MenuItem>,
+                  ...categories.map((category) => (
+                    <MenuItem key={category.value} value={category.value} sx={{ pl: 3 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          width: 24, 
+                          height: 24, 
+                          borderRadius: '50%',
+                          backgroundColor: category.color || 'primary.main',
+                          color: 'white',
+                          fontSize: '0.75rem'
+                        }}>
+                          {category.icon}
+                        </Box>
+                        <Typography variant="body2">
+                          {category.label}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))
+                ]).flat()}
               </TextField>
 
               <TextField
