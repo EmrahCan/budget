@@ -720,7 +720,7 @@ const CreditCardsPage = () => {
                 filterOptions={(options, { inputValue }) => {
                   if (!inputValue) {
                     // Popüler bankaları önce göster
-                    const popular = popularBanks.slice(0, 6);
+                    const popular = popularBanks.map(id => getBankById(id)).filter(Boolean).slice(0, 6);
                     const others = options.filter(bank => !popular.find(p => p.id === bank.id));
                     return [...popular, ...others];
                   }
