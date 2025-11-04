@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { performStartupChecks, checkApiConnectivity } from './utils/startup';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from './contexts/AuthContext';
@@ -82,6 +83,21 @@ const theme = createTheme({
 });
 
 function App() {
+  // Perform startup checks
+  useEffect(() => {
+    const runStartupChecks = async () => {
+      // Environment validation
+      performStartupChecks();
+      
+      // API connectivity check (non-blocking)
+      setTimeout(() => {
+        checkApiConnectivity();
+      }, 1000);
+    };
+    
+    runStartupChecks();
+  }, []);
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

@@ -1,6 +1,6 @@
-deep-translator
-requests
-beautifulsoup4
-python-opensubtitles
-flask
-werkzeug
+# Budget Management App - Python Dependencies
+# This file is for any Python scripts or utilities that might be needed
+# The main application runs on Node.js (see backend/package.json and frontend/package.json)
+
+# Currently no Python dependencies required for the budget app
+# Add Python packages here if needed for scripts or utilities

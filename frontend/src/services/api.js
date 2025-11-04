@@ -1,8 +1,17 @@
 import axios from 'axios';
+import environmentConfig from '../config/environment';
+
+// Get API base URL from environment config
+const baseURL = environmentConfig.getApiUrl();
+
+// Log API configuration in development
+if (environmentConfig.isDevelopment()) {
+  console.log(`🌐 API Base URL: ${baseURL}`);
+}
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

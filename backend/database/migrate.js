@@ -42,9 +42,20 @@ class DatabaseMigrator {
 
   async checkConnection() {
     try {
-      const result = await pool.query('SELECT NOW()');
-      console.log('✅ Database connection successful:', result.rows[0].now);
-      return true;
+      // Wait for database to be ready (Docker startup)
+      let retries = 10;
+      while (retries > 0) {
+        try {
+          const result = await pool.query('SELECT NOW()');
+          console.log('✅ Database connection successful:', result.rows[0].now);
+          return true;
+        } catch (error) {
+          console.log(`⏳ Waiting for database... (${retries} retries left)`);
+          retries--;
+          if (retries === 0) throw error;
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
     } catch (error) {
       console.error('❌ Database connection failed:', error.message);
       return false;

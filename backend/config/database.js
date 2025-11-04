@@ -1,24 +1,88 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+// Database configuration with Docker network support
+const dbConfig = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 5432,
+  database: process.env.DB_NAME || 'budget_app',
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASSWORD || 'password123',
+  // Connection pool settings
+  max: 20, // Maximum number of clients in the pool
+  min: 2,  // Minimum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 5000, // Return error after 5 seconds if connection could not be established
+  acquireTimeoutMillis: 60000, // Return error after 60 seconds if a client could not be checked out
+  // SSL configuration for production
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+};
+
+console.log(`🔗 Connecting to database: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
+
+const pool = new Pool(dbConfig);
+
+// Connection event handlers
+pool.on('connect', (client) => {
+  console.log(`✅ New database connection established (PID: ${client.processID})`);
 });
 
-// Test database connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
+pool.on('acquire', (client) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔄 Client acquired from pool (PID: ${client.processID})`);
+  }
 });
 
-pool.on('error', (err) => {
-  console.error('Database connection error:', err);
+pool.on('remove', (client) => {
+  console.log(`🔌 Client removed from pool (PID: ${client.processID})`);
 });
 
+pool.on('error', (err, client) => {
+  console.error('❌ Unexpected error on idle client:', err);
+  console.error('Client details:', client ? `PID: ${client.processID}` : 'No client info');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('🔄 Closing database pool...');
+  await pool.end();
+  console.log('✅ Database pool closed');
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('🔄 Closing database pool...');
+  await pool.end();
+  console.log('✅ Database pool closed');
+  process.exit(0);
+});
+
+// Health check function
+const healthCheck = async () => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query('SELECT NOW() as current_time, version() as db_version');
+    client.release();
+    
+    return {
+      status: 'healthy',
+      timestamp: result.rows[0].current_time,
+      version: result.rows[0].db_version,
+      pool: {
+        totalCount: pool.totalCount,
+        idleCount: pool.idleCount,
+        waitingCount: pool.waitingCount
+      }
+    };
+  } catch (error) {
+    return {
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
+// Export pool and health check
 module.exports = pool;
+module.exports.healthCheck = healthCheck;
