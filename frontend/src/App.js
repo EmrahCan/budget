@@ -11,16 +11,19 @@ import Layout from './components/layout/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import Dashboard from './pages/Dashboard';
+import DashboardNew from './pages/DashboardNew';
 import AccountsPage from './pages/accounts/AccountsPage';
-import CreditCardsPage from './pages/creditCards/CreditCardsPage';
+import OverdraftsPage from './pages/overdrafts/OverdraftsPage';
+import CreditCardsDashboard from './pages/creditCards/CreditCardsDashboard';
 import TransactionsPage from './pages/transactions/TransactionsPage';
 import ReportsPage from './pages/reports/ReportsPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import FixedPaymentsPage from './pages/fixedPayments/FixedPaymentsPage';
-import LandPaymentsPage from './pages/landPayments/LandPaymentsPage';
 import InstallmentPaymentsPage from './pages/installmentPayments/InstallmentPaymentsPage';
+import PaymentCalendarPage from './pages/calendar/PaymentCalendarPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserManagement from './pages/admin/UserManagement';
+import SystemHealthIndicator from './components/common/SystemHealthIndicator';
 
 const theme = createTheme({
   palette: {
@@ -116,12 +119,14 @@ function App() {
                 </ProtectedRoute>
               }>
                 <Route index element={<Dashboard />} />
+                <Route path="dashboard-new" element={<DashboardNew />} />
                 <Route path="accounts" element={<AccountsPage />} />
-                <Route path="credit-cards" element={<CreditCardsPage />} />
+                <Route path="overdrafts" element={<OverdraftsPage />} />
+                <Route path="credit-cards" element={<CreditCardsDashboard />} />
                 <Route path="transactions" element={<TransactionsPage />} />
                 <Route path="fixed-payments" element={<FixedPaymentsPage />} />
-                <Route path="land-payments" element={<LandPaymentsPage />} />
                 <Route path="installment-payments" element={<InstallmentPaymentsPage />} />
+                <Route path="payment-calendar" element={<PaymentCalendarPage />} />
                 <Route path="reports" element={<ReportsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
                 
@@ -133,6 +138,12 @@ function App() {
               {/* Redirect unknown routes to dashboard */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            
+            {/* System Health Indicator - only show in development or when issues occur */}
+            <SystemHealthIndicator 
+              position="bottom-left"
+              autoHide={process.env.NODE_ENV === 'production'}
+            />
           </Router>
         </NotificationProvider>
       </AuthProvider>

@@ -43,12 +43,12 @@ class CreditCard {
       const result = await DatabaseUtils.query(query, [
         userId,
         name.trim(),
-        bankId || null,
+        bankId?.trim() || null,
         bankName?.trim() || null,
-        creditLimit,
-        currentBalance,
-        interestRate,
-        minimumPaymentRate,
+        parseFloat(creditLimit),
+        parseFloat(currentBalance),
+        parseFloat(interestRate),
+        parseFloat(minimumPaymentRate),
         paymentDueDate || null
       ]);
 

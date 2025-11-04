@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMediaQuery, useTheme } from '@mui/material';
 import {
   Container,
   Typography,
@@ -23,6 +24,20 @@ import {
   ListItemIcon,
   Divider,
   Alert,
+  ToggleButton,
+  ToggleButtonGroup,
+  FormControl,
+  InputLabel,
+  Select,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Skeleton,
+  Snackbar,
 } from '@mui/material';
 import {
   Add,
@@ -40,91 +55,54 @@ import {
   Schedule,
   Warning,
   CheckCircle,
+  Tv,
+  Movie,
+  MusicNote,
+  SportsEsports,
+  LocalGroceryStore,
+  Restaurant,
+  Coffee,
+  ShoppingCart,
+  AccountBalance,
+  CreditCard,
+  Security,
+  Pets,
+  ChildCare,
+  CleaningServices,
+  Build,
+  LocalLaundryService,
+  Category,
+  CalendarMonth,
+  ViewList,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 import { fixedPaymentsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 
 // Sabit ödeme kategorileri ve ikonları
 const PAYMENT_CATEGORIES = [
-  // Konut ve Barınma
-  { value: 'Kira', label: 'Kira', icon: <Home />, color: '#FF6B6B' },
-  { value: 'Aidat', label: 'Site/Apartman Aidatı', icon: <Home />, color: '#FF8E8E' },
-  { value: 'Emlak_Vergisi', label: 'Emlak Vergisi', icon: <Home />, color: '#FFB3B3' },
-  
-  // Faturalar - Temel İhtiyaçlar
-  { value: 'Elektrik', label: 'Elektrik Faturası', icon: <ElectricBolt />, color: '#4ECDC4' },
-  { value: 'Dogalgaz', label: 'Doğalgaz Faturası', icon: <LocalGasStation />, color: '#45B7D1' },
-  { value: 'Su', label: 'Su Faturası', icon: <ElectricBolt />, color: '#96CEB4' },
-  { value: 'Isitma', label: 'Isıtma/Soğutma', icon: <ElectricBolt />, color: '#FFEAA7' },
-  
-  // İletişim ve Teknoloji
-  { value: 'Telefon', label: 'Telefon Faturası', icon: <Phone />, color: '#DDA0DD' },
-  { value: 'Internet', label: 'İnternet Faturası', icon: <Wifi />, color: '#98D8C8' },
-  { value: 'Kablo_TV', label: 'Kablo TV/Dijital Platform', icon: <Phone />, color: '#F7DC6F' },
-  { value: 'Mobil_Hat', label: 'Mobil Hat Faturası', icon: <Phone />, color: '#BB8FCE' },
-  
-  // Ulaşım
-  { value: 'Arac_Kredisi', label: 'Araç Kredisi', icon: <DirectionsCar />, color: '#85C1E9' },
-  { value: 'Arac_Sigortasi', label: 'Araç Sigortası', icon: <DirectionsCar />, color: '#7FB3D3' },
-  { value: 'Yakit', label: 'Yakıt (Sabit Tutar)', icon: <LocalGasStation />, color: '#F8C471' },
-  { value: 'Otopark', label: 'Otopark Ücreti', icon: <DirectionsCar />, color: '#AED6F1' },
-  { value: 'Toplu_Tasima', label: 'Toplu Taşıma Kartı', icon: <DirectionsCar />, color: '#A9DFBF' },
-  
-  // Sağlık ve Kişisel Bakım
-  { value: 'Saglik_Sigortasi', label: 'Sağlık Sigortası', icon: <HealthAndSafety />, color: '#F1948A' },
-  { value: 'Spor_Salonu', label: 'Spor Salonu/Fitness', icon: <FitnessCenter />, color: '#82E0AA' },
-  { value: 'Doktor_Kontrolu', label: 'Düzenli Doktor Kontrolü', icon: <HealthAndSafety />, color: '#F8D7DA' },
-  { value: 'Ilac', label: 'Düzenli İlaç Gideri', icon: <HealthAndSafety />, color: '#D5DBDB' },
-  
-  // Eğitim ve Gelişim
-  { value: 'Okul_Ucreti', label: 'Okul Ücreti', icon: <School />, color: '#D2B4DE' },
-  { value: 'Kurs', label: 'Kurs/Eğitim Ücreti', icon: <School />, color: '#C39BD3' },
-  { value: 'Kitap_Dergi', label: 'Kitap/Dergi Aboneliği', icon: <School />, color: '#BB8FCE' },
-  { value: 'Online_Egitim', label: 'Online Eğitim Platformu', icon: <School />, color: '#A569BD' },
-  
-  // Finansal Yükümlülükler
-  { value: 'Kredi_Karti', label: 'Kredi Kartı Asgari Ödeme', icon: <Schedule />, color: '#F7DC6F' },
-  { value: 'Banka_Kredisi', label: 'Banka Kredisi', icon: <Schedule />, color: '#F4D03F' },
-  { value: 'Hayat_Sigortasi', label: 'Hayat Sigortası', icon: <HealthAndSafety />, color: '#F8C471' },
-  { value: 'Emeklilik', label: 'Bireysel Emeklilik', icon: <Schedule />, color: '#FADBD8' },
-  
-  // Eğlence ve Sosyal
-  { value: 'Streaming', label: 'Streaming Servisleri', icon: <Phone />, color: '#AED6F1' },
-  { value: 'Muzik', label: 'Müzik Platformu', icon: <Phone />, color: '#A9DFBF' },
-  { value: 'Dernek_Uyelik', label: 'Dernek/Kulüp Üyeliği', icon: <FitnessCenter />, color: '#D5A6BD' },
-  
-  // Aile ve Çocuk
-  { value: 'Cocuk_Bakimi', label: 'Çocuk Bakımı/Kreş', icon: <School />, color: '#F9E79F' },
-  { value: 'Oyuncak_Oyun', label: 'Çocuk Oyun/Aktivite', icon: <School />, color: '#F7DC6F' },
-  
-  // Ev Bakımı ve Temizlik
-  { value: 'Temizlik', label: 'Temizlik Hizmeti', icon: <Home />, color: '#A3E4D7' },
-  { value: 'Bahce_Bakim', label: 'Bahçe Bakımı', icon: <Home />, color: '#85C1E9' },
-  { value: 'Ev_Bakimi', label: 'Ev Bakım/Onarım', icon: <Home />, color: '#D2B4DE' },
-  
-  // Diğer
-  { value: 'Bagis', label: 'Düzenli Bağış', icon: <HealthAndSafety />, color: '#F8D7DA' },
-  { value: 'Diger', label: 'Diğer Sabit Giderler', icon: <Schedule />, color: '#D5DBDB' },
-];
-
-// Örnek sabit ödemeler (demo için)
-const SAMPLE_PAYMENTS = [
-  { name: 'Ev Kirası', amount: 2500, category: 'Kira', dueDay: 1 },
-  { name: 'Site Aidatı', amount: 200, category: 'Aidat', dueDay: 1 },
-  { name: 'Elektrik Faturası', amount: 150, category: 'Elektrik', dueDay: 15 },
-  { name: 'Doğalgaz Faturası', amount: 120, category: 'Dogalgaz', dueDay: 25 },
-  { name: 'Su Faturası', amount: 80, category: 'Su', dueDay: 20 },
-  { name: 'İnternet Faturası', amount: 100, category: 'Internet', dueDay: 10 },
-  { name: 'Telefon Faturası', amount: 80, category: 'Telefon', dueDay: 20 },
-  { name: 'Netflix Aboneliği', amount: 45, category: 'Streaming', dueDay: 5 },
-  { name: 'Spor Salonu', amount: 150, category: 'Spor_Salonu', dueDay: 5 },
-  { name: 'Araç Sigortası', amount: 200, category: 'Arac_Sigortasi', dueDay: 12 },
-  { name: 'Sağlık Sigortası', amount: 300, category: 'Saglik_Sigortasi', dueDay: 8 },
-  { name: 'Bireysel Emeklilik', amount: 250, category: 'Emeklilik', dueDay: 3 },
+  { value: 'Konut', label: 'Konut (Kira, Aidat)', icon: <Home /> },
+  { value: 'Faturalar', label: 'Faturalar (Elektrik, Su, Doğalgaz)', icon: <ElectricBolt /> },
+  { value: 'İletişim', label: 'İletişim (Telefon, İnternet)', icon: <Phone /> },
+  { value: 'Eğlence', label: 'Eğlence & Medya', icon: <Tv /> },
+  { value: 'Streaming', label: 'Streaming (Netflix, Spotify)', icon: <Movie /> },
+  { value: 'Sağlık', label: 'Sağlık & Spor', icon: <HealthAndSafety /> },
+  { value: 'Eğitim', label: 'Eğitim & Kurslar', icon: <School /> },
+  { value: 'Ulaşım', label: 'Ulaşım & Yakıt', icon: <DirectionsCar /> },
+  { value: 'Finans', label: 'Finans & Bankacılık', icon: <AccountBalance /> },
+  { value: 'Sigorta', label: 'Sigorta & Güvenlik', icon: <Security /> },
+  { value: 'Alışveriş', label: 'Alışveriş & Market', icon: <ShoppingCart /> },
+  { value: 'Yemek', label: 'Yemek & İçecek', icon: <Restaurant /> },
+  { value: 'Temizlik', label: 'Temizlik & Bakım', icon: <CleaningServices /> },
+  { value: 'Çocuk', label: 'Çocuk & Bakım', icon: <ChildCare /> },
+  { value: 'Evcil Hayvan', label: 'Evcil Hayvan', icon: <Pets /> },
+  { value: 'Diğer', label: 'Diğer', icon: <Schedule /> },
 ];
 
 const FixedPaymentsPage = () => {
   const { showSuccess, showError } = useNotification();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -138,6 +116,37 @@ const FixedPaymentsPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  
+  // Yeni state'ler - görünüm değiştirici için
+  const [viewMode, setViewMode] = useState('category'); // 'category', 'calendar', 'list'
+  
+  // Ay/yıl seçici için state'ler
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Touch gesture için state'ler
+  const [touchStart, setTouchStart] = useState(null);
+  
+  // Hata yönetimi için state'ler
+  const [error, setError] = useState(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      clearError();
+      const response = await fixedPaymentsAPI.getAll();
+      setPayments(response.data.data || response.data);
+    } catch (error) {
+      handleDataError(error, 'Sabit ödemeler yükleme');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadPayments();
@@ -216,13 +225,13 @@ const FixedPaymentsPage = () => {
 
     try {
       setSubmitting(true);
+      clearError();
       
       const paymentData = {
         name: formData.name.trim(),
         amount: parseFloat(formData.amount),
         category: formData.category,
         dueDay: parseInt(formData.dueDay),
-        isActive: true,
       };
 
       if (editingPayment) {
@@ -234,9 +243,9 @@ const FixedPaymentsPage = () => {
       }
 
       handleCloseDialog();
-      loadPayments(); // Listeyi yenile
+      await loadPayments(); // Listeyi yenile
     } catch (error) {
-      showError(handleApiError(error));
+      handleDataError(error, editingPayment ? 'Sabit ödeme güncelleme' : 'Sabit ödeme ekleme');
     } finally {
       setSubmitting(false);
     }
@@ -245,11 +254,12 @@ const FixedPaymentsPage = () => {
   const handleDeletePayment = async (payment) => {
     if (window.confirm(`"${payment.name}" ödemesini silmek istediğinizden emin misiniz?`)) {
       try {
+        clearError();
         await fixedPaymentsAPI.delete(payment.id);
         showSuccess('Sabit ödeme başarıyla silindi');
-        loadPayments(); // Listeyi yenile
+        await loadPayments(); // Listeyi yenile
       } catch (error) {
-        showError(handleApiError(error));
+        handleDataError(error, 'Sabit ödeme silme');
       }
     }
   };
@@ -320,26 +330,312 @@ const FixedPaymentsPage = () => {
     }));
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="xl">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <CircularProgress size={60} />
-        </Box>
-      </Container>
-    );
-  }
+  // Ay ve yıl listeleri
+  const months = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+  ];
+  
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i);
+
+  // Görünüm değiştirme fonksiyonu (memoized)
+  const handleViewModeChange = useCallback((event, newMode) => {
+    if (!newMode) return; // Prevent deselecting all modes
+    
+    try {
+      setViewMode(newMode);
+      // Takvim veya liste görünümü seçildiğinde ek veriler yüklenebilir
+      if (newMode !== 'category') {
+        // loadCalendarData(); // Gelecekte implement edilecek
+      }
+    } catch (error) {
+      showError('Görünüm değiştirilemedi');
+      console.error('View mode change error:', error);
+    }
+  }, [showError]);
+
+  // Ay değiştirme fonksiyonu (memoized)
+  const handleMonthChange = useCallback((event) => {
+    try {
+      const newMonth = event.target.value;
+      
+      // Geçerli ay kontrolü
+      if (newMonth < 0 || newMonth > 11) {
+        throw new Error('Invalid month value');
+      }
+      
+      setSelectedMonth(newMonth);
+      
+      // Ay değiştiğinde takvim verilerini yenile
+      if (viewMode !== 'category') {
+        // loadCalendarData(); // Gelecekte implement edilecek
+      }
+    } catch (error) {
+      showError('Ay değiştirilemedi');
+      console.error('Month change error:', error);
+    }
+  }, [viewMode, showError]);
+
+  // Yıl değiştirme fonksiyonu (memoized)
+  const handleYearChange = useCallback((event) => {
+    try {
+      const newYear = event.target.value;
+      
+      // Geçerli yıl kontrolü
+      if (newYear < 1900 || newYear > 2100) {
+        throw new Error('Invalid year value');
+      }
+      
+      setSelectedYear(newYear);
+      
+      // Yıl değiştiğinde takvim verilerini yenile
+      if (viewMode !== 'category') {
+        // loadCalendarData(); // Gelecekte implement edilecek
+      }
+    } catch (error) {
+      showError('Yıl değiştirilemedi');
+      console.error('Year change error:', error);
+    }
+  }, [viewMode, showError]);
+
+  // Takvim için helper fonksiyonlar
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year, month) => {
+    const day = new Date(year, month, 1).getDay();
+    return day === 0 ? 6 : day - 1; // Pazartesi = 0, Pazar = 6
+  };
+
+  // Takvim günlerini memoize et
+  const calendarDays = useMemo(() => {
+    const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+    const firstDay = getFirstDayOfMonth(selectedYear, selectedMonth);
+    const days = [];
+
+    // Önceki ayın son günleri
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+      const prevMonthDays = getDaysInMonth(prevYear, prevMonth);
+      days.push({
+        day: prevMonthDays - i,
+        isCurrentMonth: false,
+        date: new Date(prevYear, prevMonth, prevMonthDays - i)
+      });
+    }
+
+    // Bu ayın günleri
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push({
+        day,
+        isCurrentMonth: true,
+        date: new Date(selectedYear, selectedMonth, day)
+      });
+    }
+
+    // Sonraki ayın ilk günleri (42 gün tamamlamak için)
+    const remainingDays = 42 - days.length;
+    for (let day = 1; day <= remainingDays; day++) {
+      const nextMonth = selectedMonth === 11 ? 0 : selectedMonth + 1;
+      const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
+      days.push({
+        day,
+        isCurrentMonth: false,
+        date: new Date(nextYear, nextMonth, day)
+      });
+    }
+
+    return days;
+  }, [selectedYear, selectedMonth]);
+
+  // Belirli bir tarihteki ödemeleri getir (memoized)
+  const getPaymentsForDate = useCallback((date) => {
+    return payments.filter(payment => {
+      const paymentDate = safeCalculatePaymentDate(payment, selectedMonth, selectedYear);
+      return paymentDate.toDateString() === date.toDateString();
+    });
+  }, [payments, selectedMonth, selectedYear]);
+
+  // Kategori renk mapping'i
+  const getCategoryColor = (category) => {
+    const colorMap = {
+      'Konut': 'primary',
+      'Faturalar': 'error',
+      'İletişim': 'info',
+      'Eğlence': 'secondary',
+      'Streaming': 'secondary',
+      'Sağlık': 'success',
+      'Eğitim': 'warning',
+      'Ulaşım': 'info',
+      'Finans': 'primary',
+      'Sigorta': 'warning',
+      'Alışveriş': 'secondary',
+      'Yemek': 'success',
+      'Temizlik': 'info',
+      'Çocuk': 'warning',
+      'Evcil Hayvan': 'success',
+      'Diğer': 'default'
+    };
+    return colorMap[category] || 'default';
+  };
+
+  // Güvenli tarih hesaplama fonksiyonu
+  const safeCalculatePaymentDate = (payment, month, year) => {
+    try {
+      // Ay sonu durumlarını handle et (31. gün seçilmiş ama ay 30 günlük)
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const adjustedDay = Math.min(payment.dueDay, daysInMonth);
+      
+      // Artık yıl hesaplamalarını doğru yap
+      const paymentDate = new Date(year, month, adjustedDay);
+      
+      // Tarih geçerli mi kontrol et
+      if (isNaN(paymentDate.getTime())) {
+        console.warn(`Invalid date calculated for payment ${payment.name}: ${year}-${month + 1}-${adjustedDay}`);
+        return new Date(); // Fallback to current date
+      }
+      
+      return paymentDate;
+    } catch (error) {
+      console.error('Date calculation error:', error);
+      return new Date(); // Fallback to current date
+    }
+  };
+
+  // Ödeme durumu hesaplama fonksiyonu
+  const calculatePaymentStatus = (payment, month, year) => {
+    const paymentDate = safeCalculatePaymentDate(payment, month, year);
+    const today = new Date();
+    const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const paymentDateWithoutTime = new Date(paymentDate.getFullYear(), paymentDate.getMonth(), paymentDate.getDate());
+    
+    if (paymentDateWithoutTime < todayWithoutTime) {
+      return {
+        status: 'overdue',
+        label: 'Gecikmiş',
+        color: 'error',
+        icon: <Warning />
+      };
+    } else if (paymentDateWithoutTime.getTime() === todayWithoutTime.getTime()) {
+      return {
+        status: 'today',
+        label: 'Bugün',
+        color: 'warning',
+        icon: <Schedule />
+      };
+    } else {
+      return {
+        status: 'pending',
+        label: 'Bekliyor',
+        color: 'info',
+        icon: <Schedule />
+      };
+    }
+  };
+
+  // Ödeme hesaplamalarını memoize et
+  const monthlyPayments = useMemo(() => {
+    return payments.map(payment => {
+      const paymentDate = safeCalculatePaymentDate(payment, selectedMonth, selectedYear);
+      const statusInfo = calculatePaymentStatus(payment, selectedMonth, selectedYear);
+      
+      // Gerçek ödeme gününü hesapla (ay sonu durumları için)
+      const actualDay = paymentDate.getDate();
+      const formattedDate = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+      
+      return {
+        ...payment,
+        paymentDate,
+        actualDay, // Gerçek ödeme günü
+        formattedDate,
+        ...statusInfo
+      };
+    }).sort((a, b) => a.actualDay - b.actualDay);
+  }, [payments, selectedMonth, selectedYear]);
+
+  // Durum renklerini al
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'overdue': return 'error';
+      case 'today': return 'warning';
+      case 'pending': return 'info';
+      case 'completed': return 'success';
+      default: return 'default';
+    }
+  };
+
+  // Touch gesture handler'ları (memoized)
+  const handleTouchStart = useCallback((e) => {
+    if (!isMobile || viewMode === 'category') return;
+    setTouchStart(e.targetTouches[0].clientX);
+  }, [isMobile, viewMode]);
+
+  const handleTouchMove = useCallback((e) => {
+    if (!touchStart || !isMobile || viewMode === 'category') return;
+    
+    const currentTouch = e.targetTouches[0].clientX;
+    const diff = touchStart - currentTouch;
+    
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        // Sağa kaydırma - sonraki ay
+        const newMonth = selectedMonth === 11 ? 0 : selectedMonth + 1;
+        const newYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
+      } else {
+        // Sola kaydırma - önceki ay
+        const newMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+        const newYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+        setSelectedMonth(newMonth);
+        setSelectedYear(newYear);
+      }
+      setTouchStart(null);
+    }
+  }, [touchStart, isMobile, viewMode, selectedMonth, selectedYear]);
+
+  const handleTouchEnd = useCallback(() => {
+    setTouchStart(null);
+  }, []);
+
+  // Gelişmiş hata yönetimi fonksiyonları
+  const handleDataError = useCallback((error, context = 'Veri işlemi') => {
+    console.error(`${context} error:`, error);
+    const errorMessage = error?.response?.data?.message || error?.message || `${context} sırasında hata oluştu`;
+    setError(errorMessage);
+    showError(errorMessage);
+  }, [showError]);
+
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Loading state yönetimi
+  const setLoadingState = useCallback((isLoading, context = 'calendar') => {
+    if (context === 'calendar') {
+      setCalendarLoading(isLoading);
+    }
+  }, []);
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 3 }}>
+    <Container maxWidth={isMobile ? 'sm' : 'xl'}>
+      <Box sx={{ py: isMobile ? 2 : 3 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between', 
+          alignItems: isMobile ? 'stretch' : 'center', 
+          mb: isMobile ? 3 : 4,
+          gap: isMobile ? 2 : 0
+        }}>
+          <Box sx={{ textAlign: isMobile ? 'center' : 'left' }}>
+            <Typography variant={isMobile ? "h5" : "h4"} component="h1" gutterBottom>
               Sabit Ödemelerim
             </Typography>
-            <Typography variant="body1" color="textSecondary">
+            <Typography variant="body2" color="textSecondary">
               Aylık sabit ödemelerinizi (kira, faturalar, abonelikler) yönetin
             </Typography>
           </Box>
@@ -347,12 +643,83 @@ const FixedPaymentsPage = () => {
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
-            size="large"
+            size={isMobile ? "medium" : "large"}
+            fullWidth={isMobile}
           >
-            Sabit Ödeme Ekle
+            {isMobile ? "Ekle" : "Sabit Ödeme Ekle"}
           </Button>
         </Box>
 
+        {/* View Mode Toggle */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: isMobile ? 3 : 4 }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={handleViewModeChange}
+            size={isMobile ? "small" : "small"}
+            sx={{ 
+              bgcolor: 'background.paper', 
+              borderRadius: 2,
+              width: isMobile ? '100%' : 'auto'
+            }}
+          >
+            <ToggleButton value="category" sx={{ flex: isMobile ? 1 : 'none' }}>
+              <Category sx={{ mr: isMobile ? 0.5 : 1 }} />
+              {isMobile ? "Kat." : "Kategoriler"}
+            </ToggleButton>
+            <ToggleButton value="calendar" sx={{ flex: isMobile ? 1 : 'none' }}>
+              <CalendarMonth sx={{ mr: isMobile ? 0.5 : 1 }} />
+              Takvim
+            </ToggleButton>
+            <ToggleButton value="list" sx={{ flex: isMobile ? 1 : 'none' }}>
+              <ViewList sx={{ mr: isMobile ? 0.5 : 1 }} />
+              Liste
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+
+        {/* Month/Year Selector - Sadece takvim ve liste görünümlerinde görünür */}
+        {(viewMode === 'calendar' || viewMode === 'list') && (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: isMobile ? 1 : 2, 
+            mb: isMobile ? 3 : 4,
+            px: isMobile ? 2 : 0
+          }}>
+            <FormControl size="small" sx={{ minWidth: isMobile ? 100 : 120, flex: isMobile ? 1 : 'none' }}>
+              <InputLabel>Ay</InputLabel>
+              <Select
+                value={selectedMonth}
+                label="Ay"
+                onChange={handleMonthChange}
+              >
+                {months.map((month, index) => (
+                  <MenuItem key={index} value={index}>
+                    {isMobile ? month.substring(0, 3) : month}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            
+            <FormControl size="small" sx={{ minWidth: isMobile ? 80 : 100, flex: isMobile ? 1 : 'none' }}>
+              <InputLabel>Yıl</InputLabel>
+              <Select
+                value={selectedYear}
+                label="Yıl"
+                onChange={handleYearChange}
+              >
+                {years.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        )}
+
+        {/* Alert */}
 
 
         {/* Summary Cards */}
@@ -437,94 +804,449 @@ const FixedPaymentsPage = () => {
           </Grid>
         </Grid>
 
-        {/* Payments by Category */}
-        {getPaymentsByCategory().map((categoryGroup) => (
-          <Card key={categoryGroup.category} sx={{ mb: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Avatar sx={{ 
-                  bgcolor: getCategoryInfo(categoryGroup.category).color || 'primary.main', 
-                  mr: 2 
-                }}>
-                  {getCategoryInfo(categoryGroup.category).icon}
-                </Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6">
-                    {categoryGroup.category}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {categoryGroup.payments.length} ödeme - Toplam: {formatCurrency(categoryGroup.total)}
-                  </Typography>
+        {/* Content based on view mode */}
+        {viewMode === 'category' && (
+          /* Payments by Category */
+          loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : payments.length === 0 ? (
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 8 }}>
+                <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" gutterBottom>
+                  Henüz sabit ödeme eklenmemiş
+                </Typography>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                  İlk sabit ödemenizi eklemek için "Sabit Ödeme Ekle" butonuna tıklayın
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => handleOpenDialog()}
+                >
+                  Sabit Ödeme Ekle
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            getPaymentsByCategory().map((categoryGroup) => (
+            <Card key={categoryGroup.category} sx={{ mb: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Avatar sx={{ bgcolor: 'primary.main', mr: 2 }}>
+                    {getCategoryInfo(categoryGroup.category).icon}
+                  </Avatar>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6">
+                      {categoryGroup.category}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {categoryGroup.payments.length} ödeme - Toplam: {formatCurrency(categoryGroup.total)}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
 
-              <Grid container spacing={2}>
-                {categoryGroup.payments.map((payment, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card variant="outlined">
-                      <CardContent sx={{ pb: 2 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {payment.name}
-                          </Typography>
-                          <Box>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenDialog(payment)}
-                            >
-                              <Edit />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDeletePayment(payment)}
-                            >
-                              <Delete />
-                            </IconButton>
+                <Grid container spacing={2}>
+                  {categoryGroup.payments.map((payment, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <Card variant="outlined">
+                        <CardContent sx={{ pb: 2 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {payment.name}
+                            </Typography>
+                            <Box>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenDialog(payment)}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleDeletePayment(payment)}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </Box>
                           </Box>
-                        </Box>
-                        
-                        <Typography variant="h6" color="error.main" gutterBottom>
-                          {formatCurrency(payment.amount)}
-                        </Typography>
-                        
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Chip
-                            label={`${payment.dueDay}. gün`}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
-                          <Typography variant="caption" color="textSecondary">
-                            Her ay {payment.dueDay}. günü
+                          
+                          <Typography variant="h6" color="error.main" gutterBottom>
+                            {formatCurrency(payment.amount)}
                           </Typography>
-                        </Box>
-                      </CardContent>
-                    </Card>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Chip
+                              label={`${payment.dueDay}. gün`}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                            <Typography variant="caption" color="textSecondary">
+                              Her ay {payment.dueDay}. günü
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          ))
+          )
+        )}
+
+        {viewMode === 'calendar' && (
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                {months[selectedMonth]} {selectedYear} - Sabit Ödemeler Takvimi
+              </Typography>
+              
+              {loading || calendarLoading ? (
+                <Box>
+                  {/* Haftanın günleri skeleton */}
+                  <Grid container sx={{ mb: 1 }}>
+                    {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
+                      <Grid item xs key={day}>
+                        <Skeleton variant="rectangular" height={40} />
+                      </Grid>
+                    ))}
                   </Grid>
-                ))}
-              </Grid>
+                  
+                  {/* Takvim günleri skeleton */}
+                  <Grid container>
+                    {Array.from({ length: 42 }).map((_, index) => (
+                      <Grid item xs key={index}>
+                        <Skeleton 
+                          variant="rectangular" 
+                          height={isMobile ? 80 : 120} 
+                          sx={{ border: '1px solid', borderColor: 'grey.300' }}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Box>
+              ) : payments.length === 0 ? (
+                <Alert severity="info">
+                  Bu ay için herhangi bir sabit ödeme bulunamadı.
+                </Alert>
+              ) : (
+                <Box>
+                  {/* Haftanın günleri */}
+                  <Grid container sx={{ mb: 1 }}>
+                    {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
+                      <Grid item xs key={day}>
+                        <Typography 
+                          variant="subtitle2" 
+                          align="center" 
+                          sx={{ 
+                            py: 1, 
+                            bgcolor: 'grey.100', 
+                            fontWeight: 'bold',
+                            borderRight: '1px solid',
+                            borderColor: 'grey.300'
+                          }}
+                        >
+                          {day}
+                        </Typography>
+                      </Grid>
+                    ))}
+                  </Grid>
+
+                  {/* Takvim günleri */}
+                  <Grid container>
+                    {calendarDays.map((dayInfo, index) => {
+                      const dayPayments = getPaymentsForDate(dayInfo.date);
+                      const isToday = dayInfo.date.toDateString() === new Date().toDateString();
+                      const totalAmount = dayPayments.reduce((sum, payment) => sum + payment.amount, 0);
+                      
+                      return (
+                        <Grid item xs key={index}>
+                          <Paper
+                            sx={{
+                              minHeight: isMobile ? 80 : 120,
+                              p: isMobile ? 0.5 : 1,
+                              border: '1px solid',
+                              borderColor: 'grey.300',
+                              bgcolor: dayInfo.isCurrentMonth ? 'background.paper' : 'grey.50',
+                              position: 'relative',
+                              '&:hover': {
+                                bgcolor: dayInfo.isCurrentMonth ? 'grey.50' : 'grey.100'
+                              }
+                            }}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                          >
+                            {/* Gün numarası */}
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: isToday ? 'bold' : 'normal',
+                                bgcolor: isToday ? 'primary.main' : 'transparent',
+                                color: isToday ? 'white' : (dayInfo.isCurrentMonth ? 'text.primary' : 'text.secondary'),
+                                borderRadius: isToday ? '50%' : 0,
+                                width: isToday ? 24 : 'auto',
+                                height: isToday ? 24 : 'auto',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mb: 0.5
+                              }}
+                            >
+                              {dayInfo.day}
+                            </Typography>
+
+                            {/* Ödemeler */}
+                            <Box sx={{ maxHeight: isMobile ? 60 : 90, overflow: 'hidden' }}>
+                              {dayPayments.slice(0, isMobile ? 2 : 3).map((payment, idx) => {
+                                const categoryInfo = getCategoryInfo(payment.category);
+                                const statusInfo = calculatePaymentStatus(payment, selectedMonth, selectedYear);
+                                
+                                return (
+                                  <Chip
+                                    key={idx}
+                                    label={isMobile ? payment.name.substring(0, 8) + (payment.name.length > 8 ? '...' : '') : payment.name}
+                                    size="small"
+                                    color={statusInfo.color}
+                                    icon={isMobile ? null : categoryInfo.icon}
+                                    sx={{
+                                      fontSize: isMobile ? '0.5rem' : '0.6rem',
+                                      height: isMobile ? 16 : 20,
+                                      mb: 0.5,
+                                      display: 'block',
+                                      border: statusInfo.status === 'overdue' ? '1px solid' : 'none',
+                                      borderColor: statusInfo.status === 'overdue' ? 'error.main' : 'transparent',
+                                      '& .MuiChip-label': {
+                                        px: isMobile ? 0.3 : 0.5,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        maxWidth: '100%'
+                                      },
+                                      '& .MuiChip-icon': {
+                                        fontSize: '0.7rem',
+                                        width: 12,
+                                        height: 12,
+                                        ml: 0.5
+                                      }
+                                    }}
+                                  />
+                                );
+                              })}
+                              {dayPayments.length > 3 && (
+                                <Typography variant="caption" color="textSecondary">
+                                  +{dayPayments.length - 3} daha
+                                </Typography>
+                              )}
+                              {totalAmount > 0 && (
+                                <Box sx={{ mt: 0.5 }}>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="error.main"
+                                    sx={{ 
+                                      display: 'block', 
+                                      fontWeight: 'bold'
+                                    }}
+                                  >
+                                    {formatCurrency(totalAmount)}
+                                  </Typography>
+                                  <Typography 
+                                    variant="caption" 
+                                    color="textSecondary"
+                                    sx={{ 
+                                      display: 'block',
+                                      fontSize: '0.5rem'
+                                    }}
+                                  >
+                                    {dayPayments.length} ödeme
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Box>
+              )}
             </CardContent>
           </Card>
-        ))}
+        )}
 
-        {payments.length === 0 && (
+        {viewMode === 'list' && (
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 8 }}>
-              <Schedule sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <CardContent>
               <Typography variant="h6" gutterBottom>
-                Henüz sabit ödeme eklenmemiş
+                {months[selectedMonth]} {selectedYear} - Sabit Ödemeler Listesi
               </Typography>
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-                Kira, faturalar ve aboneliklerinizi ekleyerek başlayın
-              </Typography>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => handleOpenDialog()}
-              >
-                İlk Sabit Ödemeyi Ekle
-              </Button>
+              
+              {loading || calendarLoading ? (
+                <TableContainer>
+                  <Table size={isMobile ? "small" : "medium"}>
+                    <TableHead>
+                      <TableRow>
+                        {!isMobile && <TableCell>Tarih</TableCell>}
+                        <TableCell>Ödeme</TableCell>
+                        {!isMobile && <TableCell>Kategori</TableCell>}
+                        <TableCell align="right">Tutar</TableCell>
+                        <TableCell>Durum</TableCell>
+                        <TableCell>İşlem</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <TableRow key={index}>
+                          {!isMobile && (
+                            <TableCell>
+                              <Skeleton variant="text" width={100} />
+                            </TableCell>
+                          )}
+                          <TableCell>
+                            <Skeleton variant="text" width={150} />
+                          </TableCell>
+                          {!isMobile && (
+                            <TableCell>
+                              <Skeleton variant="circular" width={24} height={24} />
+                            </TableCell>
+                          )}
+                          <TableCell align="right">
+                            <Skeleton variant="text" width={80} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="rounded" width={60} height={24} />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton variant="circular" width={24} height={24} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : payments.length === 0 ? (
+                <Alert severity="info">
+                  Bu ay için herhangi bir sabit ödeme bulunamadı.
+                </Alert>
+              ) : (
+                <TableContainer>
+                  <Table size={isMobile ? "small" : "medium"}>
+                    <TableHead>
+                      <TableRow>
+                        {!isMobile && <TableCell>Tarih</TableCell>}
+                        <TableCell>Ödeme</TableCell>
+                        {!isMobile && <TableCell>Kategori</TableCell>}
+                        <TableCell align="right">Tutar</TableCell>
+                        <TableCell>Durum</TableCell>
+                        <TableCell>İşlem</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {monthlyPayments.map((payment) => {
+                        const categoryInfo = getCategoryInfo(payment.category);
+                        return (
+                          <TableRow key={payment.id}>
+                            {!isMobile && (
+                              <TableCell>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Schedule fontSize="small" color="action" />
+                                  <Box>
+                                    <Typography variant="body2">
+                                      {payment.formattedDate}
+                                    </Typography>
+                                    {payment.dueDay !== payment.actualDay && (
+                                      <Typography variant="caption" color="textSecondary">
+                                        (Orijinal: {payment.dueDay}. gün)
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </Box>
+                              </TableCell>
+                            )}
+                            <TableCell>
+                              <Box>
+                                <Typography variant={isMobile ? "body2" : "body2"} fontWeight="medium">
+                                  {payment.name}
+                                </Typography>
+                                {isMobile && (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                    <Avatar sx={{ 
+                                      bgcolor: `${getCategoryColor(payment.category)}.main`, 
+                                      width: 16, 
+                                      height: 16 
+                                    }}>
+                                      {categoryInfo.icon}
+                                    </Avatar>
+                                    <Typography variant="caption" color="textSecondary">
+                                      {payment.category} • {payment.formattedDate}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </Box>
+                            </TableCell>
+                            {!isMobile && (
+                              <TableCell>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Avatar sx={{ 
+                                    bgcolor: `${getCategoryColor(payment.category)}.main`, 
+                                    width: 24, 
+                                    height: 24 
+                                  }}>
+                                    {categoryInfo.icon}
+                                  </Avatar>
+                                  <Typography variant="body2">
+                                    {payment.category}
+                                  </Typography>
+                                </Box>
+                              </TableCell>
+                            )}
+                            <TableCell align="right">
+                              <Typography 
+                                variant={isMobile ? "body2" : "body2"}
+                                fontWeight="medium"
+                                color="error.main"
+                              >
+                                {formatCurrency(payment.amount)}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size="small"
+                                label={isMobile ? payment.label.substring(0, 3) : payment.label}
+                                color={payment.color}
+                                icon={isMobile ? null : payment.icon}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
+                                <IconButton 
+                                  size="small"
+                                  onClick={() => handleOpenDialog(payment)}
+                                >
+                                  <Edit />
+                                </IconButton>
+                                <IconButton 
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeletePayment(payment)}
+                                >
+                                  <Delete />
+                                </IconButton>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </CardContent>
           </Card>
         )}
@@ -635,6 +1357,18 @@ const FixedPaymentsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Error Snackbar */}
+        <Snackbar
+          open={!!error}
+          autoHideDuration={6000}
+          onClose={clearError}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={clearError} severity="error" sx={{ width: '100%' }}>
+            {error}
+          </Alert>
+        </Snackbar>
       </Box>
     </Container>
   );

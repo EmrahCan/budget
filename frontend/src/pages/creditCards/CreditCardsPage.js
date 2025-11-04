@@ -702,18 +702,18 @@ const CreditCardsPage = () => {
                     <ListItemAvatar>
                       <Avatar 
                         sx={{ 
-                          bgcolor: option.color,
+                          bgcolor: option?.color || 'primary.main',
                           width: 32, 
                           height: 32,
                           fontSize: '0.75rem'
                         }}
                       >
-                        {option.name.charAt(0)}
+                        {option?.name?.charAt(0) || '?'}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={option.name}
-                      secondary={option.fullName}
+                      primary={option?.name || 'Bilinmeyen Banka'}
+                      secondary={option?.fullName || ''}
                     />
                   </Box>
                 )}
@@ -721,7 +721,7 @@ const CreditCardsPage = () => {
                   if (!inputValue) {
                     // Popüler bankaları önce göster
                     const popular = popularBanks.map(id => getBankById(id)).filter(Boolean).slice(0, 6);
-                    const others = options.filter(bank => !popular.find(p => p.id === bank.id));
+                    const others = options.filter(bank => !popular.find(p => p && p.id === bank.id));
                     return [...popular, ...others];
                   }
                   return searchBanks(inputValue);

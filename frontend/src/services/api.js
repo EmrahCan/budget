@@ -1,17 +1,9 @@
 import axios from 'axios';
-import environmentConfig from '../config/environment';
-
-// Get API base URL from environment config
-const baseURL = environmentConfig.getApiUrl();
-
-// Log API configuration in development
-if (environmentConfig.isDevelopment()) {
-  console.log(`🌐 API Base URL: ${baseURL}`);
-}
+import { reportCache, metadataCache, cacheMonitor } from './cacheManager';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL,
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -107,19 +99,94 @@ export const transactionsAPI = {
   getCategoryBreakdown: (params) => api.get('/transactions/analysis/category-breakdown', { params }),
   getSpendingTrends: (params) => api.get('/transactions/analysis/spending-trends', { params }),
   bulkDelete: (data) => api.delete('/transactions/bulk/delete', { data }),
+  
+  // Yeni chart endpoint'leri
+  getCategoryExpenses: (params) => {
+    // Mock data for now - gerçek API endpoint'i eklenene kadar
+    return Promise.resolve({
+      data: {
+        data: [
+          { category: 'Yemek', amount: 1500 },
+          { category: 'Ulaşım', amount: 800 },
+          { category: 'Eğlence', amount: 600 },
+          { category: 'Alışveriş', amount: 1200 },
+          { category: 'Sağlık', amount: 400 },
+          { category: 'Faturalar', amount: 900 }
+        ]
+      }
+    });
+  },
+  
+  getFinancialTrend: (params) => {
+    // Mock data for now - gerçek API endpoint'i eklenene kadar
+    const months = ['Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım'];
+    return Promise.resolve({
+      data: {
+        data: months.map((month, index) => ({
+          month,
+          income: 5000 + (Math.random() * 1000),
+          expense: 3500 + (Math.random() * 800),
+        }))
+      }
+    });
+  },
 };
 
 // Helper function to handle API errors
 export const handleApiError = (error) => {
+  console.error('API Error:', error);
+  
   if (error.response) {
     // Server responded with error status
-    return error.response.data?.message || 'Sunucu hatası oluştu';
+    const status = error.response.status;
+    const data = error.response.data;
+    
+    switch (status) {
+      case 400:
+        // Validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          return data.errors.map(err => err.message).join(', ');
+        }
+        return data.message || 'Geçersiz veri girişi';
+      
+      case 401:
+        return 'Oturum süreniz dolmuş, lütfen tekrar giriş yapın';
+      
+      case 403:
+        return 'Bu işlem için yetkiniz bulunmuyor';
+      
+      case 404:
+        return 'Aranan kaynak bulunamadı';
+      
+      case 409:
+        return data.message || 'Çakışma hatası oluştu';
+      
+      case 422:
+        return data.message || 'İşlenemeyen veri';
+      
+      case 429:
+        return 'Çok fazla istek gönderildi, lütfen bekleyin';
+      
+      case 500:
+        return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
+      
+      case 502:
+      case 503:
+      case 504:
+        return 'Sunucu geçici olarak kullanılamıyor';
+      
+      default:
+        return data.message || `Sunucu hatası (${status})`;
+    }
   } else if (error.request) {
     // Request was made but no response received
-    return 'Sunucuya bağlanılamadı';
+    if (error.code === 'ECONNABORTED') {
+      return 'İstek zaman aşımına uğradı';
+    }
+    return 'Sunucuya bağlanılamadı, internet bağlantınızı kontrol edin';
   } else {
     // Something else happened
-    return 'Beklenmeyen bir hata oluştu';
+    return error.message || 'Beklenmeyen bir hata oluştu';
   }
 };
 
@@ -131,6 +198,23 @@ export const formatCurrency = (amount, currency = 'TRY') => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+};
+
+// Helper function to create API call with loading state
+export const createApiCall = async (apiFunction, setLoading, errorHandler) => {
+  try {
+    if (setLoading) setLoading(true);
+    const result = await apiFunction();
+    return result;
+  } catch (error) {
+    if (errorHandler) {
+      errorHandler(handleApiError(error));
+    } else {
+      throw error;
+    }
+  } finally {
+    if (setLoading) setLoading(false);
+  }
 };
 
 // Helper function to format date
@@ -166,20 +250,6 @@ export const fixedPaymentsAPI = {
   getByCategory: (category) => api.get(`/fixed-payments/category/${category}`),
 };
 
-// Land Payments API
-export const landPaymentsAPI = {
-  getAll: (params) => api.get('/land-payments', { params }),
-  getById: (id) => api.get(`/land-payments/${id}`),
-  create: (data) => api.post('/land-payments', data),
-  update: (id, data) => api.put(`/land-payments/${id}`, data),
-  delete: (id) => api.delete(`/land-payments/${id}`),
-  recordPayment: (id, data) => api.post(`/land-payments/${id}/payment`, data),
-  getPaymentHistory: (id) => api.get(`/land-payments/${id}/history`),
-  getUpcomingPayments: (params) => api.get('/land-payments/upcoming', { params }),
-  getOverduePayments: () => api.get('/land-payments/overdue'),
-  getSummary: () => api.get('/land-payments/summary'),
-};
-
 // Installment Payments API
 export const installmentPaymentsAPI = {
   getAll: (params) => api.get('/installment-payments', { params }),
@@ -196,14 +266,137 @@ export const installmentPaymentsAPI = {
   getByCategory: (category) => api.get(`/installment-payments/category/${category}`),
 };
 
-// Reports API
+// Reports API - Enhanced for new reporting system with caching
 export const reportsAPI = {
+  // Legacy endpoints (keeping for backward compatibility)
   getFinancialOverview: (params) => api.get('/reports/financial-overview', { params }),
   getCategoryBreakdown: (params) => api.get('/reports/category-breakdown', { params }),
   getMonthlyTrends: (params) => api.get('/reports/monthly-trends', { params }),
   getInstallmentsOverview: () => api.get('/reports/installments-overview'),
   getNetWorthHistory: (params) => api.get('/reports/net-worth-history', { params }),
   exportData: (params) => api.get('/reports/export', { params, responseType: 'blob' }),
+  
+  // New enhanced reporting endpoints with caching
+  generateReport: async (filters) => {
+    // Check cache first
+    const cachedData = reportCache.getReport(filters);
+    if (cachedData) {
+      console.log('Report data served from cache');
+      return { data: { data: cachedData, fromCache: true } };
+    }
+
+    // Check memory usage before generating new data
+    cacheMonitor.forceCleanupIfNeeded();
+
+    // Generate new data (mock implementation)
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const mockData = generateMockReportData(filters);
+        
+        // Cache the result
+        reportCache.setReport(filters, mockData);
+        
+        resolve({ data: { data: mockData, fromCache: false } });
+      }, 1000);
+    });
+  },
+  
+  aggregateData: (filters) => {
+    // Mock implementation for data aggregation
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const aggregatedData = aggregateMockData(filters);
+        resolve({ data: { data: aggregatedData } });
+      }, 800);
+    });
+  },
+  
+  getAvailableCategories: async () => {
+    // Check metadata cache first
+    const cachedCategories = metadataCache.getCategories();
+    if (cachedCategories) {
+      console.log('Categories served from cache');
+      return Promise.resolve({
+        data: { data: cachedCategories, fromCache: true }
+      });
+    }
+
+    // Mock categories - will be replaced with actual backend call
+    const categories = [
+      'Gıda', 'Ulaşım', 'Eğlence', 'Faturalar', 'Alışveriş', 
+      'Sağlık', 'Eğitim', 'Teknoloji', 'Ev & Yaşam', 'Diğer'
+    ];
+
+    // Cache the categories
+    metadataCache.setCategories(categories);
+
+    return Promise.resolve({
+      data: { data: categories, fromCache: false }
+    });
+  },
+  
+  exportToPDF: (reportData, template = 'standard') => {
+    // Mock PDF export - will be implemented later
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ 
+          data: { 
+            success: true, 
+            downloadUrl: '/mock-pdf-download',
+            filename: `report_${Date.now()}.pdf`
+          } 
+        });
+      }, 2000);
+    });
+  },
+  
+  exportToExcel: (reportData) => {
+    // Mock Excel export - will be implemented later
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ 
+          data: { 
+            success: true, 
+            downloadUrl: '/mock-excel-download',
+            filename: `report_${Date.now()}.xlsx`
+          } 
+        });
+      }, 1500);
+    });
+  },
+
+  // Cache management endpoints
+  getCacheStats: () => {
+    return Promise.resolve({
+      data: {
+        data: {
+          reportCache: reportCache.getStats(),
+          memoryUsage: cacheMonitor.getMemoryUsage(),
+          isMemoryHigh: cacheMonitor.isMemoryUsageHigh()
+        }
+      }
+    });
+  },
+
+  clearCache: () => {
+    reportCache.clearReports();
+    metadataCache.clearCategories();
+    return Promise.resolve({
+      data: { success: true, message: 'Cache cleared successfully' }
+    });
+  },
+
+  // Force cache refresh for a specific report
+  refreshReport: async (filters) => {
+    // Clear existing cache for this report
+    const cacheKey = reportCache.generateCacheKey ? reportCache.generateCacheKey(filters) : null;
+    if (cacheKey) {
+      reportCache.clearReports(); // For now, clear all - can be more specific later
+    }
+
+    // Generate fresh data
+    return reportsAPI.generateReport(filters);
+  },
 };
 
 // Admin API
@@ -218,6 +411,163 @@ export const adminAPI = {
   resetUserPassword: (userId, data) => api.put(`/admin/users/${userId}/reset-password`, data),
   generateUserPassword: (userId) => api.post(`/admin/users/${userId}/generate-password`),
   createAdmin: (data) => api.post('/admin/create-admin', data),
+};
+
+// Mock data generators for reporting system
+const generateMockReportData = (filters) => {
+  const { dateRange, categories, reportType } = filters;
+  
+  // Generate mock transactions for analysis
+  const mockTransactions = generateMockTransactions(dateRange, categories);
+  
+  // Calculate summary from mock transactions
+  const totalIncome = mockTransactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = Math.abs(mockTransactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0));
+  const netIncome = totalIncome - totalExpense;
+  
+  const summary = {
+    totalIncome,
+    totalExpense,
+    netIncome,
+    transactionCount: mockTransactions.length,
+    period: dateRange || { 
+      start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      end: new Date().toISOString().split('T')[0]
+    }
+  };
+  
+  // Analyze categories from mock transactions
+  const categoryGroups = {};
+  mockTransactions.filter(t => t.amount < 0).forEach(transaction => {
+    const category = transaction.category;
+    if (!categoryGroups[category]) {
+      categoryGroups[category] = { amount: 0, count: 0 };
+    }
+    categoryGroups[category].amount += Math.abs(transaction.amount);
+    categoryGroups[category].count += 1;
+  });
+  
+  const categoryAnalysis = Object.entries(categoryGroups).map(([category, data]) => ({
+    category,
+    amount: data.amount,
+    percentage: totalExpense > 0 ? parseFloat(((data.amount / totalExpense) * 100).toFixed(1)) : 0,
+    transactionCount: data.count,
+    trend: ['up', 'down', 'stable'][Math.floor(Math.random() * 3)]
+  })).sort((a, b) => b.amount - a.amount);
+  
+  // Generate trend analysis
+  const trendAnalysis = {
+    monthly: [],
+    weekly: []
+  };
+  
+  // Generate 6 months of trend data
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    const monthStr = date.toISOString().slice(0, 7);
+    
+    trendAnalysis.monthly.push({
+      month: monthStr,
+      income: totalIncome / 6 + (Math.random() * 2000 - 1000),
+      expense: totalExpense / 6 + (Math.random() * 1500 - 750)
+    });
+  }
+  
+  // Calculate financial metrics
+  const financialMetrics = {
+    savingsRate: totalIncome > 0 ? ((netIncome / totalIncome) * 100) : 0,
+    expenseRatio: totalIncome > 0 ? ((totalExpense / totalIncome) * 100) : 0,
+    healthScore: calculateSimpleHealthScore(totalIncome, totalExpense, netIncome)
+  };
+  
+  return {
+    summary,
+    categoryAnalysis,
+    trendAnalysis,
+    financialMetrics,
+    reportType: reportType || 'summary',
+    generatedAt: new Date().toISOString()
+  };
+};
+
+// Helper function to generate mock transactions
+const generateMockTransactions = (dateRange, categories) => {
+  const transactions = [];
+  const allCategories = ['Gıda', 'Ulaşım', 'Eğlence', 'Faturalar', 'Alışveriş', 'Sağlık', 'Eğitim', 'Teknoloji'];
+  const selectedCategories = categories && categories.length > 0 ? categories : allCategories;
+  
+  // Generate transactions for the last 90 days
+  const endDate = dateRange?.end ? new Date(dateRange.end) : new Date();
+  const startDate = dateRange?.start ? new Date(dateRange.start) : new Date(endDate.getTime() - 90 * 24 * 60 * 60 * 1000);
+  
+  const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+  const transactionCount = Math.floor(daysDiff * 2.5); // ~2.5 transactions per day
+  
+  for (let i = 0; i < transactionCount; i++) {
+    // Random date within range
+    const randomDate = new Date(startDate.getTime() + Math.random() * (endDate - startDate));
+    
+    // Random category
+    const category = selectedCategories[Math.floor(Math.random() * selectedCategories.length)];
+    
+    // Random amount (80% expenses, 20% income)
+    const isIncome = Math.random() < 0.2;
+    const baseAmount = isIncome ? 
+      Math.floor(Math.random() * 5000) + 1000 : // Income: 1000-6000
+      -(Math.floor(Math.random() * 800) + 50);   // Expense: -50 to -850
+    
+    transactions.push({
+      id: i + 1,
+      date: randomDate.toISOString().split('T')[0],
+      amount: baseAmount,
+      category: category,
+      description: `Mock ${isIncome ? 'income' : 'expense'} for ${category}`,
+      type: isIncome ? 'income' : 'expense'
+    });
+  }
+  
+  return transactions;
+};
+
+// Simple health score calculation
+const calculateSimpleHealthScore = (income, expense, netIncome) => {
+  if (income <= 0) return 0;
+  
+  let score = 50; // Base score
+  
+  if (netIncome > 0) {
+    score += Math.min(30, (netIncome / income) * 100);
+  } else {
+    score -= Math.min(30, Math.abs(netIncome / income) * 100);
+  }
+  
+  const expenseRatio = expense / income;
+  if (expenseRatio < 0.5) {
+    score += 20;
+  } else if (expenseRatio < 0.8) {
+    score += 10;
+  } else if (expenseRatio > 1) {
+    score -= 20;
+  }
+  
+  return Math.max(0, Math.min(100, score));
+};
+
+const aggregateMockData = (filters) => {
+  // Mock data aggregation logic
+  const { dateRange, categories } = filters;
+  
+  return {
+    totalTransactions: Math.floor(Math.random() * 1000) + 500,
+    totalAccounts: Math.floor(Math.random() * 10) + 3,
+    totalCategories: categories ? categories.length : 10,
+    dateRange: dateRange || {
+      start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      end: new Date().toISOString().split('T')[0]
+    },
+    processedAt: new Date().toISOString()
+  };
 };
 
 export default api;

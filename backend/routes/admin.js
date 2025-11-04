@@ -21,26 +21,67 @@ router.get('/users',
 );
 
 router.get('/users/:userId', 
-  paramValidation.id,
+  [
+    param('userId')
+      .isInt({ min: 1 })
+      .withMessage('Geçersiz kullanıcı ID'),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri girişi',
+          errors: errors.array()
+        });
+      }
+      next();
+    }
+  ],
   AdminController.getUserDetails
 );
 
 router.put('/users/:userId/status',
-  paramValidation.id,
   [
+    param('userId')
+      .isInt({ min: 1 })
+      .withMessage('Geçersiz kullanıcı ID'),
     body('isActive')
       .isBoolean()
-      .withMessage('isActive boolean değer olmalıdır')
+      .withMessage('isActive boolean değer olmalıdır'),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri girişi',
+          errors: errors.array()
+        });
+      }
+      next();
+    }
   ],
   AdminController.updateUserStatus
 );
 
 router.put('/users/:userId/role',
-  paramValidation.id,
   [
+    param('userId')
+      .isInt({ min: 1 })
+      .withMessage('Geçersiz kullanıcı ID'),
     body('role')
       .isIn(['user', 'admin'])
-      .withMessage('Rol user veya admin olmalıdır')
+      .withMessage('Rol user veya admin olmalıdır'),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri girişi',
+          errors: errors.array()
+        });
+      }
+      next();
+    }
   ],
   AdminController.updateUserRole
 );

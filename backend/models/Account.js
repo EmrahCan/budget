@@ -7,6 +7,8 @@ class Account {
     this.name = accountData.name;
     this.type = accountData.type;
     this.balance = parseFloat(accountData.balance);
+    this.overdraftLimit = parseFloat(accountData.overdraft_limit || 0);
+    this.overdraftUsed = parseFloat(accountData.overdraft_used || 0);
     this.currency = accountData.currency;
     this.bankId = accountData.bank_id;
     this.bankName = accountData.bank_name;
@@ -34,6 +36,8 @@ class Account {
         name,
         type,
         balance = 0,
+        overdraftLimit = 0,
+        overdraftUsed = 0,
         currency = 'TRY',
         bankId,
         bankName,
@@ -49,21 +53,31 @@ class Account {
       } = accountData;
 
       const query = `
-        INSERT INTO accounts (
-          user_id, name, type, balance, currency, bank_id, bank_name, iban, account_number,
-          is_flexible, account_limit, current_debt, interest_rate, minimum_payment_rate, payment_due_date
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        INSERT INTO accounts (user_id, name, type, balance, overdraft_limit, overdraft_used, currency, bank_id, bank_name, iban, account_number)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `;
+
+      // Esnek hesap için özel kontroller
+      if (type === 'overdraft') {
+        if (!overdraftLimit || parseFloat(overdraftLimit) <= 0) {
+          throw new Error('Esnek hesap için geçerli bir limit belirtmelisiniz');
+        }
+        // Esnek hesap başlangıç bakiyesi 0 olmalı
+        if (parseFloat(balance) !== 0) {
+          throw new Error('Esnek hesap başlangıç bakiyesi 0 olmalıdır');
+        }
+      }
 
       const result = await DatabaseUtils.query(query, [
         userId,
         name.trim(),
         type,
-        balance,
+        parseFloat(balance),
+        parseFloat(overdraftLimit || 0),
+        parseFloat(overdraftUsed || 0), // Kullanıcının girdiği değer
         currency.toUpperCase(),
-        bankId || null,
+        bankId?.trim() || null,
         bankName?.trim() || null,
         iban?.trim() || null,
         accountNumber?.trim() || null,
@@ -141,11 +155,7 @@ class Account {
   // Update account
   async update(updateData) {
     try {
-      const allowedFields = [
-        'name', 'type', 'balance', 'currency', 'is_active', 'bank_id', 'bank_name', 
-        'iban', 'account_number', 'is_flexible', 'account_limit', 'current_debt', 
-        'interest_rate', 'minimum_payment_rate', 'payment_due_date'
-      ];
+      const allowedFields = ['name', 'type', 'balance', 'overdraft_limit', 'overdraft_used', 'currency', 'is_active'];
       
       const updates = [];
       const params = [];
@@ -279,16 +289,33 @@ class Account {
         throw new Error('Gelir tutarı pozitif olmalıdır');
       }
 
+      let newBalance = this.balance;
+      let newOverdraftUsed = this.overdraftUsed;
+
+      if (this.type === 'overdraft') {
+        // Esnek hesap için - borç ödemesi
+        const paymentAmount = Math.min(amount, this.overdraftUsed);
+        newOverdraftUsed = this.overdraftUsed - paymentAmount;
+        newBalance = 0; // Esnek hesap her zaman 0 bakiye
+        
+        if (amount > this.overdraftUsed) {
+          throw new Error(`Maksimum ödeme tutarı: ${this.overdraftUsed}`);
+        }
+      } else {
+        // Normal hesaplar için
+        newBalance = this.balance + amount;
+      }
+
       // Start transaction
       const queries = [
         {
           text: `
             UPDATE accounts 
-            SET balance = balance + $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
+            SET balance = $1, overdraft_used = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
             RETURNING *
           `,
-          params: [amount, this.id]
+          params: [newBalance, newOverdraftUsed, this.id]
         },
         {
           text: `
@@ -304,6 +331,7 @@ class Account {
       
       // Update current instance
       this.balance = parseFloat(results[0].rows[0].balance);
+      this.overdraftUsed = parseFloat(results[0].rows[0].overdraft_used);
       this.updatedAt = results[0].rows[0].updated_at;
 
       return {
@@ -317,14 +345,29 @@ class Account {
   }
 
   // Add expense transaction
-  async addExpense(amount, description, category = null, allowNegative = false) {
+  async addExpense(amount, description, category = null, allowOverdraft = true) {
     try {
       if (amount <= 0) {
         throw new Error('Gider tutarı pozitif olmalıdır');
       }
 
-      if (!allowNegative && this.balance < amount) {
-        throw new Error('Yetersiz bakiye');
+      let newBalance = this.balance;
+      let newOverdraftUsed = this.overdraftUsed;
+
+      if (this.type === 'overdraft') {
+        // Esnek hesap için
+        const availableLimit = this.getRemainingOverdraftLimit();
+        if (amount > availableLimit) {
+          throw new Error(`Yetersiz limit. Kullanılabilir: ${availableLimit}`);
+        }
+        newOverdraftUsed = this.overdraftUsed + amount;
+        newBalance = 0; // Esnek hesap her zaman 0 bakiye
+      } else {
+        // Normal hesaplar için
+        if (amount > this.balance && !allowOverdraft) {
+          throw new Error('Yetersiz bakiye');
+        }
+        newBalance = this.balance - amount;
       }
 
       // Start transaction
@@ -332,11 +375,11 @@ class Account {
         {
           text: `
             UPDATE accounts 
-            SET balance = balance - $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
+            SET balance = $1, overdraft_used = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
             RETURNING *
           `,
-          params: [amount, this.id]
+          params: [newBalance, newOverdraftUsed, this.id]
         },
         {
           text: `
@@ -352,6 +395,7 @@ class Account {
       
       // Update current instance
       this.balance = parseFloat(results[0].rows[0].balance);
+      this.overdraftUsed = parseFloat(results[0].rows[0].overdraft_used);
       this.updatedAt = results[0].rows[0].updated_at;
 
       return {
@@ -576,6 +620,47 @@ class Account {
   }
 
   // Convert to JSON
+  // Esnek hesap için özel hesaplamalar
+  getOverdraftUsed() {
+    if (this.type === 'overdraft') {
+      return this.overdraftUsed || 0;
+    }
+    return 0;
+  }
+
+  getRemainingOverdraftLimit() {
+    if (this.type === 'overdraft') {
+      return Math.max(0, this.overdraftLimit - this.getOverdraftUsed());
+    }
+    return 0;
+  }
+
+  getOverdraftDebt() {
+    if (this.type === 'overdraft') {
+      return this.getOverdraftUsed();
+    }
+    return 0;
+  }
+
+  // Normal hesaplar için
+  getAvailableBalance() {
+    if (this.type === 'overdraft') {
+      return this.getRemainingOverdraftLimit();
+    }
+    return this.balance;
+  }
+
+  getDisplayedBalance() {
+    if (this.type === 'overdraft') {
+      return 0; // Esnek hesap her zaman 0 bakiye gösterir
+    }
+    return this.balance;
+  }
+
+  isUsingOverdraft() {
+    return this.type === 'overdraft' && this.getOverdraftUsed() > 0;
+  }
+
   toJSON() {
     const baseData = {
       id: this.id,
@@ -583,7 +668,13 @@ class Account {
       name: this.name,
       type: this.type,
       typeDisplayName: this.getTypeDisplayName(),
-      balance: this.balance,
+      balance: this.getDisplayedBalance(), // Gösterilen bakiye
+      overdraftLimit: this.overdraftLimit || 0, // Esnek hesap limiti
+      overdraftUsed: this.getOverdraftUsed(), // Kullanılan esnek hesap
+      overdraftDebt: this.getOverdraftDebt(), // Esnek hesap borcu
+      availableBalance: this.getAvailableBalance(), // Kullanılabilir miktar
+      remainingOverdraftLimit: this.getRemainingOverdraftLimit(), // Kalan limit
+      isUsingOverdraft: this.isUsingOverdraft(),
       currency: this.currency,
       bankId: this.bankId,
       bankName: this.bankName,
@@ -591,7 +682,7 @@ class Account {
       accountNumber: this.accountNumber,
       isActive: this.isActive,
       isLowBalance: this.isLowBalance(),
-      isOverdrawn: this.isOverdrawn(),
+      isOverdrawn: this.type === 'overdraft' ? this.isUsingOverdraft() : this.balance < 0,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
     };

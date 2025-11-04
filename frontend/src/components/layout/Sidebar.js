@@ -23,8 +23,9 @@ import {
   AdminPanelSettings,
   People,
   Schedule,
-  Terrain,
   Payment,
+  Repeat,
+  CalendarToday,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -41,6 +42,11 @@ const getMenuItems = (userRole) => {
       path: '/accounts',
     },
     {
+      text: 'Esnek Hesaplar',
+      icon: <CreditCard />,
+      path: '/overdrafts',
+    },
+    {
       text: 'Kredi Kartlarım',
       icon: <CreditCard />,
       path: '/credit-cards',
@@ -52,18 +58,18 @@ const getMenuItems = (userRole) => {
     },
     {
       text: 'Sabit Ödemeler',
-      icon: <Schedule />,
+      icon: <Repeat />,
       path: '/fixed-payments',
-    },
-    {
-      text: 'Arsa Ödemeleri',
-      icon: <Terrain />,
-      path: '/land-payments',
     },
     {
       text: 'Taksitli Ödemeler',
       icon: <Payment />,
       path: '/installment-payments',
+    },
+    {
+      text: 'Ödeme Takvimi',
+      icon: <CalendarToday />,
+      path: '/payment-calendar',
     },
     {
       text: 'Raporlar',

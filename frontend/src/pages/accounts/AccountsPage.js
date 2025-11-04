@@ -29,6 +29,10 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Divider,
+  Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Add,
@@ -41,19 +45,22 @@ import {
   Savings,
   AccountBalanceWallet,
   CreditCard as CreditCardIcon,
+  Dashboard,
+  ViewList,
+  GridView,
 } from '@mui/icons-material';
+
+// Import dashboard components
+import AccountsDashboard from './AccountsDashboard';
 import { useNotification } from '../../contexts/NotificationContext';
 import { accountsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
 const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Vadesiz Hesap', icon: <AccountBalance /> },
-  { value: 'savings', label: 'Vadeli Hesap', icon: <Savings /> },
-  { value: 'cash', label: 'Nakit', icon: <AccountBalanceWallet /> },
-  { value: 'investment', label: 'Yatırım Hesabı', icon: <TrendingUp /> },
-  { value: 'overdraft', label: 'Overdraft Hesabı', icon: <TrendingDown />, isFlexible: true },
-  { value: 'credit_line', label: 'Kredi Limiti', icon: <CreditCardIcon />, isFlexible: true },
-  { value: 'spending_limit', label: 'Harcama Limiti', icon: <SwapHoriz />, isFlexible: true },
+  { value: 'checking', label: 'Vadesiz Hesap', icon: <AccountBalance />, description: 'Günlük işlemler için' },
+  { value: 'savings', label: 'Vadeli Hesap', icon: <Savings />, description: 'Tasarruf amaçlı' },
+  { value: 'cash', label: 'Nakit', icon: <AccountBalanceWallet />, description: 'Nakit para takibi' },
+  { value: 'investment', label: 'Yatırım Hesabı', icon: <TrendingUp />, description: 'Yatırım portföyü' },
 ];
 
 const AccountsPage = () => {
@@ -63,10 +70,12 @@ const AccountsPage = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
+  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'list'
   const [formData, setFormData] = useState({
     name: '',
     type: 'checking',
     balance: '',
+    overdraftLimit: '',
     currency: 'TRY',
     bankId: '',
     bankName: '',
@@ -82,6 +91,8 @@ const AccountsPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+
 
   useEffect(() => {
     loadAccounts();
@@ -107,6 +118,7 @@ const AccountsPage = () => {
         name: account.name,
         type: account.type,
         balance: account.balance.toString(),
+        overdraftLimit: account.overdraftLimit?.toString() || '0',
         currency: account.currency,
         bankId: account.bankId || '',
         bankName: account.bankName || '',
@@ -126,6 +138,7 @@ const AccountsPage = () => {
         name: '',
         type: 'checking',
         balance: '0',
+        overdraftLimit: '0',
         currency: 'TRY',
         bankId: '',
         bankName: '',
@@ -151,6 +164,7 @@ const AccountsPage = () => {
       name: '',
       type: 'checking',
       balance: '0',
+      overdraftLimit: '0',
       currency: 'TRY',
       bankId: '',
       bankName: '',
@@ -171,20 +185,7 @@ const AccountsPage = () => {
     setFormData(prev => {
       const newData = { ...prev, [field]: value };
       
-      // Auto-set flexible account feature based on account type
-      if (field === 'type') {
-        const accountType = ACCOUNT_TYPES.find(t => t.value === value);
-        newData.isFlexible = accountType?.isFlexible || false;
-        
-        // Reset flexible fields if switching to non-flexible type
-        if (!newData.isFlexible) {
-          newData.accountLimit = '';
-          newData.currentDebt = '0';
-          newData.interestRate = '';
-          newData.minimumPaymentRate = '5';
-          newData.paymentDueDate = '';
-        }
-      }
+
       
       return newData;
     });
@@ -219,6 +220,7 @@ const AccountsPage = () => {
         name: formData.name.trim(),
         type: formData.type,
         balance: parseFloat(formData.balance),
+        overdraftLimit: parseFloat(formData.overdraftLimit || 0),
         currency: formData.currency,
         bankId: formData.bankId || null,
         bankName: formData.bankName.trim() || null,
@@ -232,6 +234,8 @@ const AccountsPage = () => {
         minimumPaymentRate: formData.isFlexible ? parseFloat(formData.minimumPaymentRate) : 5,
         paymentDueDate: formData.isFlexible && formData.paymentDueDate ? parseInt(formData.paymentDueDate) : null,
       };
+
+      console.log('Gönderilen hesap verisi:', accountData);
 
       if (editingAccount) {
         await accountsAPI.update(editingAccount.id, accountData);
@@ -270,6 +274,24 @@ const AccountsPage = () => {
     return accounts.reduce((total, account) => total + account.balance, 0);
   };
 
+  const getTotalOverdraftDebt = () => {
+    return accounts
+      .filter(account => account.type === 'overdraft' && account.balance < 0)
+      .reduce((total, account) => total + Math.abs(account.balance), 0);
+  };
+
+  const getTotalOverdraftLimit = () => {
+    return accounts
+      .filter(account => account.type === 'overdraft')
+      .reduce((total, account) => total + (account.overdraftLimit || 0), 0);
+  };
+
+  const getNetBalance = () => {
+    return getTotalBalance() - getTotalOverdraftDebt();
+  };
+
+
+
   if (loading) {
     return (
       <Container maxWidth="xl">
@@ -293,56 +315,84 @@ const AccountsPage = () => {
               Banka hesaplarınızı ve nakit durumunuzu yönetin
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            size="large"
-          >
-            Hesap Ekle
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, newMode) => newMode && setViewMode(newMode)}
+              size="small"
+            >
+              <ToggleButton value="dashboard">
+                <Tooltip title="Dashboard Görünümü">
+                  <Dashboard />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="list">
+                <Tooltip title="Liste Görünümü">
+                  <ViewList />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+              size="large"
+            >
+              Hesap Ekle
+            </Button>
+          </Box>
         </Box>
 
-        {/* Summary Card */}
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Toplam Bakiye
-                  </Typography>
-                  <Typography variant="h3" component="div" color="primary.main">
-                    {formatCurrency(getTotalBalance())}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Aktif Hesap Sayısı
-                  </Typography>
-                  <Typography variant="h3" component="div">
-                    {accounts.filter(a => a.isActive).length}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Hesap Türleri
-                  </Typography>
-                  <Typography variant="h3" component="div">
-                    {new Set(accounts.map(a => a.type)).size}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+        {/* Dashboard or List View */}
+        {viewMode === 'dashboard' ? (
+          <AccountsDashboard />
+        ) : (
+          <>
+            {/* Summary Card */}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Toplam Bakiye
+                      </Typography>
+                      <Typography variant="h3" component="div" color="primary.main">
+                        {formatCurrency(getTotalBalance())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Esnek Hesap Borcu
+                      </Typography>
+                      <Typography variant="h3" component="div" color="error.main">
+                        {formatCurrency(getTotalOverdraftDebt())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Net Durum
+                      </Typography>
+                      <Typography 
+                        variant="h3" 
+                        component="div" 
+                        color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        {formatCurrency(getNetBalance())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
 
-        {/* Accounts Grid */}
-        {accounts.length > 0 ? (
+            {/* Accounts Grid */}
+            {accounts.length > 0 ? (
           <Grid container spacing={3}>
             {accounts.map((account) => {
               const typeInfo = getAccountTypeInfo(account.type);
@@ -357,7 +407,7 @@ const AccountsPage = () => {
                             mr: 2 
                           }}
                         >
-                          {account.bankId ? getBankById(account.bankId)?.name?.charAt(0) || typeInfo.icon : typeInfo.icon}
+                          {account.bankId && getBankById(account.bankId)?.name ? getBankById(account.bankId).name.charAt(0) : typeInfo.icon}
                         </Avatar>
                         <Box sx={{ flexGrow: 1 }}>
                           <Typography variant="h6" noWrap>
@@ -384,14 +434,48 @@ const AccountsPage = () => {
                         </Box>
                       </Box>
 
-                      <Typography
-                        variant="h4"
-                        component="div"
-                        color={account.balance >= 0 ? 'success.main' : 'error.main'}
-                        sx={{ mb: 2 }}
-                      >
-                        {formatCurrency(account.balance)}
-                      </Typography>
+                      {/* Normal hesaplar için gösterim */}
+                        /* Normal ve diğer hesaplar için gösterim */
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="body2" color="textSecondary" gutterBottom>
+                            Hesap Bakiyesi
+                          </Typography>
+                          <Typography
+                            variant="h4"
+                            component="div"
+                            color={account.balance >= 0 ? 'success.main' : 'error.main'}
+                          >
+                            {formatCurrency(account.balance)}
+                          </Typography>
+                          
+                          {/* Hesap türüne göre bütçe önerileri */}
+                          {account.type === 'checking' && account.balance > 0 && (
+                            <Alert severity="success" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                💡 <strong>Öneri:</strong> Aylık gelirinizin %20'sini tasarruf etmeyi hedefleyin. 
+                                Sabit giderlerinizi optimize edebiliriz.
+                              </Typography>
+                            </Alert>
+                          )}
+                          
+                          {account.type === 'savings' && account.balance > 0 && (
+                            <Alert severity="success" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                🎯 <strong>Hedef:</strong> Tasarruf hesabınız büyüyor! Yıllık faiz oranınızı 
+                                kontrol edin ve daha iyi alternatifler araştıralım.
+                              </Typography>
+                            </Alert>
+                          )}
+                          
+                          {account.type === 'investment' && (
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                              <Typography variant="caption">
+                                📈 <strong>Yatırım:</strong> Portföy performansınızı takip edelim. 
+                                Risk dağılımınızı analiz edebilirim.
+                              </Typography>
+                            </Alert>
+                          )}
+                        </Box>
 
                       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                         {!account.isActive && (
@@ -402,6 +486,9 @@ const AccountsPage = () => {
                         )}
                         {account.isOverdrawn && (
                           <Chip label="Eksi Bakiye" color="error" size="small" />
+                        )}
+                        {account.isUsingOverdraft && (
+                          <Chip label="Esnek Hesap Kullanımda" color="warning" size="small" />
                         )}
                       </Box>
 
@@ -516,6 +603,8 @@ const AccountsPage = () => {
             </CardContent>
           </Card>
         )}
+          </>
+        )}
 
         {/* Account Form Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
@@ -550,18 +639,18 @@ const AccountsPage = () => {
                     <ListItemAvatar>
                       <Avatar 
                         sx={{ 
-                          bgcolor: option.color,
+                          bgcolor: option?.color || 'primary.main',
                           width: 32, 
                           height: 32,
                           fontSize: '0.75rem'
                         }}
                       >
-                        {option.name.charAt(0)}
+                        {option?.name?.charAt(0) || '?'}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
-                      primary={option.name}
-                      secondary={option.fullName}
+                      primary={option?.name || 'Bilinmeyen Banka'}
+                      secondary={option?.fullName || ''}
                     />
                   </Box>
                 )}
@@ -569,7 +658,7 @@ const AccountsPage = () => {
                   if (!inputValue) {
                     // Popüler bankaları önce göster
                     const popular = popularBanks.map(id => getBankById(id)).filter(Boolean).slice(0, 6);
-                    const others = options.filter(bank => !popular.find(p => p.id === bank.id));
+                    const others = options.filter(bank => !popular.find(p => p && p.id === bank.id));
                     return [...popular, ...others];
                   }
                   return searchBanks(inputValue);
@@ -598,9 +687,14 @@ const AccountsPage = () => {
               >
                 {ACCOUNT_TYPES.map((type) => (
                   <MenuItem key={type.value} value={type.value}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {type.icon}
-                      {type.label}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {type.icon}
+                        {type.label}
+                      </Box>
+                      <Typography variant="caption" color="textSecondary">
+                        {type.description}
+                      </Typography>
                     </Box>
                   </MenuItem>
                 ))}
@@ -619,6 +713,9 @@ const AccountsPage = () => {
                 }}
                 sx={{ mb: 3 }}
               />
+
+              {/* Esnek Hesap Limiti sadece esnek hesap türü için */}
+
 
               <TextField
                 fullWidth
@@ -746,6 +843,8 @@ const AccountsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+
       </Box>
     </Container>
   );
