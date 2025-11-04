@@ -320,6 +320,16 @@ const FixedPaymentsPage = () => {
     }));
   };
 
+  if (loading) {
+    return (
+      <Container maxWidth="xl">
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl">
       <Box sx={{ py: 3 }}>
@@ -343,12 +353,7 @@ const FixedPaymentsPage = () => {
           </Button>
         </Box>
 
-        {/* Alert */}
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>Not:</strong> Bu sayfa demo modunda çalışıyor. Gerçek API entegrasyonu için backend geliştirmesi gerekiyor.
-          </Typography>
-        </Alert>
+
 
         {/* Summary Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
