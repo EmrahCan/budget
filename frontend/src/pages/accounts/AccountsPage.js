@@ -29,6 +29,9 @@ import {
   InputLabel,
   Select,
   Divider,
+  Tooltip,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import {
   Add,
@@ -41,7 +44,13 @@ import {
   Savings,
   AccountBalanceWallet,
   CreditCard as CreditCardIcon,
+  Dashboard,
+  ViewList,
+  GridView,
 } from '@mui/icons-material';
+
+// Import dashboard components
+import AccountsDashboard from './AccountsDashboard';
 import { useNotification } from '../../contexts/NotificationContext';
 import { accountsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
@@ -60,6 +69,7 @@ const AccountsPage = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
+  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard' or 'list'
   const [formData, setFormData] = useState({
     name: '',
     type: 'checking',
@@ -264,60 +274,84 @@ const AccountsPage = () => {
               Banka hesaplarınızı ve nakit durumunuzu yönetin
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            size="large"
-          >
-            Hesap Ekle
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <ToggleButtonGroup
+              value={viewMode}
+              exclusive
+              onChange={(e, newMode) => newMode && setViewMode(newMode)}
+              size="small"
+            >
+              <ToggleButton value="dashboard">
+                <Tooltip title="Dashboard Görünümü">
+                  <Dashboard />
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="list">
+                <Tooltip title="Liste Görünümü">
+                  <ViewList />
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+              size="large"
+            >
+              Hesap Ekle
+            </Button>
+          </Box>
         </Box>
 
-        {/* Summary Card */}
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Toplam Bakiye
-                  </Typography>
-                  <Typography variant="h3" component="div" color="primary.main">
-                    {formatCurrency(getTotalBalance())}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Esnek Hesap Borcu
-                  </Typography>
-                  <Typography variant="h3" component="div" color="error.main">
-                    {formatCurrency(getTotalOverdraftDebt())}
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography variant="h6" color="textSecondary" gutterBottom>
-                    Net Durum
-                  </Typography>
-                  <Typography 
-                    variant="h3" 
-                    component="div" 
-                    color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
-                  >
-                    {formatCurrency(getNetBalance())}
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+        {/* Dashboard or List View */}
+        {viewMode === 'dashboard' ? (
+          <AccountsDashboard />
+        ) : (
+          <>
+            {/* Summary Card */}
+            <Card sx={{ mb: 4 }}>
+              <CardContent>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Toplam Bakiye
+                      </Typography>
+                      <Typography variant="h3" component="div" color="primary.main">
+                        {formatCurrency(getTotalBalance())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Esnek Hesap Borcu
+                      </Typography>
+                      <Typography variant="h3" component="div" color="error.main">
+                        {formatCurrency(getTotalOverdraftDebt())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ textAlign: 'center' }}>
+                      <Typography variant="h6" color="textSecondary" gutterBottom>
+                        Net Durum
+                      </Typography>
+                      <Typography 
+                        variant="h3" 
+                        component="div" 
+                        color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
+                      >
+                        {formatCurrency(getNetBalance())}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
 
-        {/* Accounts Grid */}
-        {accounts.length > 0 ? (
+            {/* Accounts Grid */}
+            {accounts.length > 0 ? (
           <Grid container spacing={3}>
             {accounts.map((account) => {
               const typeInfo = getAccountTypeInfo(account.type);
@@ -455,6 +489,8 @@ const AccountsPage = () => {
               </Button>
             </CardContent>
           </Card>
+        )}
+          </>
         )}
 
         {/* Account Form Dialog */}

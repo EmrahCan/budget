@@ -348,9 +348,11 @@ class ReportPerformanceService {
 
     // Run cache cleanup every 10 minutes
     this.cacheCleanupInterval = setInterval(() => {
-      enhancedCacheManager.cleanup().catch(error => {
-        logger.errorWithContext('Cache cleanup failed', error);
-      });
+      if (enhancedCacheManager && enhancedCacheManager.cleanup) {
+        enhancedCacheManager.cleanup().catch(error => {
+          logger.errorWithContext('Cache cleanup failed', error);
+        });
+      }
     }, 10 * 60 * 1000);
   }
 

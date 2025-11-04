@@ -134,15 +134,59 @@ export const transactionsAPI = {
 
 // Helper function to handle API errors
 export const handleApiError = (error) => {
+  console.error('API Error:', error);
+  
   if (error.response) {
     // Server responded with error status
-    return error.response.data?.message || 'Sunucu hatası oluştu';
+    const status = error.response.status;
+    const data = error.response.data;
+    
+    switch (status) {
+      case 400:
+        // Validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          return data.errors.map(err => err.message).join(', ');
+        }
+        return data.message || 'Geçersiz veri girişi';
+      
+      case 401:
+        return 'Oturum süreniz dolmuş, lütfen tekrar giriş yapın';
+      
+      case 403:
+        return 'Bu işlem için yetkiniz bulunmuyor';
+      
+      case 404:
+        return 'Aranan kaynak bulunamadı';
+      
+      case 409:
+        return data.message || 'Çakışma hatası oluştu';
+      
+      case 422:
+        return data.message || 'İşlenemeyen veri';
+      
+      case 429:
+        return 'Çok fazla istek gönderildi, lütfen bekleyin';
+      
+      case 500:
+        return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
+      
+      case 502:
+      case 503:
+      case 504:
+        return 'Sunucu geçici olarak kullanılamıyor';
+      
+      default:
+        return data.message || `Sunucu hatası (${status})`;
+    }
   } else if (error.request) {
     // Request was made but no response received
-    return 'Sunucuya bağlanılamadı';
+    if (error.code === 'ECONNABORTED') {
+      return 'İstek zaman aşımına uğradı';
+    }
+    return 'Sunucuya bağlanılamadı, internet bağlantınızı kontrol edin';
   } else {
     // Something else happened
-    return 'Beklenmeyen bir hata oluştu';
+    return error.message || 'Beklenmeyen bir hata oluştu';
   }
 };
 
@@ -154,6 +198,23 @@ export const formatCurrency = (amount, currency = 'TRY') => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
+};
+
+// Helper function to create API call with loading state
+export const createApiCall = async (apiFunction, setLoading, errorHandler) => {
+  try {
+    if (setLoading) setLoading(true);
+    const result = await apiFunction();
+    return result;
+  } catch (error) {
+    if (errorHandler) {
+      errorHandler(handleApiError(error));
+    } else {
+      throw error;
+    }
+  } finally {
+    if (setLoading) setLoading(false);
+  }
 };
 
 // Helper function to format date

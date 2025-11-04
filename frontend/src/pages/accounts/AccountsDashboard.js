@@ -9,10 +9,12 @@ import {
   Button,
   Avatar,
   Chip,
+  Alert,
   CircularProgress,
   Paper,
   Divider,
   IconButton,
+  Tooltip,
   List,
   ListItem,
   ListItemAvatar,
@@ -21,7 +23,6 @@ import {
   Menu,
   MenuItem,
   Fab,
-  LinearProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -31,72 +32,72 @@ import {
 } from '@mui/material';
 import {
   Add,
+  AccountBalance,
   Edit,
   Delete,
-  Warning,
-  CheckCircle,
-  Error,
+  TrendingUp,
+  TrendingDown,
+  Savings,
+  AccountBalanceWallet,
   CreditCard as CreditCardIcon,
+  SwapHoriz,
+  Timeline,
+  Assessment,
+  Visibility,
   MoreVert,
-  Payment,
   FilterList,
   Sort,
-  Visibility,
 } from '@mui/icons-material';
+
 import { useNotification } from '../../contexts/NotificationContext';
-import { formatCurrency, formatDate, handleApiError, accountsAPI } from '../../services/api';
+import { accountsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
-// Esnek Hesaplar API - gerçek accounts API'sini kullanır
-const overdraftsAPI = {
-  getAll: () => accountsAPI.getAll({ type: 'overdraft' }),
-  create: (data) => accountsAPI.create({ ...data, type: 'overdraft' }),
-  update: (id, data) => accountsAPI.update(id, data),
-  delete: (id) => accountsAPI.delete(id),
-  addExpense: (id, data) => accountsAPI.addExpense(id, data),
-  addPayment: (id, data) => accountsAPI.addIncome(id, data),
-};
-
-// Overdraft summary component
-const OverdraftSummaryCard = ({ overdrafts }) => {
-  const getTotalLimit = () => overdrafts.reduce((total, od) => total + (od.overdraftLimit || 0), 0);
-  const getTotalUsed = () => overdrafts.reduce((total, od) => total + (od.overdraftUsed || 0), 0);
-  const getTotalAvailable = () => getTotalLimit() - getTotalUsed();
+// Account summary component
+const AccountSummaryCard = ({ accounts }) => {
+  const getTotalBalance = () => accounts.reduce((total, account) => total + account.balance, 0);
+  const getTotalOverdraftDebt = () => accounts
+    .filter(account => account.type === 'overdraft' && account.balance < 0)
+    .reduce((total, account) => total + Math.abs(account.balance), 0);
+  const getNetBalance = () => getTotalBalance() - getTotalOverdraftDebt();
 
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Esnek Hesap Özeti
+          Hesap Özeti
         </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
-                {formatCurrency(getTotalLimit())}
+                {formatCurrency(getTotalBalance())}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Toplam Limit
+                Toplam Bakiye
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="error.main">
-                {formatCurrency(getTotalUsed())}
+                {formatCurrency(getTotalOverdraftDebt())}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Kullanılan
+                Esnek Hesap Borcu
               </Typography>
             </Box>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main">
-                {formatCurrency(getTotalAvailable())}
+              <Typography 
+                variant="h4" 
+                color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
+              >
+                {formatCurrency(getNetBalance())}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Kullanılabilir
+                Net Durum
               </Typography>
             </Box>
           </Grid>
@@ -106,40 +107,55 @@ const OverdraftSummaryCard = ({ overdrafts }) => {
   );
 };
 
-// Overdrafts list component
-const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
+// Account list component
+const AccountsList = ({ accounts, onEdit, onDelete }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedOverdraft, setSelectedOverdraft] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [sortBy, setSortBy] = useState('name'); // 'name', 'balance', 'type', 'bank'
+  const [filterType, setFilterType] = useState('all'); // 'all', 'checking', 'savings', etc.
 
-  const getStatusInfo = (overdraft) => {
-    const used = overdraft.overdraftUsed || 0;
-    const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
-    
-    if (utilizationRate >= 90) {
-      return { label: 'Kritik', color: 'error', icon: <Error /> };
-    } else if (utilizationRate >= 70) {
-      return { label: 'Uyarı', color: 'warning', icon: <Warning /> };
-    } else {
-      return { label: 'Normal', color: 'success', icon: <CheckCircle /> };
-    }
+  const getAccountTypeInfo = (type) => {
+    const types = {
+      checking: { label: 'Vadesiz Hesap', icon: <AccountBalance />, color: 'primary' },
+      savings: { label: 'Vadeli Hesap', icon: <Savings />, color: 'success' },
+      cash: { label: 'Nakit', icon: <AccountBalanceWallet />, color: 'warning' },
+      investment: { label: 'Yatırım Hesabı', icon: <TrendingUp />, color: 'info' },
+      overdraft: { label: 'Esnek Hesap', icon: <CreditCardIcon />, color: 'error' },
+    };
+    return types[type] || types.checking;
   };
 
-  const handleMenuClick = (event, overdraft) => {
+  const handleMenuClick = (event, account) => {
     setAnchorEl(event.currentTarget);
-    setSelectedOverdraft(overdraft);
+    setSelectedAccount(account);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedOverdraft(null);
+    setSelectedAccount(null);
   };
+
+  const sortedAndFilteredAccounts = accounts
+    .filter(account => filterType === 'all' || account.type === filterType)
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'balance':
+          return b.balance - a.balance;
+        case 'type':
+          return a.type.localeCompare(b.type);
+        case 'bank':
+          return (a.bankName || '').localeCompare(b.bankName || '');
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
 
   return (
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
-            Esnek Hesaplarım ({overdrafts.length})
+            Hesaplarım ({sortedAndFilteredAccounts.length})
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button size="small" startIcon={<FilterList />} variant="outlined">
@@ -152,14 +168,10 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
         </Box>
         
         <List>
-          {overdrafts.map((overdraft, index) => {
-            const statusInfo = getStatusInfo(overdraft);
-            const used = overdraft.overdraftUsed || 0;
-            const available = (overdraft.overdraftLimit || 0) - used;
-            const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
-            
+          {sortedAndFilteredAccounts.map((account, index) => {
+            const typeInfo = getAccountTypeInfo(account.type);
             return (
-              <React.Fragment key={overdraft.id}>
+              <React.Fragment key={account.id}>
                 <ListItem
                   sx={{
                     borderRadius: 2,
@@ -175,14 +187,14 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                   <ListItemAvatar>
                     <Avatar 
                       sx={{ 
-                        bgcolor: overdraft.bankId ? getBankById(overdraft.bankId)?.color || 'primary.main' : 'primary.main',
+                        bgcolor: account.bankId ? getBankById(account.bankId)?.color || 'primary.main' : `${typeInfo.color}.main`,
                         width: 48,
                         height: 48
                       }}
                     >
-                      {overdraft.bankId && getBankById(overdraft.bankId)?.name 
-                        ? getBankById(overdraft.bankId).name.charAt(0) 
-                        : <CreditCardIcon />}
+                      {account.bankId && getBankById(account.bankId)?.name 
+                        ? getBankById(account.bankId).name.charAt(0) 
+                        : typeInfo.icon}
                     </Avatar>
                   </ListItemAvatar>
                   
@@ -190,72 +202,52 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
-                          {overdraft.name}
+                          {account.name}
                         </Typography>
-                        <Chip 
-                          icon={statusInfo.icon}
-                          label={statusInfo.label}
-                          color={statusInfo.color}
-                          size="small"
-                        />
+                        {!account.isActive && <Chip label="Pasif" color="error" size="small" />}
+                        {account.isLowBalance && <Chip label="Düşük" color="warning" size="small" />}
+                        {account.isOverdrawn && <Chip label="Eksi" color="error" size="small" />}
                       </Box>
                     }
                     secondary={
                       <React.Fragment>
                         <Typography variant="body2" color="textSecondary" component="span" display="block">
-                          {overdraft.bankName || 'Esnek Hesap'}
+                          {account.bankName ? `${account.bankName} • ${typeInfo.label}` : typeInfo.label}
                         </Typography>
-                        {/* Kullanım oranı progress bar */}
-                        <Box component="span" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={utilizationRate}
-                            color={utilizationRate > 80 ? 'error' : utilizationRate > 60 ? 'warning' : 'success'}
-                            sx={{ height: 6, borderRadius: 1, flexGrow: 1 }}
-                          />
-                          <Typography variant="caption" color="textSecondary" component="span">
-                            %{utilizationRate.toFixed(1)}
+                        {account.accountNumber && (
+                          <Typography variant="caption" color="textSecondary" component="span" display="block">
+                            Hesap No: {account.accountNumber}
                           </Typography>
-                        </Box>
+                        )}
                       </React.Fragment>
                     }
                   />
                   
-                  <Box sx={{ textAlign: 'right', mr: 2, minWidth: 120 }}>
-                    {/* Toplam Limit */}
-                    <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
-                      Limit: {formatCurrency(overdraft.overdraftLimit || 0)}
-                    </Typography>
-                    
-                    {/* Kullanılan Borç */}
-                    <Typography variant="body2" color="error.main" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                      Borç: {formatCurrency(used)}
-                    </Typography>
-                    
-                    {/* Kullanılabilir */}
+                  <Box sx={{ textAlign: 'right', mr: 2 }}>
                     <Typography 
-                      variant="subtitle1" 
-                      color="success.main"
+                      variant="h6" 
+                      color={account.balance >= 0 ? 'success.main' : 'error.main'}
                       fontWeight="bold"
-                      sx={{ fontSize: '1rem' }}
                     >
-                      {formatCurrency(available)}
+                      {formatCurrency(account.balance)}
                     </Typography>
-                    <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
-                      Kullanılabilir
-                    </Typography>
+                    {account.type === 'overdraft' && account.overdraftLimit && (
+                      <Typography variant="caption" color="textSecondary">
+                        Limit: {formatCurrency(account.overdraftLimit)}
+                      </Typography>
+                    )}
                   </Box>
                   
                   <ListItemSecondaryAction>
                     <IconButton 
                       edge="end" 
-                      onClick={(e) => handleMenuClick(e, overdraft)}
+                      onClick={(e) => handleMenuClick(e, account)}
                     >
                       <MoreVert />
                     </IconButton>
                   </ListItemSecondaryAction>
                 </ListItem>
-                {index < overdrafts.length - 1 && <Divider />}
+                {index < sortedAndFilteredAccounts.length - 1 && <Divider />}
               </React.Fragment>
             );
           })}
@@ -267,18 +259,18 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => { onEdit && onEdit(selectedOverdraft); handleMenuClose(); }}>
+          <MenuItem onClick={() => { onEdit && onEdit(selectedAccount); handleMenuClose(); }}>
             <Edit sx={{ mr: 1 }} /> Düzenle
           </MenuItem>
           <MenuItem onClick={() => { /* Handle view details */ handleMenuClose(); }}>
             <Visibility sx={{ mr: 1 }} /> Detayları Görüntüle
           </MenuItem>
-          <MenuItem onClick={() => { /* Handle payment */ handleMenuClose(); }}>
-            <Payment sx={{ mr: 1 }} /> Ödeme Yap
+          <MenuItem onClick={() => { /* Handle transfer */ handleMenuClose(); }}>
+            <SwapHoriz sx={{ mr: 1 }} /> Transfer Yap
           </MenuItem>
           <Divider />
           <MenuItem 
-            onClick={() => { onDelete && onDelete(selectedOverdraft?.id); handleMenuClose(); }}
+            onClick={() => { onDelete && onDelete(selectedAccount?.id); handleMenuClose(); }}
             sx={{ color: 'error.main' }}
           >
             <Delete sx={{ mr: 1 }} /> Sil
@@ -290,34 +282,19 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
 };
 
 // Quick stats component
-const QuickStats = ({ overdrafts }) => {
+const QuickStats = ({ accounts }) => {
   const getStats = () => {
-    const criticalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate >= 90;
-    });
+    const activeAccounts = accounts.filter(acc => acc.isActive !== false);
+    const lowBalanceAccounts = accounts.filter(acc => acc.isLowBalance);
+    const overdraftAccounts = accounts.filter(acc => acc.type === 'overdraft');
+    const savingsAccounts = accounts.filter(acc => acc.type === 'savings');
     
-    const warningOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate >= 70 && utilizationRate < 90;
-    });
-    
-    const normalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate < 70;
-    });
-
-    const highInterestOverdrafts = overdrafts.filter(od => (od.interestRate || 0) > 15);
-
     return {
-      total: overdrafts.length,
-      normal: normalOverdrafts.length,
-      warning: warningOverdrafts.length,
-      critical: criticalOverdrafts.length,
-      highInterest: highInterestOverdrafts.length
+      total: accounts.length,
+      active: activeAccounts.length,
+      lowBalance: lowBalanceAccounts.length,
+      overdrafts: overdraftAccounts.length,
+      savings: savingsAccounts.length
     };
   };
 
@@ -338,40 +315,40 @@ const QuickStats = ({ overdrafts }) => {
       <Grid item xs={6} sm={2.4}>
         <Paper sx={{ p: 2, textAlign: 'center' }}>
           <Typography variant="h4" color="success.main">
-            {stats.normal}
+            {stats.active}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Normal
+            Aktif Hesap
           </Typography>
         </Paper>
       </Grid>
       <Grid item xs={6} sm={2.4}>
         <Paper sx={{ p: 2, textAlign: 'center' }}>
           <Typography variant="h4" color="warning.main">
-            {stats.warning}
+            {stats.lowBalance}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Uyarı
+            Düşük Bakiye
           </Typography>
         </Paper>
       </Grid>
       <Grid item xs={6} sm={2.4}>
         <Paper sx={{ p: 2, textAlign: 'center' }}>
           <Typography variant="h4" color="error.main">
-            {stats.critical}
+            {stats.overdrafts}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Kritik
+            Esnek Hesap
           </Typography>
         </Paper>
       </Grid>
       <Grid item xs={6} sm={2.4}>
         <Paper sx={{ p: 2, textAlign: 'center' }}>
           <Typography variant="h4" color="info.main">
-            {stats.highInterest}
+            {stats.savings}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Yüksek Faiz
+            Tasarruf
           </Typography>
         </Paper>
       </Grid>
@@ -379,33 +356,32 @@ const QuickStats = ({ overdrafts }) => {
   );
 };
 
-const OverdraftsPage = () => {
-  const { showSuccess, showError } = useNotification();
-  const [overdrafts, setOverdrafts] = useState([]);
+const AccountsDashboard = () => {
+  const { showError, showSuccess } = useNotification();
+  const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingOverdraft, setEditingOverdraft] = useState(null);
+  const [editingAccount, setEditingAccount] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     bankId: '',
     bankName: '',
-    overdraftLimit: '',
-    currentBalance: '0',
-    interestRate: '',
+    accountType: 'checking',
+    currentBalance: '',
     accountNumber: '',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadOverdrafts();
+    loadAccounts();
   }, []);
 
-  const loadOverdrafts = async () => {
+  const loadAccounts = async () => {
     try {
       setLoading(true);
-      const response = await overdraftsAPI.getAll();
-      setOverdrafts(response.data.data.accounts || []);
+      const response = await accountsAPI.getAll();
+      setAccounts(response.data.data.accounts);
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -413,27 +389,25 @@ const OverdraftsPage = () => {
     }
   };
 
-  const handleOpenDialog = (overdraft = null) => {
-    if (overdraft) {
-      setEditingOverdraft(overdraft);
+  const handleOpenDialog = (account = null) => {
+    if (account) {
+      setEditingAccount(account);
       setFormData({
-        name: overdraft.name,
-        bankId: overdraft.bankId || '',
-        bankName: overdraft.bankName || '',
-        overdraftLimit: overdraft.overdraftLimit?.toString() || '',
-        currentBalance: overdraft.currentBalance?.toString() || '0',
-        interestRate: overdraft.interestRate?.toString() || '',
-        accountNumber: overdraft.accountNumber || '',
+        name: account.name,
+        bankId: account.bankId || '',
+        bankName: account.bankName || '',
+        accountType: account.accountType || 'checking',
+        currentBalance: account.currentBalance?.toString() || '',
+        accountNumber: account.accountNumber || '',
       });
     } else {
-      setEditingOverdraft(null);
+      setEditingAccount(null);
       setFormData({
         name: '',
         bankId: '',
         bankName: '',
-        overdraftLimit: '',
-        currentBalance: '0',
-        interestRate: '',
+        accountType: 'checking',
+        currentBalance: '',
         accountNumber: '',
       });
     }
@@ -443,7 +417,7 @@ const OverdraftsPage = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setEditingOverdraft(null);
+    setEditingAccount(null);
     setFormErrors({});
   };
 
@@ -459,14 +433,8 @@ const OverdraftsPage = () => {
     if (!formData.name.trim()) {
       errors.name = 'Hesap adı gereklidir';
     }
-    if (!formData.overdraftLimit || isNaN(parseFloat(formData.overdraftLimit)) || parseFloat(formData.overdraftLimit) <= 0) {
-      errors.overdraftLimit = 'Geçerli bir esnek hesap limiti giriniz';
-    }
     if (isNaN(parseFloat(formData.currentBalance))) {
       errors.currentBalance = 'Geçerli bir bakiye giriniz';
-    }
-    if (!formData.interestRate || isNaN(parseFloat(formData.interestRate)) || parseFloat(formData.interestRate) < 0) {
-      errors.interestRate = 'Geçerli bir faiz oranı giriniz';
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -476,25 +444,24 @@ const OverdraftsPage = () => {
     if (!validateForm()) return;
     try {
       setSubmitting(true);
-      const overdraftData = {
+      const accountData = {
         name: formData.name.trim(),
         bankId: formData.bankId || null,
         bankName: formData.bankName.trim() || null,
-        overdraftLimit: parseFloat(formData.overdraftLimit),
+        accountType: formData.accountType,
         currentBalance: parseFloat(formData.currentBalance),
-        interestRate: parseFloat(formData.interestRate),
         accountNumber: formData.accountNumber.trim() || null,
-        type: 'overdraft',
+        type: 'account',
       };
-      if (editingOverdraft) {
-        await overdraftsAPI.update(editingOverdraft.id, overdraftData);
-        showSuccess('Esnek hesap başarıyla güncellendi');
+      if (editingAccount) {
+        await accountsAPI.update(editingAccount.id, accountData);
+        showSuccess('Hesap başarıyla güncellendi');
       } else {
-        await overdraftsAPI.create(overdraftData);
-        showSuccess('Esnek hesap başarıyla oluşturuldu');
+        await accountsAPI.create(accountData);
+        showSuccess('Hesap başarıyla oluşturuldu');
       }
       handleCloseDialog();
-      loadOverdrafts();
+      loadAccounts();
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -502,26 +469,22 @@ const OverdraftsPage = () => {
     }
   };
 
-  const handleEdit = (overdraft) => {
-    handleOpenDialog(overdraft);
+  const handleEdit = (account) => {
+    handleOpenDialog(account);
   };
 
-  const handleDelete = async (overdraftId) => {
-    const overdraft = overdrafts.find(o => o.id === overdraftId);
-    if (overdraft && window.confirm(`"${overdraft.name}" esnek hesabını silmek istediğinizden emin misiniz?`)) {
+  const handleDelete = async (accountId) => {
+    const account = accounts.find(a => a.id === accountId);
+    if (account && window.confirm(`"${account.name}" hesabını silmek istediğinizden emin misiniz?`)) {
       try {
-        await overdraftsAPI.delete(overdraftId);
-        showSuccess('Esnek hesap başarıyla silindi');
-        loadOverdrafts();
+        await accountsAPI.delete(accountId);
+        showSuccess('Hesap başarıyla silindi');
+        loadAccounts();
       } catch (error) {
         showError(handleApiError(error));
       }
     }
   };
-
-
-
-
 
   if (loading) {
     return (
@@ -540,23 +503,23 @@ const OverdraftsPage = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box>
             <Typography variant="h4" component="h1" gutterBottom>
-              Esnek Hesaplarım
+              Hesaplarım
             </Typography>
             <Typography variant="body1" color="textSecondary">
-              Esnek hesap limitlerini ve kullanımlarını yönetin
+              Banka hesaplarınızı ve nakit durumunuzu yönetin
             </Typography>
           </Box>
         </Box>
 
         {/* Summary Card */}
-        <OverdraftSummaryCard overdrafts={overdrafts} />
+        <AccountSummaryCard accounts={accounts} />
 
         {/* Quick Stats */}
-        <QuickStats overdrafts={overdrafts} />
+        <QuickStats accounts={accounts} />
 
-        {/* Overdrafts List */}
-        <OverdraftsList 
-          overdrafts={overdrafts} 
+        {/* Accounts List */}
+        <AccountsList 
+          accounts={accounts} 
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
@@ -564,7 +527,7 @@ const OverdraftsPage = () => {
         {/* Floating Action Button */}
         <Fab
           color="primary"
-          aria-label="add overdraft"
+          aria-label="add account"
           onClick={() => handleOpenDialog()}
           sx={{
             position: 'fixed',
@@ -575,10 +538,10 @@ const OverdraftsPage = () => {
           <Add />
         </Fab>
 
-        {/* Overdraft Form Dialog */}
+        {/* Account Form Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle>
-            {editingOverdraft ? 'Esnek Hesap Düzenle' : 'Yeni Esnek Hesap Ekle'}
+            {editingAccount ? 'Hesap Düzenle' : 'Yeni Hesap Ekle'}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
@@ -592,7 +555,7 @@ const OverdraftsPage = () => {
                   handleFormChange('bankId', newValue?.id || '');
                   handleFormChange('bankName', newValue?.name || '');
                   if (newValue && !formData.name) {
-                    handleFormChange('name', `${newValue.name} Esnek Hesap`);
+                    handleFormChange('name', `${newValue.name} Hesabı`);
                   }
                 }}
                 renderInput={(params) => (
@@ -600,7 +563,7 @@ const OverdraftsPage = () => {
                     {...params}
                     label="Banka Seçin"
                     error={!!formErrors.bankId}
-                    helperText={formErrors.bankId || 'Esnek hesabınızın bankasını seçin'}
+                    helperText={formErrors.bankId || 'Hesabınızın bankasını seçin'}
                   />
                 )}
                 filterOptions={(options, { inputValue }) => {
@@ -620,23 +583,22 @@ const OverdraftsPage = () => {
                 onChange={(e) => handleFormChange('name', e.target.value)}
                 error={!!formErrors.name}
                 helperText={formErrors.name}
-                placeholder="Örn: Ziraat Bankası Esnek Hesap"
+                placeholder="Örn: Ziraat Bankası Vadesiz Hesap"
                 sx={{ mb: 3 }}
               />
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={6}>
                   <TextField
                     fullWidth
-                    label="Esnek Hesap Limiti"
-                    type="number"
-                    value={formData.overdraftLimit}
-                    onChange={(e) => handleFormChange('overdraftLimit', e.target.value)}
-                    error={!!formErrors.overdraftLimit}
-                    helperText={formErrors.overdraftLimit}
-                    InputProps={{
-                      startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
-                    }}
-                  />
+                    select
+                    label="Hesap Türü"
+                    value={formData.accountType}
+                    onChange={(e) => handleFormChange('accountType', e.target.value)}
+                  >
+                    <MenuItem value="checking">Vadesiz Hesap</MenuItem>
+                    <MenuItem value="savings">Vadeli Hesap</MenuItem>
+                    <MenuItem value="cash">Nakit</MenuItem>
+                  </TextField>
                 </Grid>
                 <Grid item xs={6}>
                   <TextField
@@ -646,38 +608,21 @@ const OverdraftsPage = () => {
                     value={formData.currentBalance}
                     onChange={(e) => handleFormChange('currentBalance', e.target.value)}
                     error={!!formErrors.currentBalance}
-                    helperText={formErrors.currentBalance || 'Negatif değer borç anlamına gelir'}
+                    helperText={formErrors.currentBalance}
                     InputProps={{
                       startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
                     }}
                   />
                 </Grid>
               </Grid>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    label="Faiz Oranı (%)"
-                    type="number"
-                    value={formData.interestRate}
-                    onChange={(e) => handleFormChange('interestRate', e.target.value)}
-                    error={!!formErrors.interestRate}
-                    helperText={formErrors.interestRate}
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 1 }}>%</Typography>,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    fullWidth
-                    label="Hesap Numarası"
-                    value={formData.accountNumber}
-                    onChange={(e) => handleFormChange('accountNumber', e.target.value)}
-                    helperText="Opsiyonel"
-                  />
-                </Grid>
-              </Grid>
+              <TextField
+                fullWidth
+                label="Hesap Numarası"
+                value={formData.accountNumber}
+                onChange={(e) => handleFormChange('accountNumber', e.target.value)}
+                helperText="Opsiyonel"
+                sx={{ mb: 2 }}
+              />
             </Box>
           </DialogContent>
           <DialogActions>
@@ -687,15 +632,13 @@ const OverdraftsPage = () => {
               variant="contained"
               disabled={submitting}
             >
-              {submitting ? 'Kaydediliyor...' : (editingOverdraft ? 'Güncelle' : 'Oluştur')}
+              {submitting ? 'Kaydediliyor...' : (editingAccount ? 'Güncelle' : 'Oluştur')}
             </Button>
           </DialogActions>
         </Dialog>
-
-
       </Box>
     </Container>
   );
 };
 
-export default OverdraftsPage;
+export default AccountsDashboard;

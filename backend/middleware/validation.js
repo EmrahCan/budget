@@ -101,7 +101,7 @@ const accountValidation = {
       .isLength({ min: 2, max: 100 })
       .withMessage('Hesap adı 2-100 karakter arasında olmalıdır'),
     body('type')
-      .isIn(['checking', 'savings', 'cash', 'investment'])
+      .isIn(['checking', 'savings', 'cash', 'investment', 'overdraft'])
       .withMessage('Geçersiz hesap türü'),
     body('balance')
       .optional()

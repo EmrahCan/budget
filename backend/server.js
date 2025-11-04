@@ -4,9 +4,19 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-// Import performance services
-const reportPerformanceService = require('./services/reportPerformanceService');
+// Import performance services - temporarily disabled
+// const reportPerformanceService = require('./services/reportPerformanceService');
 const logger = require('./utils/logger');
+
+// Import health monitoring
+const {
+  healthCheckMiddleware,
+  systemHealthMiddleware,
+  memoryMonitoringMiddleware,
+  errorTrackingMiddleware,
+  initializeHealthMonitoring,
+  shutdownHealthMonitoring
+} = require('./middleware/healthCheck');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,7 +37,8 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:3001',
     'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'http://localhost:3002'
   ],
   credentials: true
 }));
@@ -39,12 +50,14 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware
 app.use(logger.requestMiddleware);
 
-// Health check endpoint
+// Basic health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     message: 'Budget App Backend is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    memory: process.memoryUsage(),
+    uptime: process.uptime()
   });
 });
 
@@ -58,6 +71,7 @@ const installmentPaymentRoutes = require('./routes/installmentPayments');
 const reportRoutes = require('./routes/reports');
 const optimizedReportRoutes = require('./routes/optimizedReports');
 const adminRoutes = require('./routes/admin');
+const aiRoutes = require('./routes/ai');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
@@ -65,6 +79,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/fixed-payments', fixedPaymentRoutes);
 app.use('/api/installment-payments', installmentPaymentRoutes);
+app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/reports/optimized', optimizedReportRoutes);
 app.use('/api/admin', adminRoutes);
@@ -78,17 +93,16 @@ app.use('/api/*', (req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
-  logger.errorWithContext('Unhandled error', err, {
-    url: req.url,
-    method: req.method,
-    userId: req.user ? req.user.id : null
-  });
+app.use((error, req, res, next) => {
+  // Track error in performance monitor
+  performanceMonitor.trackError(error, 'request');
+  
+  logger.errorWithContext('Unhandled error:', error);
   
   res.status(500).json({
     success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    message: 'Internal server error',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -100,13 +114,12 @@ app.use('*', (req, res) => {
   });
 });
 
-// Initialize performance services
+// Initialize services - simplified for stability
 async function initializeServices() {
   try {
-    await reportPerformanceService.initialize();
-    logger.info('All performance services initialized successfully');
+    logger.info('Basic services initialized successfully');
   } catch (error) {
-    logger.errorWithContext('Failed to initialize performance services', error);
+    logger.errorWithContext('Failed to initialize services', error);
     process.exit(1);
   }
 }
@@ -114,13 +127,11 @@ async function initializeServices() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully');
-  await reportPerformanceService.shutdown();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully');
-  await reportPerformanceService.shutdown();
   process.exit(0);
 });
 

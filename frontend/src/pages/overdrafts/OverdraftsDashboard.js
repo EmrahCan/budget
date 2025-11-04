@@ -43,24 +43,15 @@ import {
   Sort,
   Visibility,
 } from '@mui/icons-material';
-import { useNotification } from '../../contexts/NotificationContext';
-import { formatCurrency, formatDate, handleApiError, accountsAPI } from '../../services/api';
-import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
-// Esnek Hesaplar API - gerçek accounts API'sini kullanır
-const overdraftsAPI = {
-  getAll: () => accountsAPI.getAll({ type: 'overdraft' }),
-  create: (data) => accountsAPI.create({ ...data, type: 'overdraft' }),
-  update: (id, data) => accountsAPI.update(id, data),
-  delete: (id) => accountsAPI.delete(id),
-  addExpense: (id, data) => accountsAPI.addExpense(id, data),
-  addPayment: (id, data) => accountsAPI.addIncome(id, data),
-};
+import { useNotification } from '../../contexts/NotificationContext';
+import { accountsAPI, formatCurrency, handleApiError } from '../../services/api';
+import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
 // Overdraft summary component
 const OverdraftSummaryCard = ({ overdrafts }) => {
   const getTotalLimit = () => overdrafts.reduce((total, od) => total + (od.overdraftLimit || 0), 0);
-  const getTotalUsed = () => overdrafts.reduce((total, od) => total + (od.overdraftUsed || 0), 0);
+  const getTotalUsed = () => overdrafts.reduce((total, od) => total + Math.abs(Math.min(0, od.currentBalance || 0)), 0);
   const getTotalAvailable = () => getTotalLimit() - getTotalUsed();
 
   return (
@@ -110,9 +101,11 @@ const OverdraftSummaryCard = ({ overdrafts }) => {
 const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedOverdraft, setSelectedOverdraft] = useState(null);
+  const [sortBy] = useState('name'); // 'name', 'balance', 'limit', 'bank'
+  const [filterType] = useState('all'); // 'all', 'normal', 'warning', 'critical'
 
   const getStatusInfo = (overdraft) => {
-    const used = overdraft.overdraftUsed || 0;
+    const used = Math.abs(Math.min(0, overdraft.currentBalance || 0));
     const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
     
     if (utilizationRate >= 90) {
@@ -134,12 +127,31 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
     setSelectedOverdraft(null);
   };
 
+  const sortedAndFilteredOverdrafts = overdrafts
+    .filter(overdraft => {
+      if (filterType === 'all') return true;
+      const statusInfo = getStatusInfo(overdraft);
+      return statusInfo.label.toLowerCase() === filterType;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'balance':
+          return Math.abs(Math.min(0, b.currentBalance || 0)) - Math.abs(Math.min(0, a.currentBalance || 0));
+        case 'limit':
+          return (b.overdraftLimit || 0) - (a.overdraftLimit || 0);
+        case 'bank':
+          return (a.bankName || '').localeCompare(b.bankName || '');
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
   return (
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
-            Esnek Hesaplarım ({overdrafts.length})
+            Esnek Hesaplarım ({sortedAndFilteredOverdrafts.length})
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button size="small" startIcon={<FilterList />} variant="outlined">
@@ -152,9 +164,9 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
         </Box>
         
         <List>
-          {overdrafts.map((overdraft, index) => {
+          {sortedAndFilteredOverdrafts.map((overdraft, index) => {
             const statusInfo = getStatusInfo(overdraft);
-            const used = overdraft.overdraftUsed || 0;
+            const used = Math.abs(Math.min(0, overdraft.currentBalance || 0));
             const available = (overdraft.overdraftLimit || 0) - used;
             const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
             
@@ -205,6 +217,11 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                         <Typography variant="body2" color="textSecondary" component="span" display="block">
                           {overdraft.bankName || 'Esnek Hesap'}
                         </Typography>
+                        {overdraft.accountNumber && (
+                          <Typography variant="caption" color="textSecondary" component="span" display="block">
+                            Hesap No: {overdraft.accountNumber}
+                          </Typography>
+                        )}
                         {/* Kullanım oranı progress bar */}
                         <Box component="span" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <LinearProgress 
@@ -229,7 +246,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     
                     {/* Kullanılan Borç */}
                     <Typography variant="body2" color="error.main" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                      Borç: {formatCurrency(used)}
+                      Kullanılan: {formatCurrency(used)}
                     </Typography>
                     
                     {/* Kullanılabilir */}
@@ -244,6 +261,15 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
                       Kullanılabilir
                     </Typography>
+                    
+                    {/* Faiz Oranı */}
+                    {overdraft.interestRate && (
+                      <Box sx={{ mt: 0.5 }}>
+                        <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
+                          Faiz: %{overdraft.interestRate}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                   
                   <ListItemSecondaryAction>
@@ -255,7 +281,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     </IconButton>
                   </ListItemSecondaryAction>
                 </ListItem>
-                {index < overdrafts.length - 1 && <Divider />}
+                {index < sortedAndFilteredOverdrafts.length - 1 && <Divider />}
               </React.Fragment>
             );
           })}
@@ -293,23 +319,24 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
 const QuickStats = ({ overdrafts }) => {
   const getStats = () => {
     const criticalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = Math.abs(Math.min(0, od.currentBalance || 0));
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate >= 90;
     });
     
     const warningOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = Math.abs(Math.min(0, od.currentBalance || 0));
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate >= 70 && utilizationRate < 90;
     });
     
     const normalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = Math.abs(Math.min(0, od.currentBalance || 0));
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate < 70;
     });
 
+    // Yüksek faizli hesaplar (örnek olarak %15 üzeri)
     const highInterestOverdrafts = overdrafts.filter(od => (od.interestRate || 0) > 15);
 
     return {
@@ -379,7 +406,7 @@ const QuickStats = ({ overdrafts }) => {
   );
 };
 
-const OverdraftsPage = () => {
+const OverdraftsDashboard = () => {
   const { showSuccess, showError } = useNotification();
   const [overdrafts, setOverdrafts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -404,8 +431,10 @@ const OverdraftsPage = () => {
   const loadOverdrafts = async () => {
     try {
       setLoading(true);
-      const response = await overdraftsAPI.getAll();
-      setOverdrafts(response.data.data.accounts || []);
+      const response = await accountsAPI.getAll();
+      // Filter only overdraft accounts
+      const overdraftAccounts = response.data.data.accounts.filter(account => account.type === 'overdraft');
+      setOverdrafts(overdraftAccounts);
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -487,10 +516,10 @@ const OverdraftsPage = () => {
         type: 'overdraft',
       };
       if (editingOverdraft) {
-        await overdraftsAPI.update(editingOverdraft.id, overdraftData);
+        await accountsAPI.update(editingOverdraft.id, overdraftData);
         showSuccess('Esnek hesap başarıyla güncellendi');
       } else {
-        await overdraftsAPI.create(overdraftData);
+        await accountsAPI.create(overdraftData);
         showSuccess('Esnek hesap başarıyla oluşturuldu');
       }
       handleCloseDialog();
@@ -510,7 +539,7 @@ const OverdraftsPage = () => {
     const overdraft = overdrafts.find(o => o.id === overdraftId);
     if (overdraft && window.confirm(`"${overdraft.name}" esnek hesabını silmek istediğinizden emin misiniz?`)) {
       try {
-        await overdraftsAPI.delete(overdraftId);
+        await accountsAPI.delete(overdraftId);
         showSuccess('Esnek hesap başarıyla silindi');
         loadOverdrafts();
       } catch (error) {
@@ -518,10 +547,6 @@ const OverdraftsPage = () => {
       }
     }
   };
-
-
-
-
 
   if (loading) {
     return (
@@ -691,11 +716,9 @@ const OverdraftsPage = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
-
       </Box>
     </Container>
   );
 };
 
-export default OverdraftsPage;
+export default OverdraftsDashboard;

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import healthConfig from '../config/healthConfig';
 
 const useMemoryManagement = ({
-  maxCacheSize = 100, // Maximum number of items to keep in cache
-  cleanupInterval = 30000, // Cleanup interval in milliseconds (30 seconds)
-  memoryThreshold = 0.8, // Memory usage threshold (80%)
-  enableAutoCleanup = true
+  maxCacheSize = healthConfig.memory.cache.maxSize,
+  cleanupInterval = healthConfig.memory.cache.cleanupInterval,
+  memoryThreshold = healthConfig.memory.thresholds.warning,
+  enableAutoCleanup = healthConfig.memory.cache.enableAutoCleanup
 }) => {
   const cacheRef = useRef(new Map());
   const accessTimeRef = useRef(new Map());

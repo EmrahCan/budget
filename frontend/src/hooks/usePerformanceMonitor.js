@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import healthConfig from '../config/healthConfig';
 
 const usePerformanceMonitor = (componentName = 'Component') => {
   const [metrics, setMetrics] = useState({
@@ -36,11 +37,11 @@ const usePerformanceMonitor = (componentName = 'Component') => {
         renderCount: prev.renderCount + 1,
         lastRenderTime: renderTime,
         averageRenderTime,
-        isSlowRender: renderTime > 16 // 60fps threshold
+        isSlowRender: renderTime > healthConfig.performance.rendering.slowRenderThreshold
       }));
       
       // Log slow renders
-      if (renderTime > 50) {
+      if (renderTime > healthConfig.performance.rendering.criticalRenderThreshold) {
         console.warn(`Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
       }
       

@@ -27,6 +27,7 @@ class Account {
         type,
         balance = 0,
         overdraftLimit = 0,
+        overdraftUsed = 0,
         currency = 'TRY',
         bankId,
         bankName,
@@ -57,7 +58,7 @@ class Account {
         type,
         parseFloat(balance),
         parseFloat(overdraftLimit || 0),
-        0, // overdraft_used starts at 0
+        parseFloat(overdraftUsed || 0), // Kullanıcının girdiği değer
         currency.toUpperCase(),
         bankId?.trim() || null,
         bankName?.trim() || null,
@@ -131,7 +132,7 @@ class Account {
   // Update account
   async update(updateData) {
     try {
-      const allowedFields = ['name', 'type', 'balance', 'overdraft_limit', 'currency', 'is_active'];
+      const allowedFields = ['name', 'type', 'balance', 'overdraft_limit', 'overdraft_used', 'currency', 'is_active'];
       
       const updates = [];
       const params = [];

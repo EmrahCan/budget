@@ -36,38 +36,31 @@ import {
   Warning,
   CheckCircle,
   Error,
-  CreditCard as CreditCardIcon,
+  CreditCard,
   MoreVert,
   Payment,
+  Schedule,
+  CalendarToday,
   FilterList,
   Sort,
   Visibility,
 } from '@mui/icons-material';
+
 import { useNotification } from '../../contexts/NotificationContext';
-import { formatCurrency, formatDate, handleApiError, accountsAPI } from '../../services/api';
+import { creditCardsAPI, formatCurrency, handleApiError } from '../../services/api';
 import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from '../../data/turkishBanks';
 
-// Esnek Hesaplar API - gerçek accounts API'sini kullanır
-const overdraftsAPI = {
-  getAll: () => accountsAPI.getAll({ type: 'overdraft' }),
-  create: (data) => accountsAPI.create({ ...data, type: 'overdraft' }),
-  update: (id, data) => accountsAPI.update(id, data),
-  delete: (id) => accountsAPI.delete(id),
-  addExpense: (id, data) => accountsAPI.addExpense(id, data),
-  addPayment: (id, data) => accountsAPI.addIncome(id, data),
-};
-
-// Overdraft summary component
-const OverdraftSummaryCard = ({ overdrafts }) => {
-  const getTotalLimit = () => overdrafts.reduce((total, od) => total + (od.overdraftLimit || 0), 0);
-  const getTotalUsed = () => overdrafts.reduce((total, od) => total + (od.overdraftUsed || 0), 0);
+// Credit Card summary component
+const CreditCardSummaryCard = ({ creditCards }) => {
+  const getTotalLimit = () => creditCards.reduce((total, cc) => total + (cc.creditLimit || 0), 0);
+  const getTotalUsed = () => creditCards.reduce((total, cc) => total + (cc.currentBalance || 0), 0);
   const getTotalAvailable = () => getTotalLimit() - getTotalUsed();
 
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          Esnek Hesap Özeti
+          Kredi Kartı Özeti
         </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={4}>
@@ -106,40 +99,71 @@ const OverdraftSummaryCard = ({ overdrafts }) => {
   );
 };
 
-// Overdrafts list component
-const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedOverdraft, setSelectedOverdraft] = useState(null);
 
-  const getStatusInfo = (overdraft) => {
-    const used = overdraft.overdraftUsed || 0;
-    const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
+
+// Credit Cards list component
+const CreditCardsList = ({ creditCards, onEdit, onDelete }) => {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [sortBy] = useState('name'); // 'name', 'balance', 'limit', 'bank'
+  const [filterType] = useState('all'); // 'all', 'normal', 'warning', 'critical'
+
+  const getStatusInfo = (creditCard) => {
+    const utilization = creditCard.utilizationPercentage || 0;
     
-    if (utilizationRate >= 90) {
+    if (utilization >= 90) {
       return { label: 'Kritik', color: 'error', icon: <Error /> };
-    } else if (utilizationRate >= 70) {
+    } else if (utilization >= 70) {
       return { label: 'Uyarı', color: 'warning', icon: <Warning /> };
     } else {
       return { label: 'Normal', color: 'success', icon: <CheckCircle /> };
     }
   };
 
-  const handleMenuClick = (event, overdraft) => {
+  const getDaysUntilPayment = (paymentDueDate) => {
+    if (!paymentDueDate) return null;
+    const dueDate = new Date(paymentDueDate);
+    const today = new Date();
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const handleMenuClick = (event, creditCard) => {
     setAnchorEl(event.currentTarget);
-    setSelectedOverdraft(overdraft);
+    setSelectedCard(creditCard);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedOverdraft(null);
+    setSelectedCard(null);
   };
+
+  const sortedAndFilteredCards = creditCards
+    .filter(card => {
+      if (filterType === 'all') return true;
+      const statusInfo = getStatusInfo(card);
+      return statusInfo.label.toLowerCase() === filterType;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'balance':
+          return (b.currentBalance || 0) - (a.currentBalance || 0);
+        case 'limit':
+          return (b.creditLimit || 0) - (a.creditLimit || 0);
+        case 'bank':
+          return (a.bankName || '').localeCompare(b.bankName || '');
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
 
   return (
     <Card>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">
-            Esnek Hesaplarım ({overdrafts.length})
+            Kredi Kartlarım ({sortedAndFilteredCards.length})
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button size="small" startIcon={<FilterList />} variant="outlined">
@@ -152,14 +176,13 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
         </Box>
         
         <List>
-          {overdrafts.map((overdraft, index) => {
-            const statusInfo = getStatusInfo(overdraft);
-            const used = overdraft.overdraftUsed || 0;
-            const available = (overdraft.overdraftLimit || 0) - used;
-            const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
+          {sortedAndFilteredCards.map((creditCard, index) => {
+            const statusInfo = getStatusInfo(creditCard);
+            const daysUntilPayment = getDaysUntilPayment(creditCard.paymentDueDate);
+            const available = (creditCard.creditLimit || 0) - (creditCard.currentBalance || 0);
             
             return (
-              <React.Fragment key={overdraft.id}>
+              <React.Fragment key={creditCard.id}>
                 <ListItem
                   sx={{
                     borderRadius: 2,
@@ -175,14 +198,14 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                   <ListItemAvatar>
                     <Avatar 
                       sx={{ 
-                        bgcolor: overdraft.bankId ? getBankById(overdraft.bankId)?.color || 'primary.main' : 'primary.main',
+                        bgcolor: creditCard.bankId ? getBankById(creditCard.bankId)?.color || 'primary.main' : 'primary.main',
                         width: 48,
                         height: 48
                       }}
                     >
-                      {overdraft.bankId && getBankById(overdraft.bankId)?.name 
-                        ? getBankById(overdraft.bankId).name.charAt(0) 
-                        : <CreditCardIcon />}
+                      {creditCard.bankId && getBankById(creditCard.bankId)?.name 
+                        ? getBankById(creditCard.bankId).name.charAt(0) 
+                        : <CreditCard />}
                     </Avatar>
                   </ListItemAvatar>
                   
@@ -190,7 +213,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
-                          {overdraft.name}
+                          {creditCard.name}
                         </Typography>
                         <Chip 
                           icon={statusInfo.icon}
@@ -198,23 +221,36 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                           color={statusInfo.color}
                           size="small"
                         />
+                        {daysUntilPayment !== null && daysUntilPayment <= 7 && daysUntilPayment >= 0 && (
+                          <Chip 
+                            icon={<CalendarToday />}
+                            label={`${daysUntilPayment} gün`}
+                            color={daysUntilPayment <= 3 ? 'error' : 'warning'}
+                            size="small"
+                          />
+                        )}
                       </Box>
                     }
                     secondary={
                       <React.Fragment>
                         <Typography variant="body2" color="textSecondary" component="span" display="block">
-                          {overdraft.bankName || 'Esnek Hesap'}
+                          {creditCard.bankName || 'Kredi Kartı'}
                         </Typography>
+                        {creditCard.cardNumber && (
+                          <Typography variant="caption" color="textSecondary" component="span" display="block">
+                            Kart No: ****{creditCard.cardNumber.slice(-4)}
+                          </Typography>
+                        )}
                         {/* Kullanım oranı progress bar */}
                         <Box component="span" sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <LinearProgress 
                             variant="determinate" 
-                            value={utilizationRate}
-                            color={utilizationRate > 80 ? 'error' : utilizationRate > 60 ? 'warning' : 'success'}
+                            value={creditCard.utilizationPercentage || 0}
+                            color={(creditCard.utilizationPercentage || 0) > 80 ? 'error' : (creditCard.utilizationPercentage || 0) > 60 ? 'warning' : 'success'}
                             sx={{ height: 6, borderRadius: 1, flexGrow: 1 }}
                           />
                           <Typography variant="caption" color="textSecondary" component="span">
-                            %{utilizationRate.toFixed(1)}
+                            %{(creditCard.utilizationPercentage || 0).toFixed(1)}
                           </Typography>
                         </Box>
                       </React.Fragment>
@@ -224,12 +260,12 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                   <Box sx={{ textAlign: 'right', mr: 2, minWidth: 120 }}>
                     {/* Toplam Limit */}
                     <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.75rem' }}>
-                      Limit: {formatCurrency(overdraft.overdraftLimit || 0)}
+                      Limit: {formatCurrency(creditCard.creditLimit || 0)}
                     </Typography>
                     
                     {/* Kullanılan Borç */}
                     <Typography variant="body2" color="error.main" sx={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                      Borç: {formatCurrency(used)}
+                      Borç: {formatCurrency(creditCard.currentBalance || 0)}
                     </Typography>
                     
                     {/* Kullanılabilir */}
@@ -244,18 +280,27 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
                     <Typography variant="caption" color="textSecondary" sx={{ fontSize: '0.7rem' }}>
                       Kullanılabilir
                     </Typography>
+                    
+                    {/* Minimum Ödeme */}
+                    {creditCard.minimumPayment && (
+                      <Box sx={{ mt: 0.5 }}>
+                        <Typography variant="caption" color="warning.main" sx={{ fontSize: '0.7rem' }}>
+                          Min. Ödeme: {formatCurrency(creditCard.minimumPayment)}
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                   
                   <ListItemSecondaryAction>
                     <IconButton 
                       edge="end" 
-                      onClick={(e) => handleMenuClick(e, overdraft)}
+                      onClick={(e) => handleMenuClick(e, creditCard)}
                     >
                       <MoreVert />
                     </IconButton>
                   </ListItemSecondaryAction>
                 </ListItem>
-                {index < overdrafts.length - 1 && <Divider />}
+                {index < sortedAndFilteredCards.length - 1 && <Divider />}
               </React.Fragment>
             );
           })}
@@ -267,7 +312,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem onClick={() => { onEdit && onEdit(selectedOverdraft); handleMenuClose(); }}>
+          <MenuItem onClick={() => { onEdit && onEdit(selectedCard); handleMenuClose(); }}>
             <Edit sx={{ mr: 1 }} /> Düzenle
           </MenuItem>
           <MenuItem onClick={() => { /* Handle view details */ handleMenuClose(); }}>
@@ -276,9 +321,12 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
           <MenuItem onClick={() => { /* Handle payment */ handleMenuClose(); }}>
             <Payment sx={{ mr: 1 }} /> Ödeme Yap
           </MenuItem>
+          <MenuItem onClick={() => { /* Handle installment */ handleMenuClose(); }}>
+            <Schedule sx={{ mr: 1 }} /> Taksitlendirme
+          </MenuItem>
           <Divider />
           <MenuItem 
-            onClick={() => { onDelete && onDelete(selectedOverdraft?.id); handleMenuClose(); }}
+            onClick={() => { onDelete && onDelete(selectedCard?.id); handleMenuClose(); }}
             sx={{ color: 'error.main' }}
           >
             <Delete sx={{ mr: 1 }} /> Sil
@@ -290,34 +338,31 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
 };
 
 // Quick stats component
-const QuickStats = ({ overdrafts }) => {
+const QuickStats = ({ creditCards }) => {
   const getStats = () => {
-    const criticalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate >= 90;
+    const criticalCards = creditCards.filter(cc => (cc.utilizationPercentage || 0) >= 90);
+    const warningCards = creditCards.filter(cc => {
+      const utilization = cc.utilizationPercentage || 0;
+      return utilization >= 70 && utilization < 90;
     });
+    const normalCards = creditCards.filter(cc => (cc.utilizationPercentage || 0) < 70);
     
-    const warningOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate >= 70 && utilizationRate < 90;
+    // Ödeme tarihi yaklaşan kartlar (7 gün içinde)
+    const upcomingPayments = creditCards.filter(cc => {
+      if (!cc.paymentDueDate) return false;
+      const dueDate = new Date(cc.paymentDueDate);
+      const today = new Date();
+      const diffTime = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 7 && diffDays >= 0;
     });
-    
-    const normalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
-      const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
-      return utilizationRate < 70;
-    });
-
-    const highInterestOverdrafts = overdrafts.filter(od => (od.interestRate || 0) > 15);
 
     return {
-      total: overdrafts.length,
-      normal: normalOverdrafts.length,
-      warning: warningOverdrafts.length,
-      critical: criticalOverdrafts.length,
-      highInterest: highInterestOverdrafts.length
+      total: creditCards.length,
+      normal: normalCards.length,
+      warning: warningCards.length,
+      critical: criticalCards.length,
+      upcomingPayments: upcomingPayments.length
     };
   };
 
@@ -331,7 +376,7 @@ const QuickStats = ({ overdrafts }) => {
             {stats.total}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Toplam Hesap
+            Toplam Kart
           </Typography>
         </Paper>
       </Grid>
@@ -368,10 +413,10 @@ const QuickStats = ({ overdrafts }) => {
       <Grid item xs={6} sm={2.4}>
         <Paper sx={{ p: 2, textAlign: 'center' }}>
           <Typography variant="h4" color="info.main">
-            {stats.highInterest}
+            {stats.upcomingPayments}
           </Typography>
           <Typography variant="caption" color="textSecondary">
-            Yüksek Faiz
+            Yaklaşan Ödeme
           </Typography>
         </Paper>
       </Grid>
@@ -379,33 +424,34 @@ const QuickStats = ({ overdrafts }) => {
   );
 };
 
-const OverdraftsPage = () => {
+const CreditCardsDashboard = () => {
   const { showSuccess, showError } = useNotification();
-  const [overdrafts, setOverdrafts] = useState([]);
+  const [creditCards, setCreditCards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingOverdraft, setEditingOverdraft] = useState(null);
+  const [editingCard, setEditingCard] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     bankId: '',
     bankName: '',
-    overdraftLimit: '',
+    creditLimit: '',
     currentBalance: '0',
     interestRate: '',
-    accountNumber: '',
+    minimumPaymentRate: '5',
+    paymentDueDate: '',
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    loadOverdrafts();
+    loadCreditCards();
   }, []);
 
-  const loadOverdrafts = async () => {
+  const loadCreditCards = async () => {
     try {
       setLoading(true);
-      const response = await overdraftsAPI.getAll();
-      setOverdrafts(response.data.data.accounts || []);
+      const response = await creditCardsAPI.getAll();
+      setCreditCards(response.data.data.creditCards || []);
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -413,28 +459,30 @@ const OverdraftsPage = () => {
     }
   };
 
-  const handleOpenDialog = (overdraft = null) => {
-    if (overdraft) {
-      setEditingOverdraft(overdraft);
+  const handleOpenDialog = (card = null) => {
+    if (card) {
+      setEditingCard(card);
       setFormData({
-        name: overdraft.name,
-        bankId: overdraft.bankId || '',
-        bankName: overdraft.bankName || '',
-        overdraftLimit: overdraft.overdraftLimit?.toString() || '',
-        currentBalance: overdraft.currentBalance?.toString() || '0',
-        interestRate: overdraft.interestRate?.toString() || '',
-        accountNumber: overdraft.accountNumber || '',
+        name: card.name,
+        bankId: card.bankId || '',
+        bankName: card.bankName || '',
+        creditLimit: card.creditLimit.toString(),
+        currentBalance: card.currentBalance.toString(),
+        interestRate: card.interestRate.toString(),
+        minimumPaymentRate: card.minimumPaymentRate.toString(),
+        paymentDueDate: card.paymentDueDate?.toString() || '',
       });
     } else {
-      setEditingOverdraft(null);
+      setEditingCard(null);
       setFormData({
         name: '',
         bankId: '',
         bankName: '',
-        overdraftLimit: '',
+        creditLimit: '',
         currentBalance: '0',
         interestRate: '',
-        accountNumber: '',
+        minimumPaymentRate: '5',
+        paymentDueDate: '',
       });
     }
     setFormErrors({});
@@ -443,7 +491,7 @@ const OverdraftsPage = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
-    setEditingOverdraft(null);
+    setEditingCard(null);
     setFormErrors({});
   };
 
@@ -456,45 +504,54 @@ const OverdraftsPage = () => {
 
   const validateForm = () => {
     const errors = {};
+    
     if (!formData.name.trim()) {
-      errors.name = 'Hesap adı gereklidir';
+      errors.name = 'Kart adı gereklidir';
     }
-    if (!formData.overdraftLimit || isNaN(parseFloat(formData.overdraftLimit)) || parseFloat(formData.overdraftLimit) <= 0) {
-      errors.overdraftLimit = 'Geçerli bir esnek hesap limiti giriniz';
+    
+    if (!formData.creditLimit || isNaN(parseFloat(formData.creditLimit)) || parseFloat(formData.creditLimit) <= 0) {
+      errors.creditLimit = 'Geçerli bir kredi limiti giriniz';
     }
-    if (isNaN(parseFloat(formData.currentBalance))) {
-      errors.currentBalance = 'Geçerli bir bakiye giriniz';
+    
+    if (isNaN(parseFloat(formData.currentBalance)) || parseFloat(formData.currentBalance) < 0) {
+      errors.currentBalance = 'Geçerli bir mevcut bakiye giriniz';
     }
+    
     if (!formData.interestRate || isNaN(parseFloat(formData.interestRate)) || parseFloat(formData.interestRate) < 0) {
       errors.interestRate = 'Geçerli bir faiz oranı giriniz';
     }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+
     try {
       setSubmitting(true);
-      const overdraftData = {
+      
+      const cardData = {
         name: formData.name.trim(),
         bankId: formData.bankId || null,
         bankName: formData.bankName.trim() || null,
-        overdraftLimit: parseFloat(formData.overdraftLimit),
+        creditLimit: parseFloat(formData.creditLimit),
         currentBalance: parseFloat(formData.currentBalance),
         interestRate: parseFloat(formData.interestRate),
-        accountNumber: formData.accountNumber.trim() || null,
-        type: 'overdraft',
+        minimumPaymentRate: parseFloat(formData.minimumPaymentRate),
+        paymentDueDate: formData.paymentDueDate ? parseInt(formData.paymentDueDate) : null,
       };
-      if (editingOverdraft) {
-        await overdraftsAPI.update(editingOverdraft.id, overdraftData);
-        showSuccess('Esnek hesap başarıyla güncellendi');
+
+      if (editingCard) {
+        await creditCardsAPI.update(editingCard.id, cardData);
+        showSuccess('Kredi kartı başarıyla güncellendi');
       } else {
-        await overdraftsAPI.create(overdraftData);
-        showSuccess('Esnek hesap başarıyla oluşturuldu');
+        await creditCardsAPI.create(cardData);
+        showSuccess('Kredi kartı başarıyla oluşturuldu');
       }
+
       handleCloseDialog();
-      loadOverdrafts();
+      loadCreditCards();
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -502,26 +559,22 @@ const OverdraftsPage = () => {
     }
   };
 
-  const handleEdit = (overdraft) => {
-    handleOpenDialog(overdraft);
+  const handleEdit = (creditCard) => {
+    handleOpenDialog(creditCard);
   };
 
-  const handleDelete = async (overdraftId) => {
-    const overdraft = overdrafts.find(o => o.id === overdraftId);
-    if (overdraft && window.confirm(`"${overdraft.name}" esnek hesabını silmek istediğinizden emin misiniz?`)) {
+  const handleDelete = async (creditCardId) => {
+    const card = creditCards.find(c => c.id === creditCardId);
+    if (card && window.confirm(`"${card.name}" kredi kartını silmek istediğinizden emin misiniz?`)) {
       try {
-        await overdraftsAPI.delete(overdraftId);
-        showSuccess('Esnek hesap başarıyla silindi');
-        loadOverdrafts();
+        await creditCardsAPI.delete(creditCardId);
+        showSuccess('Kredi kartı başarıyla silindi');
+        loadCreditCards();
       } catch (error) {
         showError(handleApiError(error));
       }
     }
   };
-
-
-
-
 
   if (loading) {
     return (
@@ -540,23 +593,23 @@ const OverdraftsPage = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box>
             <Typography variant="h4" component="h1" gutterBottom>
-              Esnek Hesaplarım
+              Kredi Kartlarım
             </Typography>
             <Typography variant="body1" color="textSecondary">
-              Esnek hesap limitlerini ve kullanımlarını yönetin
+              Kredi kartı limitlerini ve ödemelerini yönetin
             </Typography>
           </Box>
         </Box>
 
         {/* Summary Card */}
-        <OverdraftSummaryCard overdrafts={overdrafts} />
+        <CreditCardSummaryCard creditCards={creditCards} />
 
         {/* Quick Stats */}
-        <QuickStats overdrafts={overdrafts} />
+        <QuickStats creditCards={creditCards} />
 
-        {/* Overdrafts List */}
-        <OverdraftsList 
-          overdrafts={overdrafts} 
+        {/* Credit Cards List */}
+        <CreditCardsList 
+          creditCards={creditCards} 
           onEdit={handleEdit}
           onDelete={handleDelete}
         />
@@ -564,7 +617,7 @@ const OverdraftsPage = () => {
         {/* Floating Action Button */}
         <Fab
           color="primary"
-          aria-label="add overdraft"
+          aria-label="add credit card"
           onClick={() => handleOpenDialog()}
           sx={{
             position: 'fixed',
@@ -575,10 +628,10 @@ const OverdraftsPage = () => {
           <Add />
         </Fab>
 
-        {/* Overdraft Form Dialog */}
+        {/* Credit Card Form Dialog */}
         <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle>
-            {editingOverdraft ? 'Esnek Hesap Düzenle' : 'Yeni Esnek Hesap Ekle'}
+            {editingCard ? 'Kredi Kartı Düzenle' : 'Yeni Kredi Kartı Ekle'}
           </DialogTitle>
           <DialogContent>
             <Box sx={{ pt: 2 }}>
@@ -588,11 +641,11 @@ const OverdraftsPage = () => {
                 getOptionLabel={(option) => option.name}
                 groupBy={(option) => bankTypes[option.type]}
                 value={getBankById(formData.bankId) || null}
-                onChange={(_, newValue) => {
+                onChange={(event, newValue) => {
                   handleFormChange('bankId', newValue?.id || '');
                   handleFormChange('bankName', newValue?.name || '');
                   if (newValue && !formData.name) {
-                    handleFormChange('name', `${newValue.name} Esnek Hesap`);
+                    handleFormChange('name', `${newValue.name} Kredi Kartı`);
                   }
                 }}
                 renderInput={(params) => (
@@ -600,11 +653,12 @@ const OverdraftsPage = () => {
                     {...params}
                     label="Banka Seçin"
                     error={!!formErrors.bankId}
-                    helperText={formErrors.bankId || 'Esnek hesabınızın bankasını seçin'}
+                    helperText={formErrors.bankId || 'Kredi kartınızın bankasını seçin'}
                   />
                 )}
                 filterOptions={(options, { inputValue }) => {
                   if (!inputValue) {
+                    // Popüler bankaları önce göster
                     const popular = popularBanks.map(id => getBankById(id)).filter(Boolean).slice(0, 6);
                     const others = options.filter(bank => !popular.find(p => p && p.id === bank.id));
                     return [...popular, ...others];
@@ -613,26 +667,28 @@ const OverdraftsPage = () => {
                 }}
                 sx={{ mb: 3 }}
               />
+
               <TextField
                 fullWidth
-                label="Hesap Adı"
+                label="Kart Adı"
                 value={formData.name}
                 onChange={(e) => handleFormChange('name', e.target.value)}
                 error={!!formErrors.name}
                 helperText={formErrors.name}
-                placeholder="Örn: Ziraat Bankası Esnek Hesap"
+                placeholder="Örn: Ziraat Bankası World Kart"
                 sx={{ mb: 3 }}
               />
+
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={6}>
                   <TextField
                     fullWidth
-                    label="Esnek Hesap Limiti"
+                    label="Kredi Limiti"
                     type="number"
-                    value={formData.overdraftLimit}
-                    onChange={(e) => handleFormChange('overdraftLimit', e.target.value)}
-                    error={!!formErrors.overdraftLimit}
-                    helperText={formErrors.overdraftLimit}
+                    value={formData.creditLimit}
+                    onChange={(e) => handleFormChange('creditLimit', e.target.value)}
+                    error={!!formErrors.creditLimit}
+                    helperText={formErrors.creditLimit}
                     InputProps={{
                       startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
                     }}
@@ -641,18 +697,19 @@ const OverdraftsPage = () => {
                 <Grid item xs={6}>
                   <TextField
                     fullWidth
-                    label="Mevcut Bakiye"
+                    label="Mevcut Borç"
                     type="number"
                     value={formData.currentBalance}
                     onChange={(e) => handleFormChange('currentBalance', e.target.value)}
                     error={!!formErrors.currentBalance}
-                    helperText={formErrors.currentBalance || 'Negatif değer borç anlamına gelir'}
+                    helperText={formErrors.currentBalance}
                     InputProps={{
                       startAdornment: <Typography sx={{ mr: 1 }}>₺</Typography>,
                     }}
                   />
                 </Grid>
               </Grid>
+
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={6}>
                   <TextField
@@ -671,13 +728,26 @@ const OverdraftsPage = () => {
                 <Grid item xs={6}>
                   <TextField
                     fullWidth
-                    label="Hesap Numarası"
-                    value={formData.accountNumber}
-                    onChange={(e) => handleFormChange('accountNumber', e.target.value)}
-                    helperText="Opsiyonel"
+                    label="Min. Ödeme Oranı (%)"
+                    type="number"
+                    value={formData.minimumPaymentRate}
+                    onChange={(e) => handleFormChange('minimumPaymentRate', e.target.value)}
+                    InputProps={{
+                      endAdornment: <Typography sx={{ ml: 1 }}>%</Typography>,
+                    }}
                   />
                 </Grid>
               </Grid>
+
+              <TextField
+                fullWidth
+                label="Ödeme Günü (Ayın Kaçı)"
+                type="number"
+                value={formData.paymentDueDate}
+                onChange={(e) => handleFormChange('paymentDueDate', e.target.value)}
+                inputProps={{ min: 1, max: 31 }}
+                helperText="Aylık ödeme tarihi (1-31 arası)"
+              />
             </Box>
           </DialogContent>
           <DialogActions>
@@ -687,15 +757,13 @@ const OverdraftsPage = () => {
               variant="contained"
               disabled={submitting}
             >
-              {submitting ? 'Kaydediliyor...' : (editingOverdraft ? 'Güncelle' : 'Oluştur')}
+              {submitting ? 'Kaydediliyor...' : (editingCard ? 'Güncelle' : 'Oluştur')}
             </Button>
           </DialogActions>
         </Dialog>
-
-
       </Box>
     </Container>
   );
 };
 
-export default OverdraftsPage;
+export default CreditCardsDashboard;

@@ -1,0 +1,198 @@
+{
+  service: 'budget-backend',
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001,
+  level: 'error',
+  message: 'Uncaught exception: listen EADDRINUSE: address already in use :::5001',
+  stack: 'Error: listen EADDRINUSE: address already in use :::5001\n' +
+    '    at Server.setupListenHandle [as _listen2] (node:net:1940:16)\n' +
+    '    at listenInCluster (node:net:1997:12)\n' +
+    '    at Server.listen (node:net:2102:7)\n' +
+    '    at app.listen (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/application.js:635:24)\n' +
+    '    at startServer (/Users/emrahcercioglu/Documents/Butce/budget/backend/server.js:145:9)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  timestamp: '2025-11-04 21:21:06'
+}
+{
+  service: 'budget-backend',
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 5001,
+  level: 'error',
+  message: 'Error tracked (uncaught_exception): listen EADDRINUSE: address already in use :::5001',
+  stack: 'Error: listen EADDRINUSE: address already in use :::5001\n' +
+    '    at Server.setupListenHandle [as _listen2] (node:net:1940:16)\n' +
+    '    at listenInCluster (node:net:1997:12)\n' +
+    '    at Server.listen (node:net:2102:7)\n' +
+    '    at app.listen (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/application.js:635:24)\n' +
+    '    at startServer (/Users/emrahcercioglu/Documents/Butce/budget/backend/server.js:145:9)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)',
+  timestamp: '2025-11-04 21:21:06'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (http_error): HTTP 500',
+  stack: 'Error: HTTP 500\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:141:37)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:26:06'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Unhandled promise rejection: this.get is not a function',
+  stack: 'TypeError: this.get is not a function\n' +
+    '    at PerformanceMonitor.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:148:17)\n' +
+    '    at PerformanceMonitor.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/services/performanceMonitor.js:248:20)\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:144:18)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:26:06'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (unhandled_rejection): TypeError: this.get is not a function',
+  stack: 'Error: TypeError: this.get is not a function\n' +
+    '    at process.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/scripts/initializeMonitoring.js:183:35)\n' +
+    '    at process.emit (node:events:508:28)\n' +
+    '    at emitUnhandledRejection (node:internal/process/promises:252:13)\n' +
+    '    at throwUnhandledRejectionsMode (node:internal/process/promises:388:19)\n' +
+    '    at processPromiseRejections (node:internal/process/promises:475:17)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:106:32)',
+  timestamp: '2025-11-04 21:26:06'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (http_error): HTTP 500',
+  stack: 'Error: HTTP 500\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:141:37)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:27:00'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Unhandled promise rejection: this.get is not a function',
+  stack: 'TypeError: this.get is not a function\n' +
+    '    at PerformanceMonitor.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:148:17)\n' +
+    '    at PerformanceMonitor.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/services/performanceMonitor.js:248:20)\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:144:18)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:27:00'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (unhandled_rejection): TypeError: this.get is not a function',
+  stack: 'Error: TypeError: this.get is not a function\n' +
+    '    at process.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/scripts/initializeMonitoring.js:183:35)\n' +
+    '    at process.emit (node:events:508:28)\n' +
+    '    at emitUnhandledRejection (node:internal/process/promises:252:13)\n' +
+    '    at throwUnhandledRejectionsMode (node:internal/process/promises:388:19)\n' +
+    '    at processPromiseRejections (node:internal/process/promises:475:17)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:106:32)',
+  timestamp: '2025-11-04 21:27:00'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (http_error): HTTP 503',
+  stack: 'Error: HTTP 503\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:141:37)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at handleHealthCheck (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:43:28)',
+  timestamp: '2025-11-04 21:27:04'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Health check error: this.get is not a function',
+  stack: 'TypeError: this.get is not a function\n' +
+    '    at PerformanceMonitor.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:148:17)\n' +
+    '    at PerformanceMonitor.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/services/performanceMonitor.js:248:20)\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:144:18)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at handleHealthCheck (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:43:28)',
+  timestamp: '2025-11-04 21:27:04'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (http_error): HTTP 503',
+  stack: 'Error: HTTP 503\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:141:37)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at handleHealthCheck (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:46:21)',
+  timestamp: '2025-11-04 21:27:04'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Unhandled promise rejection: this.get is not a function',
+  stack: 'TypeError: this.get is not a function\n' +
+    '    at PerformanceMonitor.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:148:17)\n' +
+    '    at PerformanceMonitor.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/services/performanceMonitor.js:248:20)\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:144:18)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at handleHealthCheck (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:46:21)',
+  timestamp: '2025-11-04 21:27:04'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (unhandled_rejection): TypeError: this.get is not a function',
+  stack: 'Error: TypeError: this.get is not a function\n' +
+    '    at process.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/scripts/initializeMonitoring.js:183:35)\n' +
+    '    at process.emit (node:events:508:28)\n' +
+    '    at emitUnhandledRejection (node:internal/process/promises:252:13)\n' +
+    '    at throwUnhandledRejectionsMode (node:internal/process/promises:388:19)\n' +
+    '    at processPromiseRejections (node:internal/process/promises:475:17)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:106:32)',
+  timestamp: '2025-11-04 21:27:04'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (http_error): HTTP 500',
+  stack: 'Error: HTTP 500\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:141:37)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:28:37'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Unhandled promise rejection: this.get is not a function',
+  stack: 'TypeError: this.get is not a function\n' +
+    '    at PerformanceMonitor.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:148:17)\n' +
+    '    at PerformanceMonitor.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/services/performanceMonitor.js:248:20)\n' +
+    '    at res.send (/Users/emrahcercioglu/Documents/Butce/budget/backend/middleware/healthCheck.js:144:18)\n' +
+    '    at ServerResponse.json (/Users/emrahcercioglu/Documents/Butce/budget/backend/node_modules/express/lib/response.js:278:15)\n' +
+    '    at login (/Users/emrahcercioglu/Documents/Butce/budget/backend/controllers/authController.js:82:23)',
+  timestamp: '2025-11-04 21:28:37'
+}
+{
+  service: 'budget-backend',
+  level: 'error',
+  message: 'Error tracked (unhandled_rejection): TypeError: this.get is not a function',
+  stack: 'Error: TypeError: this.get is not a function\n' +
+    '    at process.<anonymous> (/Users/emrahcercioglu/Documents/Butce/budget/backend/scripts/initializeMonitoring.js:183:35)\n' +
+    '    at process.emit (node:events:508:28)\n' +
+    '    at emitUnhandledRejection (node:internal/process/promises:252:13)\n' +
+    '    at throwUnhandledRejectionsMode (node:internal/process/promises:388:19)\n' +
+    '    at processPromiseRejections (node:internal/process/promises:475:17)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:106:32)',
+  timestamp: '2025-11-04 21:28:37'
+}
