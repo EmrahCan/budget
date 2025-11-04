@@ -42,7 +42,7 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
-import { formatCurrency, formatDate, handleApiError } from '../../services/api';
+import { fixedPaymentsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
 
 // Sabit ödeme kategorileri ve ikonları
 const PAYMENT_CATEGORIES = [
@@ -126,8 +126,8 @@ const SAMPLE_PAYMENTS = [
 const FixedPaymentsPage = () => {
   const { showSuccess, showError } = useNotification();
   
-  const [payments, setPayments] = useState(SAMPLE_PAYMENTS); // Demo için örnek veri
-  const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [formData, setFormData] = useState({
@@ -139,21 +139,39 @@ const FixedPaymentsPage = () => {
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    try {
+      setLoading(true);
+      const response = await fixedPaymentsAPI.getAll();
+      setPayments(response.data.data || []);
+    } catch (error) {
+      showError(handleApiError(error));
+      // Fallback to sample data if API fails
+      setPayments(SAMPLE_PAYMENTS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleOpenDialog = (payment = null) => {
     if (payment) {
       setEditingPayment(payment);
       setFormData({
-        name: payment.name,
-        amount: payment.amount.toString(),
-        category: payment.category,
-        dueDay: payment.dueDay.toString(),
+        name: payment.name || '',
+        amount: payment.amount?.toString() || '',
+        category: payment.category || 'Kira',
+        dueDay: payment.dueDay?.toString() || payment.due_day?.toString() || '',
       });
     } else {
       setEditingPayment(null);
       setFormData({
         name: '',
         amount: '',
-        category: 'Faturalar',
+        category: 'Kira',
         dueDay: '',
       });
     }
@@ -208,29 +226,31 @@ const FixedPaymentsPage = () => {
       };
 
       if (editingPayment) {
-        // Demo için array güncelleme
-        setPayments(prev => prev.map(p => 
-          p.name === editingPayment.name ? { ...paymentData } : p
-        ));
+        await fixedPaymentsAPI.update(editingPayment.id, paymentData);
         showSuccess('Sabit ödeme başarıyla güncellendi');
       } else {
-        // Demo için array'e ekleme
-        setPayments(prev => [...prev, paymentData]);
+        await fixedPaymentsAPI.create(paymentData);
         showSuccess('Sabit ödeme başarıyla eklendi');
       }
 
       handleCloseDialog();
+      loadPayments(); // Listeyi yenile
     } catch (error) {
-      showError('İşlem sırasında hata oluştu');
+      showError(handleApiError(error));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeletePayment = (payment) => {
+  const handleDeletePayment = async (payment) => {
     if (window.confirm(`"${payment.name}" ödemesini silmek istediğinizden emin misiniz?`)) {
-      setPayments(prev => prev.filter(p => p.name !== payment.name));
-      showSuccess('Sabit ödeme başarıyla silindi');
+      try {
+        await fixedPaymentsAPI.delete(payment.id);
+        showSuccess('Sabit ödeme başarıyla silindi');
+        loadPayments(); // Listeyi yenile
+      } catch (error) {
+        showError(handleApiError(error));
+      }
     }
   };
 
