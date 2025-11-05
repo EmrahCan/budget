@@ -152,19 +152,7 @@ const FixedPaymentsPage = () => {
     loadPayments();
   }, []);
 
-  const loadPayments = async () => {
-    try {
-      setLoading(true);
-      const response = await fixedPaymentsAPI.getAll();
-      setPayments(response.data.data || []);
-    } catch (error) {
-      showError(handleApiError(error));
-      // Fallback to sample data if API fails
-      setPayments(SAMPLE_PAYMENTS);
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleOpenDialog = (payment = null) => {
     if (payment) {
