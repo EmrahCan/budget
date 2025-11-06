@@ -43,8 +43,8 @@ class User {
     }
   }
 
-  // Find user by email
-  static async findByEmail(email) {
+  // Find user by email (with password hash for authentication)
+  static async findByEmailWithPassword(email) {
     const query = `
       SELECT id, email, password_hash, first_name, last_name, role, is_active, created_at, updated_at
       FROM users 
@@ -58,9 +58,26 @@ class User {
     }
 
     return {
-      ...result.rows[0],
+      passwordHash: result.rows[0].password_hash,
       user: new User(result.rows[0])
     };
+  }
+
+  // Find user by email (without password hash)
+  static async findByEmail(email) {
+    const query = `
+      SELECT id, email, first_name, last_name, role, is_active, created_at, updated_at
+      FROM users 
+      WHERE email = $1
+    `;
+
+    const result = await DatabaseUtils.query(query, [email.toLowerCase().trim()]);
+    
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return new User(result.rows[0]);
   }
 
   // Find user by ID

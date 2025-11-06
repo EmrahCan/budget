@@ -56,7 +56,7 @@ validate_environment() {
             ENV_FILE=".env.development"
             ;;
         "production")
-            COMPOSE_FILE="docker-compose.yml -f docker-compose.prod.yml"
+            COMPOSE_FILE="docker-compose.prod.yml"
             ENV_FILE=".env.production"
             ;;
         *)

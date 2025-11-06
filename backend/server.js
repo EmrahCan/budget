@@ -60,12 +60,42 @@ app.use(cors({
     process.env.FRONTEND_URL || 'http://localhost:3001',
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://localhost:3002'
+    'http://localhost:3002',
+    // Current Azure VM IP - comprehensive coverage
+    'http://108.143.146.143',
+    'http://108.143.146.143:80',
+    'http://108.143.146.143:3000',
+    'https://108.143.146.143',
+    'https://108.143.146.143:443',
+    // Docker network internal communication
+    'http://budget-frontend:3000',
+    'http://frontend:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
   ],
   exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 200
 }));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400'); // 24 hours
+  res.sendStatus(200);
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

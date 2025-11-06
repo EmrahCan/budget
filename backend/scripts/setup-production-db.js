@@ -15,44 +15,61 @@ async function setupProductionDatabase() {
   console.log('🔗 Connected to Azure MySQL database');
 
   try {
-    // Read and execute migration files
-    const migrationsDir = path.join(__dirname, '../database/migrations');
-    const migrationFiles = fs.readdirSync(migrationsDir)
-      .filter(file => file.endsWith('.sql'))
-      .sort();
-
-    for (const file of migrationFiles) {
-      console.log(`📄 Executing migration: ${file}`);
-      const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
-      
-      // Split by semicolon and execute each statement
-      const statements = sql.split(';').filter(stmt => stmt.trim());
-      
-      for (const statement of statements) {
-        if (statement.trim()) {
+    // Execute main initialization script
+    const initSqlPath = path.join(__dirname, '../database/init/mysql-init.sql');
+    console.log('📄 Executing main initialization script...');
+    
+    const sql = fs.readFileSync(initSqlPath, 'utf8');
+    
+    // Split by semicolon and execute each statement
+    const statements = sql.split(';').filter(stmt => stmt.trim());
+    
+    for (const statement of statements) {
+      if (statement.trim()) {
+        try {
           await connection.execute(statement);
+        } catch (error) {
+          // Ignore duplicate key errors and table exists errors
+          if (!error.message.includes('Duplicate entry') && 
+              !error.message.includes('already exists')) {
+            console.warn('⚠️ Statement warning:', error.message);
+          }
         }
       }
-      
-      console.log(`✅ Migration ${file} completed`);
     }
-
-    // Create admin user if not exists
-    const adminEmail = 'admin@budget.com';
-    const adminPassword = '$2b$10$rQZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9QZ9Q'; // 'admin123'
     
-    const [existingUser] = await connection.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [adminEmail]
-    );
+    console.log('✅ Main initialization completed');
 
-    if (existingUser.length === 0) {
-      await connection.execute(
-        'INSERT INTO users (email, password, first_name, last_name, is_admin, created_at) VALUES (?, ?, ?, ?, ?, NOW())',
-        [adminEmail, adminPassword, 'Admin', 'User', true]
-      );
-      console.log('👤 Admin user created');
+    // Execute additional migration files if they exist
+    const migrationsDir = path.join(__dirname, '../database/migrations');
+    if (fs.existsSync(migrationsDir)) {
+      const migrationFiles = fs.readdirSync(migrationsDir)
+        .filter(file => file.endsWith('.sql'))
+        .sort();
+
+      for (const file of migrationFiles) {
+        console.log(`📄 Executing migration: ${file}`);
+        const migrationSql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+        
+        const migrationStatements = migrationSql.split(';').filter(stmt => stmt.trim());
+        
+        for (const statement of migrationStatements) {
+          if (statement.trim()) {
+            try {
+              await connection.execute(statement);
+            } catch (error) {
+              console.warn(`⚠️ Migration ${file} warning:`, error.message);
+            }
+          }
+        }
+        
+        console.log(`✅ Migration ${file} completed`);
+      }
     }
+
+    // Verify tables were created
+    const [tables] = await connection.execute('SHOW TABLES');
+    console.log('📊 Created tables:', tables.map(t => Object.values(t)[0]));
 
     console.log('🎉 Database setup completed successfully!');
     

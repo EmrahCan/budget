@@ -48,8 +48,8 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Find user by email
-      const userData = await User.findByEmail(email);
+      // Find user by email with password hash
+      const userData = await User.findByEmailWithPassword(email);
       if (!userData) {
         return res.status(401).json({
           success: false,
@@ -58,7 +58,7 @@ class AuthController {
       }
 
       // Verify password
-      const isValidPassword = await User.verifyPassword(password, userData.password_hash);
+      const isValidPassword = await User.verifyPassword(password, userData.passwordHash);
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
@@ -79,6 +79,7 @@ class AuthController {
       });
     } catch (error) {
       console.error('Login error:', error);
+      console.error('Login error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Giriş işlemi sırasında hata oluştu'

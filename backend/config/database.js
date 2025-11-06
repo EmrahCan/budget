@@ -7,15 +7,17 @@ const dbConfig = {
   port: parseInt(process.env.DB_PORT) || 5432,
   database: process.env.DB_NAME || 'budget_app',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'password123',
+  // Fix for production: ensure password is always a string, never empty
+  password: process.env.DB_PASSWORD || 'postgres',
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool
   min: 2,  // Minimum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
   connectionTimeoutMillis: 5000, // Return error after 5 seconds if connection could not be established
   acquireTimeoutMillis: 60000, // Return error after 60 seconds if a client could not be checked out
-  // SSL configuration for production
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  // SSL configuration: explicitly disable for Docker internal network
+  // PostgreSQL driver requires this to be undefined or an object, not false
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 };
 
 console.log(`🔗 Connecting to database: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);

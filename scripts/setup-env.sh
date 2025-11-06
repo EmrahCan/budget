@@ -60,29 +60,35 @@ GEMINI_MODEL=gemini-1.5-pro
 EOF
             ;;
         "production")
+            # Get VM public IP
+            VM_PUBLIC_IP=$(curl -s http://checkip.amazonaws.com 2>/dev/null || curl -s http://ipinfo.io/ip 2>/dev/null || echo "YOUR_VM_PUBLIC_IP")
+            
             cat > "$env_file" << EOF
-# Budget App - Production Environment
+# Budget App - Production Environment (Azure VM)
 
 # Server Configuration
 NODE_ENV=production
 PORT=5001
 
-# Database Configuration
+# Database Configuration (Docker internal)
 DB_HOST=database
 DB_PORT=5432
 DB_NAME=budget_app_prod
 DB_USER=postgres
-DB_PASSWORD=password123
+DB_PASSWORD=BudgetApp2024!SecurePassword
 
 # JWT Configuration
-JWT_SECRET=budget_app_super_secret_jwt_key_2024
+JWT_SECRET=budget_app_super_secret_jwt_key_2024_azure_vm_$(date +%s)
 JWT_EXPIRES_IN=7d
 
 # Frontend Configuration
-FRONTEND_URL=http://4.210.173.21:3000
+FRONTEND_URL=http://$VM_PUBLIC_IP:3000
+
+# CORS Configuration
+CORS_ORIGIN=http://$VM_PUBLIC_IP:3000
 
 # API Configuration
-REACT_APP_API_URL=http://4.210.173.21:5001/api
+REACT_APP_API_URL=http://$VM_PUBLIC_IP:5001/api
 REACT_APP_ENVIRONMENT=production
 REACT_APP_DEBUG=false
 
@@ -92,6 +98,9 @@ GEMINI_MODEL=gemini-1.5-pro
 
 # Production Optimizations
 GENERATE_SOURCEMAP=false
+
+# Azure VM Specific
+VM_PUBLIC_IP=$VM_PUBLIC_IP
 EOF
             ;;
     esac

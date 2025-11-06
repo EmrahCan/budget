@@ -47767,3 +47767,211 @@
   level: 'info',
   message: 'HTTP Request'
 }
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 38,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 32,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 3,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 3,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/?type=overdraft',
+  statusCode: 200,
+  duration: 4,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/?type=overdraft',
+  statusCode: 200,
+  duration: 3,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:07',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 4,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 7,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 5,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/recent?limit=5',
+  statusCode: 200,
+  duration: 3,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/recent?limit=5',
+  statusCode: 200,
+  duration: 12,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 5,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 15,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 14,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 13,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/',
+  statusCode: 200,
+  duration: 3,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: 1,
+  timestamp: '2025-11-05 22:47:09',
+  level: 'info',
+  message: 'HTTP Request'
+}
