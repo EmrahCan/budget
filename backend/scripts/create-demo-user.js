@@ -1,28 +1,28 @@
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 
-async function createAdminUser() {
+async function createDemoUser() {
   try {
-    const email = 'admin@budget.com';
-    const password = 'admin123';
-    const firstName = 'Admin';
-    const lastName = 'User';
+    const email = 'demo@budget.com';
+    const password = 'demo123';
+    const firstName = 'Demo';
+    const lastName = 'Kullanıcı';
     
     // Hash password
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
     
-    // Check if admin already exists
+    // Check if user already exists
     const checkQuery = 'SELECT id FROM users WHERE email = $1';
     const checkResult = await pool.query(checkQuery, [email]);
     
     if (checkResult.rows.length > 0) {
-      console.log('❌ Admin user already exists!');
+      console.log('❌ Demo user already exists!');
       console.log('Email:', email);
       process.exit(0);
     }
     
-    // Create admin user
+    // Create demo user
     const insertQuery = `
       INSERT INTO users (email, password_hash, first_name, last_name, role)
       VALUES ($1, $2, $3, $4, $5)
@@ -34,22 +34,21 @@ async function createAdminUser() {
       passwordHash,
       firstName,
       lastName,
-      'admin'
+      'user'
     ]);
     
-    console.log('✅ Admin user created successfully!');
+    console.log('✅ Demo user created successfully!');
     console.log('-----------------------------------');
     console.log('Email:', email);
     console.log('Password:', password);
     console.log('Role:', result.rows[0].role);
     console.log('-----------------------------------');
-    console.log('⚠️  Please change the password after first login!');
     
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error creating admin user:', error);
+    console.error('❌ Error creating demo user:', error);
     process.exit(1);
   }
 }
 
-createAdminUser();
+createDemoUser();
