@@ -437,6 +437,42 @@ class AdminController {
     }
   }
 
+  // Delete user
+  static async deleteUser(req, res) {
+    try {
+      const { userId } = req.params;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Kullanıcı bulunamadı'
+        });
+      }
+
+      // Prevent deleting yourself
+      if (req.user && req.user.id === userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Kendi hesabınızı silemezsiniz'
+        });
+      }
+
+      await user.delete();
+
+      res.json({
+        success: true,
+        message: 'Kullanıcı başarıyla silindi'
+      });
+    } catch (error) {
+      console.error('Delete user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Kullanıcı silinirken hata oluştu'
+      });
+    }
+  }
+
   // Create admin user
   static async createAdmin(req, res) {
     try {

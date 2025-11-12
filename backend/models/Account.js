@@ -10,18 +10,18 @@ class Account {
     this.overdraftLimit = parseFloat(accountData.overdraft_limit || 0);
     this.overdraftUsed = parseFloat(accountData.overdraft_used || 0);
     this.currency = accountData.currency;
-    this.bankId = accountData.bank_id;
-    this.bankName = accountData.bank_name;
-    this.iban = accountData.iban;
-    this.accountNumber = accountData.account_number;
+    this.bankId = accountData.bank_id || null;
+    this.bankName = accountData.bank_name || null;
+    this.iban = accountData.iban || null;
+    this.accountNumber = accountData.account_number || null;
     this.isActive = accountData.is_active;
-    // Flexible account fields
+    // Flexible account fields - set defaults since columns don't exist yet
     this.isFlexible = accountData.is_flexible || false;
     this.accountLimit = accountData.account_limit ? parseFloat(accountData.account_limit) : null;
     this.currentDebt = parseFloat(accountData.current_debt || 0);
     this.interestRate = accountData.interest_rate ? parseFloat(accountData.interest_rate) : null;
     this.minimumPaymentRate = parseFloat(accountData.minimum_payment_rate || 5);
-    this.paymentDueDate = accountData.payment_due_date;
+    this.paymentDueDate = accountData.payment_due_date || null;
     // Computed fields
     this.availableLimit = accountData.available_limit ? parseFloat(accountData.available_limit) : null;
     this.utilizationPercentage = accountData.utilization_percentage ? parseFloat(accountData.utilization_percentage) : null;
@@ -53,8 +53,8 @@ class Account {
       } = accountData;
 
       const query = `
-        INSERT INTO accounts (user_id, name, type, balance, overdraft_limit, overdraft_used, currency, bank_id, bank_name, iban, account_number)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO accounts (user_id, name, type, balance, overdraft_limit, currency)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
       `;
 
@@ -75,18 +75,7 @@ class Account {
         type,
         parseFloat(balance),
         parseFloat(overdraftLimit || 0),
-        parseFloat(overdraftUsed || 0), // Kullanıcının girdiği değer
-        currency.toUpperCase(),
-        bankId?.trim() || null,
-        bankName?.trim() || null,
-        iban?.trim() || null,
-        accountNumber?.trim() || null,
-        isFlexible,
-        accountLimit || null,
-        currentDebt,
-        interestRate || null,
-        minimumPaymentRate,
-        paymentDueDate || null
+        currency.toUpperCase()
       ]);
 
       return new Account(result.rows[0]);

@@ -5,7 +5,7 @@ class CreditCard {
     this.id = cardData.id;
     this.userId = cardData.user_id;
     this.name = cardData.name;
-    this.bankId = cardData.bank_id;
+    this.bankId = cardData.bank_id || null;
     this.bankName = cardData.bank_name;
     this.creditLimit = parseFloat(cardData.credit_limit);
     this.currentBalance = parseFloat(cardData.current_balance);
@@ -33,17 +33,16 @@ class CreditCard {
 
       const query = `
         INSERT INTO credit_cards (
-          user_id, name, bank_id, bank_name, credit_limit, current_balance, 
+          user_id, name, bank_name, credit_limit, current_balance, 
           interest_rate, minimum_payment_rate, payment_due_date
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
 
       const result = await DatabaseUtils.query(query, [
         userId,
         name.trim(),
-        bankId?.trim() || null,
         bankName?.trim() || null,
         parseFloat(creditLimit),
         parseFloat(currentBalance),

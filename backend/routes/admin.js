@@ -23,8 +23,9 @@ router.get('/users',
 router.get('/users/:userId', 
   [
     param('userId')
-      .isInt({ min: 1 })
-      .withMessage('Geçersiz kullanıcı ID'),
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -43,8 +44,9 @@ router.get('/users/:userId',
 router.put('/users/:userId/status',
   [
     param('userId')
-      .isInt({ min: 1 })
-      .withMessage('Geçersiz kullanıcı ID'),
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
     body('isActive')
       .isBoolean()
       .withMessage('isActive boolean değer olmalıdır'),
@@ -66,8 +68,9 @@ router.put('/users/:userId/status',
 router.put('/users/:userId/role',
   [
     param('userId')
-      .isInt({ min: 1 })
-      .withMessage('Geçersiz kullanıcı ID'),
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
     body('role')
       .isIn(['user', 'admin'])
       .withMessage('Rol user veya admin olmalıdır'),
@@ -89,8 +92,9 @@ router.put('/users/:userId/role',
 router.put('/users/:userId/reset-password',
   [
     param('userId')
-      .isInt({ min: 1 })
-      .withMessage('Geçersiz kullanıcı ID'),
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
     body('newPassword')
       .isLength({ min: 6 })
       .withMessage('Yeni şifre en az 6 karakter olmalıdır'),
@@ -112,8 +116,9 @@ router.put('/users/:userId/reset-password',
 router.post('/users/:userId/generate-password',
   [
     param('userId')
-      .isInt({ min: 1 })
-      .withMessage('Geçersiz kullanıcı ID'),
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -127,6 +132,28 @@ router.post('/users/:userId/generate-password',
     }
   ],
   AdminController.generateUserPassword
+);
+
+// Delete user
+router.delete('/users/:userId',
+  [
+    param('userId')
+      .trim()
+      .notEmpty().withMessage('Kullanıcı ID gereklidir')
+      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri girişi',
+          errors: errors.array()
+        });
+      }
+      next();
+    }
+  ],
+  AdminController.deleteUser
 );
 
 // Admin creation
