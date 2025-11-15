@@ -144,7 +144,16 @@ class Account {
   // Update account
   async update(updateData) {
     try {
-      const allowedFields = ['name', 'type', 'balance', 'overdraft_limit', 'overdraft_used', 'currency', 'is_active'];
+      const allowedFields = [
+        'name', 
+        'type', 
+        'balance', 
+        'overdraft_limit', 
+        'overdraft_used', 
+        'interest_rate',
+        'currency', 
+        'is_active'
+      ];
       
       const updates = [];
       const params = [];
@@ -192,14 +201,20 @@ class Account {
   // Delete account (soft delete)
   async delete() {
     try {
+      console.log(`[Account.delete] Starting delete for account ID: ${this.id}, Type: ${this.type}`);
+      
       // Check if account has transactions
       const transactionCount = await DatabaseUtils.query(
         'SELECT COUNT(*) FROM transactions WHERE account_id = $1',
         [this.id]
       );
 
-      if (parseInt(transactionCount.rows[0].count) > 0) {
+      const count = parseInt(transactionCount.rows[0].count);
+      console.log(`[Account.delete] Transaction count: ${count}`);
+
+      if (count > 0) {
         // Soft delete if has transactions
+        console.log(`[Account.delete] Performing soft delete (has ${count} transactions)`);
         const query = `
           UPDATE accounts 
           SET is_active = false, updated_at = CURRENT_TIMESTAMP
@@ -209,14 +224,18 @@ class Account {
 
         const result = await DatabaseUtils.query(query, [this.id]);
         this.isActive = false;
+        console.log(`[Account.delete] Soft delete successful for account ID: ${this.id}`);
         return { deleted: false, deactivated: true };
       } else {
         // Hard delete if no transactions
+        console.log(`[Account.delete] Performing hard delete (no transactions)`);
         await this.hardDelete();
+        console.log(`[Account.delete] Hard delete successful for account ID: ${this.id}`);
         return { deleted: true, deactivated: false };
       }
     } catch (error) {
-      console.error('Error deleting account:', error);
+      console.error(`[Account.delete] Error deleting account ID ${this.id}:`, error);
+      console.error(`[Account.delete] Error stack:`, error.stack);
       throw error;
     }
   }
@@ -224,11 +243,15 @@ class Account {
   // Hard delete (permanent)
   async hardDelete() {
     try {
+      console.log(`[Account.hardDelete] Starting hard delete for account ID: ${this.id}`);
       const query = 'DELETE FROM accounts WHERE id = $1';
       await DatabaseUtils.query(query, [this.id]);
+      console.log(`[Account.hardDelete] Hard delete completed for account ID: ${this.id}`);
       return true;
     } catch (error) {
-      console.error('Error hard deleting account:', error);
+      console.error(`[Account.hardDelete] Error hard deleting account ID ${this.id}:`, error);
+      console.error(`[Account.hardDelete] Error details:`, error.message);
+      console.error(`[Account.hardDelete] Error stack:`, error.stack);
       throw error;
     }
   }
@@ -660,10 +683,12 @@ class Account {
       balance: this.getDisplayedBalance(), // Gösterilen bakiye
       overdraftLimit: this.overdraftLimit || 0, // Esnek hesap limiti
       overdraftUsed: this.getOverdraftUsed(), // Kullanılan esnek hesap
+      currentBalance: this.getOverdraftUsed(), // Frontend compatibility - same as overdraftUsed
       overdraftDebt: this.getOverdraftDebt(), // Esnek hesap borcu
       availableBalance: this.getAvailableBalance(), // Kullanılabilir miktar
       remainingOverdraftLimit: this.getRemainingOverdraftLimit(), // Kalan limit
       isUsingOverdraft: this.isUsingOverdraft(),
+      interestRate: this.interestRate || null, // Faiz oranı
       currency: this.currency,
       bankId: this.bankId,
       bankName: this.bankName,

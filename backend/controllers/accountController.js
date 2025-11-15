@@ -110,7 +110,13 @@ class AccountController {
     try {
       const { id } = req.params;
       const userId = req.user.id;
-      const updateData = req.body;
+      const updateData = { ...req.body };
+
+      // Map frontend field names to backend field names
+      if (updateData.currentBalance !== undefined) {
+        updateData.overdraftUsed = updateData.currentBalance;
+        delete updateData.currentBalance;
+      }
 
       const account = await Account.findById(id, userId);
       if (!account) {
@@ -144,19 +150,25 @@ class AccountController {
       const { id } = req.params;
       const userId = req.user.id;
 
+      console.log(`[AccountController.deleteAccount] Request to delete account ID: ${id} by user ID: ${userId}`);
+
       const account = await Account.findById(id, userId);
       if (!account) {
+        console.log(`[AccountController.deleteAccount] Account not found: ID ${id} for user ${userId}`);
         return res.status(404).json({
           success: false,
           message: 'Hesap bulunamadı'
         });
       }
 
+      console.log(`[AccountController.deleteAccount] Account found: ${account.name} (Type: ${account.type})`);
       const result = await account.delete();
 
       const message = result.deleted 
         ? 'Hesap başarıyla silindi'
         : 'Hesap devre dışı bırakıldı (işlem geçmişi nedeniyle)';
+
+      console.log(`[AccountController.deleteAccount] Delete successful: ${message}`);
 
       res.json({
         success: true,
@@ -167,10 +179,13 @@ class AccountController {
         }
       });
     } catch (error) {
-      console.error('Delete account error:', error);
+      console.error('[AccountController.deleteAccount] Delete account error:', error);
+      console.error('[AccountController.deleteAccount] Error message:', error.message);
+      console.error('[AccountController.deleteAccount] Error stack:', error.stack);
       res.status(500).json({
         success: false,
-        message: 'Hesap silinirken hata oluştu'
+        message: 'Hesap silinirken hata oluştu',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
