@@ -77,6 +77,7 @@ import {
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 import { fixedPaymentsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
+import PaymentStatusCheckbox from '../../components/fixedPayments/PaymentStatusCheckbox';
 
 // Sabit ödeme kategorileri ve ikonları
 const PAYMENT_CATEGORIES = [
@@ -130,6 +131,10 @@ const FixedPaymentsPage = () => {
   // Hata yönetimi için state'ler
   const [error, setError] = useState(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  
+  // Payment history state'leri
+  const [paymentStatuses, setPaymentStatuses] = useState({});
+  const [paymentStatistics, setPaymentStatistics] = useState(null);
 
   useEffect(() => {
     loadPayments();
@@ -147,6 +152,44 @@ const FixedPaymentsPage = () => {
       setLoading(false);
     }
   };
+
+  // Load payment history for selected month/year
+  const loadPaymentHistory = async () => {
+    try {
+      setCalendarLoading(true);
+      const response = await fixedPaymentsAPI.getMonthlyStatusWithHistory({
+        month: selectedMonth + 1, // API expects 1-12
+        year: selectedYear
+      });
+      
+      const data = response.data.data;
+      
+      // Create a map of payment statuses
+      const statusMap = {};
+      data.payments.forEach(payment => {
+        statusMap[payment.id] = {
+          isPaid: payment.isPaid,
+          paidDate: payment.paidDate,
+          paidAmount: payment.paidAmount,
+          notes: payment.notes
+        };
+      });
+      
+      setPaymentStatuses(statusMap);
+      setPaymentStatistics(data.statistics);
+    } catch (error) {
+      handleDataError(error, 'Ödeme geçmişi yükleme');
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  // Load payment history when month/year changes or view mode changes to list/calendar
+  useEffect(() => {
+    if (viewMode !== 'category' && payments.length > 0) {
+      loadPaymentHistory();
+    }
+  }, [selectedMonth, selectedYear, viewMode, payments.length]);
 
   useEffect(() => {
     loadPayments();
@@ -588,6 +631,39 @@ const FixedPaymentsPage = () => {
     setTouchStart(null);
   }, []);
 
+  // Handle payment status change
+  const handlePaymentStatusChange = async (paymentId, isPaid, month, year) => {
+    try {
+      const apiMonth = month !== undefined ? month + 1 : selectedMonth + 1;
+      const apiYear = year !== undefined ? year : selectedYear;
+      
+      if (isPaid) {
+        // Mark as paid
+        const payment = payments.find(p => p.id === paymentId);
+        await fixedPaymentsAPI.markAsPaid(paymentId, {
+          month: apiMonth,
+          year: apiYear,
+          paidAmount: payment?.amount,
+          paidDate: new Date().toISOString().split('T')[0]
+        });
+        showSuccess('Ödeme yapıldı olarak işaretlendi');
+      } else {
+        // Mark as unpaid
+        await fixedPaymentsAPI.markAsUnpaid(paymentId, {
+          month: apiMonth,
+          year: apiYear
+        });
+        showSuccess('Ödeme yapılmadı olarak işaretlendi');
+      }
+      
+      // Reload payment history
+      await loadPaymentHistory();
+    } catch (error) {
+      handleDataError(error, 'Ödeme durumu güncelleme');
+      throw error; // Re-throw to let checkbox component handle it
+    }
+  };
+
   // Gelişmiş hata yönetimi fonksiyonları
   const handleDataError = useCallback((error, context = 'Veri işlemi') => {
     console.error(`${context} error:`, error);
@@ -729,6 +805,30 @@ const FixedPaymentsPage = () => {
                 <Typography variant="body2" color="textSecondary">
                   {payments.length} sabit ödeme
                 </Typography>
+                {paymentStatistics && viewMode !== 'category' && (
+                  <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="body2" color="textSecondary">
+                      {months[selectedMonth]} {selectedYear}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                      <Chip 
+                        label={`✓ ${paymentStatistics.paidCount}`} 
+                        size="small" 
+                        color="success" 
+                      />
+                      <Chip 
+                        label={`✗ ${paymentStatistics.unpaidCount}`} 
+                        size="small" 
+                        color="error" 
+                      />
+                      <Chip 
+                        label={`${paymentStatistics.completionRate}%`} 
+                        size="small" 
+                        color="info" 
+                      />
+                    </Box>
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -1080,6 +1180,7 @@ const FixedPaymentsPage = () => {
                   <Table size={isMobile ? "small" : "medium"}>
                     <TableHead>
                       <TableRow>
+                        <TableCell padding="checkbox">Ödendi</TableCell>
                         {!isMobile && <TableCell>Tarih</TableCell>}
                         <TableCell>Ödeme</TableCell>
                         {!isMobile && <TableCell>Kategori</TableCell>}
@@ -1091,6 +1192,9 @@ const FixedPaymentsPage = () => {
                     <TableBody>
                       {Array.from({ length: 5 }).map((_, index) => (
                         <TableRow key={index}>
+                          <TableCell padding="checkbox">
+                            <Skeleton variant="circular" width={24} height={24} />
+                          </TableCell>
                           {!isMobile && (
                             <TableCell>
                               <Skeleton variant="text" width={100} />
@@ -1127,6 +1231,7 @@ const FixedPaymentsPage = () => {
                   <Table size={isMobile ? "small" : "medium"}>
                     <TableHead>
                       <TableRow>
+                        <TableCell padding="checkbox">Ödendi</TableCell>
                         {!isMobile && <TableCell>Tarih</TableCell>}
                         <TableCell>Ödeme</TableCell>
                         {!isMobile && <TableCell>Kategori</TableCell>}
@@ -1138,8 +1243,18 @@ const FixedPaymentsPage = () => {
                     <TableBody>
                       {monthlyPayments.map((payment) => {
                         const categoryInfo = getCategoryInfo(payment.category);
+                        const paymentStatus = paymentStatuses[payment.id] || { isPaid: false };
                         return (
                           <TableRow key={payment.id}>
+                            <TableCell padding="checkbox">
+                              <PaymentStatusCheckbox
+                                payment={payment}
+                                month={selectedMonth}
+                                year={selectedYear}
+                                isPaid={paymentStatus.isPaid}
+                                onStatusChange={handlePaymentStatusChange}
+                              />
+                            </TableCell>
                             {!isMobile && (
                               <TableCell>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

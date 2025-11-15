@@ -1,4 +1,5 @@
 const FixedPayment = require('../models/FixedPayment');
+const FixedPaymentHistory = require('../models/FixedPaymentHistory');
 const { validationResult } = require('express-validator');
 
 class FixedPaymentController {
@@ -323,6 +324,333 @@ class FixedPaymentController {
       res.status(500).json({
         success: false,
         message: 'Kategoriler alınırken hata oluştu'
+      });
+    }
+  }
+
+  // ============ PAYMENT HISTORY ENDPOINTS ============
+
+  // Get monthly status with payment history
+  static async getMonthlyStatusWithHistory(req, res) {
+    try {
+      const userId = req.user.id;
+      const { month, year } = req.query;
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+      const targetYear = year ? parseInt(year) : now.getFullYear();
+      
+      // Validate month and year
+      if (targetMonth < 1 || targetMonth > 12) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz ay değeri (1-12 arası olmalı)'
+        });
+      }
+      
+      if (targetYear < 2020 || targetYear > 2030) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz yıl değeri'
+        });
+      }
+      
+      // Auto-create records for this month if they don't exist
+      await FixedPaymentHistory.autoCreateMonthlyRecords(userId, targetMonth, targetYear);
+      
+      // Get monthly status
+      const monthlyStatus = await FixedPaymentHistory.getMonthlyStatus(userId, targetMonth, targetYear);
+      
+      // Get statistics
+      const statistics = await FixedPaymentHistory.getPaymentStatistics(userId, targetMonth, targetYear);
+      
+      res.json({
+        success: true,
+        data: {
+          month: targetMonth,
+          year: targetYear,
+          payments: monthlyStatus,
+          statistics
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching monthly status with history:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Aylık ödeme durumu alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Mark payment as paid
+  static async markPaymentAsPaid(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri',
+          errors: errors.array()
+        });
+      }
+
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { month, year, paidDate, paidAmount, transactionId, notes } = req.body;
+      
+      // Verify the fixed payment belongs to the user
+      const payment = await FixedPayment.findById(id, userId);
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sabit ödeme bulunamadı'
+        });
+      }
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month || now.getMonth() + 1;
+      const targetYear = year || now.getFullYear();
+      
+      // Mark as paid
+      const history = await FixedPaymentHistory.markAsPaid(
+        id,
+        userId,
+        targetMonth,
+        targetYear,
+        {
+          paidDate: paidDate || new Date(),
+          paidAmount: paidAmount || payment.amount,
+          transactionId,
+          notes
+        }
+      );
+      
+      res.json({
+        success: true,
+        message: 'Ödeme başarıyla işaretlendi',
+        data: history.toJSON()
+      });
+    } catch (error) {
+      console.error('Error marking payment as paid:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödeme işaretlenirken hata oluştu'
+      });
+    }
+  }
+
+  // Mark payment as unpaid
+  static async markPaymentAsUnpaid(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Geçersiz veri',
+          errors: errors.array()
+        });
+      }
+
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { month, year } = req.body;
+      
+      // Verify the fixed payment belongs to the user
+      const payment = await FixedPayment.findById(id, userId);
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sabit ödeme bulunamadı'
+        });
+      }
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month || now.getMonth() + 1;
+      const targetYear = year || now.getFullYear();
+      
+      // Mark as unpaid
+      const history = await FixedPaymentHistory.markAsUnpaid(
+        id,
+        userId,
+        targetMonth,
+        targetYear
+      );
+      
+      res.json({
+        success: true,
+        message: 'Ödeme ödenmedi olarak işaretlendi',
+        data: history.toJSON()
+      });
+    } catch (error) {
+      console.error('Error marking payment as unpaid:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödeme işaretlenirken hata oluştu'
+      });
+    }
+  }
+
+  // Get payment statistics
+  static async getPaymentStatistics(req, res) {
+    try {
+      const userId = req.user.id;
+      const { month, year } = req.query;
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+      const targetYear = year ? parseInt(year) : now.getFullYear();
+      
+      const statistics = await FixedPaymentHistory.getPaymentStatistics(userId, targetMonth, targetYear);
+      
+      res.json({
+        success: true,
+        data: {
+          month: targetMonth,
+          year: targetYear,
+          statistics
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching payment statistics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödeme istatistikleri alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Get unpaid payments
+  static async getUnpaidPayments(req, res) {
+    try {
+      const userId = req.user.id;
+      const { month, year } = req.query;
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+      const targetYear = year ? parseInt(year) : now.getFullYear();
+      
+      const unpaidPayments = await FixedPaymentHistory.getUnpaidPayments(userId, targetMonth, targetYear);
+      
+      res.json({
+        success: true,
+        data: {
+          month: targetMonth,
+          year: targetYear,
+          payments: unpaidPayments
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching unpaid payments:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödenmemiş ödemeler alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Get paid payments
+  static async getPaidPayments(req, res) {
+    try {
+      const userId = req.user.id;
+      const { month, year } = req.query;
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+      const targetYear = year ? parseInt(year) : now.getFullYear();
+      
+      const paidPayments = await FixedPaymentHistory.getPaidPayments(userId, targetMonth, targetYear);
+      
+      res.json({
+        success: true,
+        data: {
+          month: targetMonth,
+          year: targetYear,
+          payments: paidPayments
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching paid payments:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödenmiş ödemeler alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Get overdue payments with history
+  static async getOverduePaymentsWithHistory(req, res) {
+    try {
+      const userId = req.user.id;
+      const { month, year } = req.query;
+      
+      // Default to current month/year if not provided
+      const now = new Date();
+      const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+      const targetYear = year ? parseInt(year) : now.getFullYear();
+      
+      const overduePayments = await FixedPaymentHistory.getOverduePayments(userId, targetMonth, targetYear);
+      
+      res.json({
+        success: true,
+        data: {
+          month: targetMonth,
+          year: targetYear,
+          payments: overduePayments
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching overdue payments:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Gecikmiş ödemeler alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Get payment history for a specific fixed payment
+  static async getPaymentHistory(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      const { limit, offset } = req.query;
+      
+      // Verify the fixed payment belongs to the user
+      const payment = await FixedPayment.findById(id, userId);
+      if (!payment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Sabit ödeme bulunamadı'
+        });
+      }
+      
+      const history = await FixedPaymentHistory.getPaymentHistory(
+        id,
+        userId,
+        {
+          limit: limit ? parseInt(limit) : 12,
+          offset: offset ? parseInt(offset) : 0
+        }
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          fixedPaymentId: id,
+          fixedPaymentName: payment.name,
+          history: history.map(h => h.toJSON())
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching payment history:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Ödeme geçmişi alınırken hata oluştu'
       });
     }
   }

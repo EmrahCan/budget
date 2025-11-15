@@ -248,6 +248,16 @@ export const fixedPaymentsAPI = {
   getTotalMonthlyAmount: () => api.get('/fixed-payments/total-monthly'),
   getCategories: () => api.get('/fixed-payments/categories'),
   getByCategory: (category) => api.get(`/fixed-payments/category/${category}`),
+  
+  // Payment History endpoints
+  getMonthlyStatusWithHistory: (params) => api.get('/fixed-payments/history/monthly-status', { params }),
+  getPaymentStatistics: (params) => api.get('/fixed-payments/history/statistics', { params }),
+  getUnpaidPayments: (params) => api.get('/fixed-payments/history/unpaid', { params }),
+  getPaidPayments: (params) => api.get('/fixed-payments/history/paid', { params }),
+  getOverduePaymentsWithHistory: (params) => api.get('/fixed-payments/history/overdue', { params }),
+  getPaymentHistory: (id, params) => api.get(`/fixed-payments/${id}/history`, { params }),
+  markAsPaid: (id, data) => api.post(`/fixed-payments/${id}/mark-paid`, data),
+  markAsUnpaid: (id, data) => api.post(`/fixed-payments/${id}/mark-unpaid`, data),
 };
 
 // Installment Payments API
