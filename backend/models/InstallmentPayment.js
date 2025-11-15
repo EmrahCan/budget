@@ -97,22 +97,34 @@ class InstallmentPayment {
       installmentAmount,
       totalInstallments,
       interestRate,
+      startDate,
       vendor,
-      notes,
-      isActive
+      notes
     } = updateData;
+    
+    // Calculate next payment date based on start date and paid installments
+    const currentPayment = await this.findById(id, userId);
+    if (!currentPayment) {
+      return null;
+    }
+    
+    const paidInstallments = currentPayment.paidInstallments || 0;
+    const nextPaymentDate = new Date(startDate);
+    nextPaymentDate.setMonth(nextPaymentDate.getMonth() + paidInstallments);
     
     const query = `
       UPDATE installment_payments 
       SET item_name = $3, category = $4, total_amount = $5, installment_amount = $6,
-          total_installments = $7, interest_rate = $8, vendor = $9, notes = $10, is_active = $11
+          total_installments = $7, interest_rate = $8, start_date = $9, 
+          next_payment_date = $10, vendor = $11, notes = $12
       WHERE id = $1 AND user_id = $2
       RETURNING *
     `;
     
     const result = await db.query(query, [
       id, userId, itemName, category, totalAmount, installmentAmount,
-      totalInstallments, interestRate, vendor, notes, isActive
+      totalInstallments, interestRate, startDate, nextPaymentDate.toISOString().split('T')[0],
+      vendor, notes
     ]);
     
     return result.rows.length > 0 ? new InstallmentPayment(result.rows[0]) : null;
