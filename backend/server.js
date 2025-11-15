@@ -62,6 +62,12 @@ app.use(cors({
     'http://localhost:3001',
     'http://localhost:3002',
     // Current Azure VM IP - comprehensive coverage
+    'http://98.71.149.168',
+    'http://98.71.149.168:80',
+    'http://98.71.149.168:3000',
+    'https://98.71.149.168',
+    'https://98.71.149.168:443',
+    // Previous Azure VM IPs
     'http://108.143.146.143',
     'http://108.143.146.143:80',
     'http://108.143.146.143:3000',
