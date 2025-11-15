@@ -1,227 +1,214 @@
-# Production Deployment Guide - Azure Static Web Apps
+# Production Deployment Guide - Fixed Payment History
 
-## 🎯 **Hızlı Deployment - 15 Dakikada Canlı!**
+## Overview
+This guide explains how to deploy the fixed payment history tracking feature to Azure VM production environment.
 
-### **1. Azure Static Web App Oluşturma**
+## Prerequisites
+- SSH access to Azure VM (98.71.149.168)
+- Docker and docker-compose running on Azure VM
+- PostgreSQL database container running
 
-1. **Azure Portal'a gidin**: https://portal.azure.com
-2. **"Static Web Apps" arayın** ve seçin
-3. **"Create"** butonuna tıklayın
+## Deployment Steps
 
-**Konfigürasyon:**
-```
-Subscription: [Azure aboneliğiniz]
-Resource Group: budget-app-rg (yeni oluşturun)
-Name: budget-management-app
-Plan: Free (başlangıç için)
-Region: West Europe (Türkiye'ye yakın)
-Source: GitHub
-Repository: [GitHub repo URL'niz]
-Branch: main
-Build Presets: React
-App location: /budget/frontend
-Output location: build
-```
-
-### **2. GitHub Secrets Ayarlama**
-
-GitHub repo'nuzda **Settings > Secrets and variables > Actions**:
-
-```
-AZURE_STATIC_WEB_APPS_API_TOKEN: [Azure'dan alacağınız token]
-REACT_APP_API_URL: https://your-backend-url.com/api
-```
-
-### **3. Backend Deployment (Seçenekler)**
-
-#### **Seçenek A: Azure App Service**
+### Step 1: Connect to Azure VM
 ```bash
-# Azure CLI ile
-az webapp create --resource-group budget-app-rg --plan budget-plan --name budget-backend --runtime "NODE|18-lts"
+ssh azureuser@98.71.149.168
+cd ~/budget
 ```
 
-#### **Seçenek B: Azure Container Instances**
+### Step 2: Pull Latest Code
 ```bash
-# Docker image build ve push
-docker build -t budget-backend ./budget/backend
-docker tag budget-backend your-registry.azurecr.io/budget-backend
-docker push your-registry.azurecr.io/budget-backend
+git pull origin main
 ```
 
-#### **Seçenek C: Azure VM (Mevcut Docker Setup)**
+### Step 3: Run Database Migration
+
+**Option A: Using Docker Exec (Recommended)**
 ```bash
-# VM'de
-git clone [your-repo]
-cd budget
-./scripts/deploy.sh production
+# Copy migration file to database container
+docker cp backend/database/migrations/add_fixed_payment_history.sql budget-db:/tmp/
+
+# Run migration
+docker exec -it budget-db psql -U postgres -d budget_app -f /tmp/add_fixed_payment_history.sql
 ```
 
-### **4. Database Setup**
-
-#### **Azure Database for MySQL**
+**Option B: Using psql from Host**
 ```bash
-az mysql flexible-server create \
-  --resource-group budget-app-rg \
-  --name budget-mysql-server \
-  --admin-user budgetadmin \
-  --admin-password [güçlü-şifre] \
-  --sku-name Standard_B1ms \
-  --tier Burstable \
-  --public-access 0.0.0.0 \
-  --storage-size 20 \
-  --version 8.0.21
+# If psql is installed on host
+PGPASSWORD=your_password psql -h localhost -U postgres -d budget_app -f backend/database/migrations/add_fixed_payment_history.sql
 ```
 
-### **5. Environment Variables**
-
-**Frontend (.env.production):**
-```env
-REACT_APP_API_URL=https://budget-backend.azurewebsites.net/api
-REACT_APP_ENVIRONMENT=production
-REACT_APP_VERSION=2.0.0
-```
-
-**Backend (.env.production):**
-```env
-NODE_ENV=production
-PORT=80
-DB_HOST=budget-mysql-server.mysql.database.azure.com
-DB_PORT=3306
-DB_NAME=budget_app
-DB_USER=budgetadmin
-DB_PASSWORD=[şifreniz]
-JWT_SECRET=[güvenli-secret]
-GEMINI_API_KEY=[gemini-api-key]
-CORS_ORIGIN=https://your-static-web-app.azurestaticapps.net
-```
-
-## 🚀 **Otomatik Deployment**
-
-GitHub Actions zaten konfigüre edilmiş. Main branch'e push yaptığınızda:
-
-1. ✅ **Build** otomatik çalışır
-2. ✅ **Test** otomatik çalışır  
-3. ✅ **Deploy** otomatik olur
-4. ✅ **Live URL** alırsınız
-
-## 📊 **Monitoring ve Health Checks**
-
-### **Health Endpoints**
-- Frontend: `https://your-app.azurestaticapps.net`
-- Backend: `https://your-backend.azurewebsites.net/health`
-- API: `https://your-backend.azurewebsites.net/api`
-
-### **Azure Application Insights**
-```javascript
-// Otomatik monitoring için
-import { ApplicationInsights } from '@microsoft/applicationinsights-web';
-
-const appInsights = new ApplicationInsights({
-  config: {
-    instrumentationKey: 'your-key'
-  }
-});
-```
-
-## 💰 **Maliyet Tahmini (Aylık)**
-
-### **Minimal Setup (Başlangıç)**
-- Static Web Apps: **Ücretsiz**
-- App Service (Basic): **~$13**
-- MySQL (Basic): **~$20**
-- **Toplam: ~$33/ay**
-
-### **Production Setup**
-- Static Web Apps: **$9/ay**
-- App Service (Standard): **~$55**
-- MySQL (General Purpose): **~$80**
-- **Toplam: ~$144/ay**
-
-## 🔐 **Security Checklist**
-
-- [ ] **HTTPS** zorlaması aktif
-- [ ] **CORS** origins kısıtlı
-- [ ] **JWT secrets** güvenli
-- [ ] **Database** firewall aktif
-- [ ] **API rate limiting** aktif
-- [ ] **Environment variables** güvenli
-
-## 🎯 **Custom Domain Setup**
-
-1. **Azure Static Web Apps'te**:
-   - Custom domains sekmesi
-   - Domain ekle: `budget.yourdomain.com`
-   - DNS kayıtları ayarla
-
-2. **DNS Kayıtları**:
-   ```
-   Type: CNAME
-   Name: budget
-   Value: your-app.azurestaticapps.net
-   ```
-
-## 🚨 **Troubleshooting**
-
-### **Build Hataları**
+**Option C: Manual SQL Execution**
 ```bash
-# Local'de test et
-cd budget/frontend
-npm install
-npm run build
+# Connect to database
+docker exec -it budget-db psql -U postgres -d budget_app
+
+# Then paste the SQL from add_fixed_payment_history.sql
+# Or run: \i /path/to/add_fixed_payment_history.sql
 ```
 
-### **CORS Hataları**
-```javascript
-// Backend'de CORS ayarları
-app.use(cors({
-  origin: [
-    'https://your-app.azurestaticapps.net',
-    'http://localhost:3002'
-  ]
-}));
-```
-
-### **Database Bağlantı Sorunları**
+### Step 4: Rebuild and Restart Containers
 ```bash
-# Connection string test
-mysql -h budget-mysql-server.mysql.database.azure.com -u budgetadmin -p
+# Stop containers
+docker-compose down
+
+# Rebuild backend (to get new code)
+docker-compose build backend
+
+# Start all containers
+docker-compose up -d
+
+# Check status
+docker-compose ps
 ```
 
-## 📈 **Performance Optimization**
+### Step 5: Verify Deployment
 
-### **Frontend**
-- ✅ **Code splitting** aktif
-- ✅ **Lazy loading** aktif
-- ✅ **CDN** otomatik
-- ✅ **Gzip compression** aktif
+**Check Container Logs:**
+```bash
+docker-compose logs -f backend
+```
 
-### **Backend**
-- ✅ **Connection pooling** aktif
-- ✅ **Caching** sistemi mevcut
-- ✅ **Rate limiting** aktif
+**Test Backend Health:**
+```bash
+curl http://localhost:5001/health
+```
 
-## 🎉 **Deployment Tamamlandı!**
+**Test New Endpoint:**
+```bash
+# Get a valid token first by logging in through frontend
+# Then test the endpoint
+curl -X GET "http://localhost:5001/api/fixed-payments/history/statistics?month=11&year=2025" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
 
-Başarılı deployment sonrası:
+## Verification Checklist
 
-1. ✅ **Frontend**: https://your-app.azurestaticapps.net
-2. ✅ **Backend**: https://your-backend.azurewebsites.net
-3. ✅ **API**: https://your-backend.azurewebsites.net/api
-4. ✅ **Health**: https://your-backend.azurewebsites.net/health
-5. ✅ **SSL**: Otomatik aktif
-6. ✅ **CDN**: Global edge locations
-7. ✅ **Monitoring**: Application Insights
+- [ ] Code pulled successfully from GitHub
+- [ ] Database migration completed without errors
+- [ ] Docker containers rebuilt and running
+- [ ] Backend health check returns 200 OK
+- [ ] Frontend loads without errors
+- [ ] Can access fixed payments page
+- [ ] Can see payment status checkboxes
+- [ ] Can mark payments as paid/unpaid
+- [ ] Payment statistics display correctly
 
-**🚀 Artık production'da canlı bir Budget Management System'iniz var!**
+## Rollback Plan
 
-## 📞 **Sonraki Adımlar**
+If something goes wrong:
 
-1. **Custom domain** ayarlayın
-2. **Application Insights** konfigüre edin
-3. **Backup stratejisi** oluşturun
-4. **Monitoring alerts** ayarlayın
-5. **Performance testing** yapın
+### Rollback Code:
+```bash
+cd ~/budget
+git log --oneline -5  # Find previous commit
+git reset --hard <previous-commit-hash>
+docker-compose down
+docker-compose build backend
+docker-compose up -d
+```
 
----
+### Rollback Database:
+```bash
+# Connect to database
+docker exec -it budget-db psql -U postgres -d budget_app
 
-*Bu guide ile 15-30 dakikada production'a çıkabilirsiniz! 🎯*
+# Drop the table
+DROP TABLE IF EXISTS fixed_payment_history CASCADE;
+```
+
+## Troubleshooting
+
+### Issue: Migration fails with "relation already exists"
+**Solution:** Migration has already been applied. Skip this step.
+
+### Issue: Containers won't start
+**Solution:** 
+```bash
+docker-compose logs backend
+docker-compose logs frontend
+# Check for errors and fix configuration
+```
+
+### Issue: 404 errors on new endpoints
+**Solution:**
+```bash
+# Restart backend container
+docker-compose restart backend
+
+# Check if routes are loaded
+docker-compose logs backend | grep "fixed-payments"
+```
+
+### Issue: Database connection errors
+**Solution:**
+```bash
+# Check database container
+docker-compose ps budget-db
+
+# Restart database if needed
+docker-compose restart budget-db
+```
+
+## Post-Deployment Testing
+
+### Test Scenarios:
+
+1. **View Fixed Payments List:**
+   - Navigate to Fixed Payments page
+   - Switch to "List" view
+   - Verify checkbox column appears
+
+2. **Mark Payment as Paid:**
+   - Click checkbox next to a payment
+   - Verify success message
+   - Verify statistics update
+
+3. **Mark Payment as Unpaid:**
+   - Uncheck a paid payment
+   - Verify success message
+   - Verify statistics update
+
+4. **View Payment Statistics:**
+   - Check summary card shows paid/unpaid counts
+   - Verify completion rate percentage
+   - Switch between months
+
+5. **Check Payment History:**
+   - View payment history for specific payment
+   - Verify dates and amounts are correct
+
+## Monitoring
+
+### Key Metrics to Monitor:
+- API response times for new endpoints
+- Database query performance
+- Error rates in logs
+- User engagement with new feature
+
+### Log Locations:
+```bash
+# Backend logs
+docker-compose logs -f backend
+
+# Database logs
+docker-compose logs -f budget-db
+
+# All logs
+docker-compose logs -f
+```
+
+## Support
+
+If you encounter issues:
+1. Check logs first
+2. Verify database migration was successful
+3. Ensure all containers are running
+4. Test API endpoints manually
+5. Check browser console for frontend errors
+
+## Feature Documentation
+
+- API Documentation: `backend/FIXED_PAYMENT_HISTORY_API.md`
+- Migration README: `backend/database/migrations/README_fixed_payment_history.md`
+- Model Documentation: See `backend/models/FixedPaymentHistory.js`
