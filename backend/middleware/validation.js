@@ -200,7 +200,17 @@ const transactionValidation = {
 const paramValidation = {
   id: [
     param('id')
-      .isInt({ min: 1 })
+      .custom((value) => {
+        // Support both integer and UUID formats
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        
+        if (!isInteger && !isUUID) {
+          throw new Error('Geçersiz ID formatı');
+        }
+        
+        return true;
+      })
       .withMessage('Geçersiz ID'),
     handleValidationErrors
   ]
