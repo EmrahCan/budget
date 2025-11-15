@@ -8,7 +8,17 @@ const router = express.Router();
 // Validation middleware
 const paramValidation = {
   id: param('id')
-    .isInt({ min: 1 })
+    .custom((value) => {
+      // Support both integer and UUID formats
+      const isInteger = /^\d+$/.test(value);
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+      
+      if (!isInteger && !isUUID) {
+        throw new Error('Geçersiz taksitli ödeme ID formatı');
+      }
+      
+      return true;
+    })
     .withMessage('Geçersiz taksitli ödeme ID'),
   category: param('category')
     .isLength({ min: 1, max: 100 })
