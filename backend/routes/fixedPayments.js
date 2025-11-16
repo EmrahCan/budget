@@ -2,14 +2,27 @@ const express = require('express');
 const { body, param, query } = require('express-validator');
 const FixedPaymentController = require('../controllers/fixedPaymentController');
 const { authenticateToken } = require('../middleware/auth');
+const { paramValidation: globalParamValidation } = require('../middleware/validation');
 
 const router = express.Router();
 
 // Validation middleware
 const paramValidation = {
-  id: param('id')
-    .isInt({ min: 1 })
-    .withMessage('Geçersiz ödeme ID'),
+  id: [
+    param('id')
+      .custom((value) => {
+        // Support both integer and UUID formats
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        
+        if (!isInteger && !isUUID) {
+          throw new Error('Geçersiz ödeme ID formatı');
+        }
+        
+        return true;
+      })
+      .withMessage('Geçersiz ödeme ID')
+  ],
   category: param('category')
     .isLength({ min: 1, max: 100 })
     .withMessage('Geçersiz kategori')
