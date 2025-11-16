@@ -62,6 +62,11 @@ app.use(cors({
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
+      // Production domain
+      'https://budgetapp.site',
+      'https://www.budgetapp.site',
+      'http://budgetapp.site',
+      'http://www.budgetapp.site',
       // Current Azure VM IP - comprehensive coverage
       'http://98.71.149.168',
       'http://98.71.149.168:80',
