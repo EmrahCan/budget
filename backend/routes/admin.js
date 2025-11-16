@@ -25,7 +25,18 @@ router.get('/users/:userId',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        // Support both integer and UUID formats
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        
+        if (!isInteger && !isUUID) {
+          throw new Error('Geçersiz kullanıcı ID formatı');
+        }
+        
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -46,7 +57,13 @@ router.put('/users/:userId/status',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        if (!isInteger && !isUUID) throw new Error('Geçersiz kullanıcı ID formatı');
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     body('isActive')
       .isBoolean()
       .withMessage('isActive boolean değer olmalıdır'),
@@ -70,7 +87,13 @@ router.put('/users/:userId/role',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        if (!isInteger && !isUUID) throw new Error('Geçersiz kullanıcı ID formatı');
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     body('role')
       .isIn(['user', 'admin'])
       .withMessage('Rol user veya admin olmalıdır'),
@@ -94,7 +117,13 @@ router.put('/users/:userId/reset-password',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        if (!isInteger && !isUUID) throw new Error('Geçersiz kullanıcı ID formatı');
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     body('newPassword')
       .isLength({ min: 6 })
       .withMessage('Yeni şifre en az 6 karakter olmalıdır'),
@@ -118,7 +147,13 @@ router.post('/users/:userId/generate-password',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        if (!isInteger && !isUUID) throw new Error('Geçersiz kullanıcı ID formatı');
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -140,7 +175,13 @@ router.delete('/users/:userId',
     param('userId')
       .trim()
       .notEmpty().withMessage('Kullanıcı ID gereklidir')
-      .isUUID().withMessage('Geçersiz kullanıcı ID formatı'),
+      .custom((value) => {
+        const isInteger = /^\d+$/.test(value);
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+        if (!isInteger && !isUUID) throw new Error('Geçersiz kullanıcı ID formatı');
+        return true;
+      })
+      .withMessage('Geçersiz kullanıcı ID formatı'),
     (req, res, next) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
