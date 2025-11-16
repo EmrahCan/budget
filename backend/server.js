@@ -56,27 +56,39 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3001',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-    // Current Azure VM IP - comprehensive coverage
-    'http://98.71.149.168',
-    'http://98.71.149.168:80',
-    'http://98.71.149.168:3000',
-    'https://98.71.149.168',
-    'https://98.71.149.168:443',
-    // Previous Azure VM IPs
-    'http://108.143.146.143',
-    'http://108.143.146.143:80',
-    'http://108.143.146.143:3000',
-    'https://108.143.146.143',
-    'https://108.143.146.143:443',
-    // Docker network internal communication
-    'http://budget-frontend:3000',
-    'http://frontend:3000'
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'http://localhost:3001',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      // Current Azure VM IP - comprehensive coverage
+      'http://98.71.149.168',
+      'http://98.71.149.168:80',
+      'http://98.71.149.168:3000',
+      'https://98.71.149.168',
+      'https://98.71.149.168:443',
+      // Previous Azure VM IPs
+      'http://108.143.146.143',
+      'http://108.143.146.143:80',
+      'http://108.143.146.143:3000',
+      'https://108.143.146.143',
+      'https://108.143.146.143:443',
+      // Docker network internal communication
+      'http://budget-frontend:3000',
+      'http://frontend:3000'
+    ];
+    
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Content-Type', 
@@ -181,9 +193,6 @@ app.use('/api/*', (req, res) => {
 
 // Global error handler
 app.use((error, req, res, next) => {
-  // Track error in performance monitor
-  performanceMonitor.trackError(error, 'request');
-  
   logger.errorWithContext('Unhandled error:', error);
   
   res.status(500).json({
