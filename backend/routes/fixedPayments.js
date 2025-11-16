@@ -84,6 +84,9 @@ router.get('/', FixedPaymentController.getFixedPayments);
 // Get monthly schedule
 router.get('/schedule', scheduleValidation, FixedPaymentController.getMonthlySchedule);
 
+// Calendar endpoint (alias for schedule - for frontend compatibility)
+router.get('/calendar', scheduleValidation, FixedPaymentController.getMonthlySchedule);
+
 // Get payments due this month
 router.get('/due-this-month', FixedPaymentController.getPaymentsDueThisMonth);
 
