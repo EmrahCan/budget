@@ -53,6 +53,23 @@
     "startDate": "Start Date",
     "endDate": "End Date"
   },
+  "auth": {
+    "login": "Login",
+    "loggingIn": "Logging in...",
+    "loginSubtitle": "Sign in to your account",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "rememberMe": "Remember Me",
+    "forgotPassword": "Forgot Password",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "confirmPassword": "Confirm Password",
+    "or": "or",
+    "demoInfo": "You can use any email and password for demo"
+  },
   "navigation": {
     "dashboard": "Dashboard",
     "accounts": "Accounts",
@@ -200,7 +217,8 @@
       "created": "Successfully created",
       "updated": "Successfully updated",
       "deleted": "Successfully deleted",
-      "saved": "Successfully saved"
+      "saved": "Successfully saved",
+      "loggedIn": "Successfully logged in"
     },
     "error": {
       "general": "An error occurred",

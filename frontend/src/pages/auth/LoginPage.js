@@ -22,12 +22,14 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   const { showError, showSuccess } = useNotification();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -58,14 +60,14 @@ const LoginPage = () => {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        showSuccess('Başarıyla giriş yapıldı!');
+        showSuccess(t('messages.success.loggedIn'));
         navigate(from, { replace: true });
       } else {
         setError(result.message);
         showError(result.message);
       }
     } catch (err) {
-      const errorMessage = 'Giriş yapılırken beklenmeyen bir hata oluştu';
+      const errorMessage = t('messages.error.general');
       setError(errorMessage);
       showError(errorMessage);
     } finally {
@@ -94,10 +96,10 @@ const LoginPage = () => {
             <TrendingUp sx={{ fontSize: 48, color: 'primary.main' }} />
           </Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Bütçe Yönetimi
+            {t('common.appTitle')}
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Hesabınıza giriş yapın
+            {t('auth.loginSubtitle')}
           </Typography>
         </Box>
 
@@ -112,7 +114,7 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="E-posta"
+                label={t('auth.email')}
                 name="email"
                 type="email"
                 value={formData.email}
@@ -132,7 +134,7 @@ const LoginPage = () => {
 
               <TextField
                 fullWidth
-                label="Şifre"
+                label={t('auth.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -168,19 +170,19 @@ const LoginPage = () => {
                 disabled={loading}
                 sx={{ mb: 3, py: 1.5 }}
               >
-                {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+                {loading ? t('auth.loggingIn') : t('auth.login')}
               </Button>
             </form>
 
             <Divider sx={{ my: 3 }}>
               <Typography variant="body2" color="textSecondary">
-                veya
+                {t('auth.or')}
               </Typography>
             </Divider>
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="textSecondary">
-                Hesabınız yok mu?{' '}
+                {t('auth.dontHaveAccount')}{' '}
                 <Link
                   to="/register"
                   style={{
@@ -189,7 +191,7 @@ const LoginPage = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Kayıt olun
+                  {t('auth.register')}
                 </Link>
               </Typography>
             </Box>
@@ -199,7 +201,7 @@ const LoginPage = () => {
         {/* Demo credentials info */}
         <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Typography variant="caption" color="textSecondary">
-            Demo için herhangi bir e-posta ve şifre kullanabilirsiniz
+            {t('auth.demoInfo')}
           </Typography>
         </Box>
       </Box>

@@ -77,6 +77,8 @@
   },
   "auth": {
     "login": "Giriş Yap",
+    "loggingIn": "Giriş yapılıyor...",
+    "loginSubtitle": "Hesabınıza giriş yapın",
     "register": "Kayıt Ol",
     "email": "E-posta",
     "password": "Şifre",
@@ -86,7 +88,9 @@
     "alreadyHaveAccount": "Zaten hesabınız var mı?",
     "firstName": "Ad",
     "lastName": "Soyad",
-    "confirmPassword": "Şifre Tekrar"
+    "confirmPassword": "Şifre Tekrar",
+    "or": "veya",
+    "demoInfo": "Demo için herhangi bir e-posta ve şifre kullanabilirsiniz"
   },
   "pages": {
     "dashboard": {

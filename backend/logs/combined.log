@@ -67912,3 +67912,81 @@
   level: 'info',
   message: 'HTTP Request'
 }
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 0,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:54:54',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 0,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:54:54',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 1,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:55:06',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 0,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:55:06',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 0,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:55:13',
+  level: 'info',
+  message: 'HTTP Request'
+}
+{
+  service: 'budget-backend',
+  method: 'GET',
+  url: '/health',
+  statusCode: 200,
+  duration: 0,
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+  ip: '::1',
+  userId: null,
+  timestamp: '2025-11-17 18:55:13',
+  level: 'info',
+  message: 'HTTP Request'
+}
