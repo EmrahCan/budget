@@ -13,12 +13,12 @@ import {
 import {
   AccountCircle,
   Notifications,
-  Settings,
   Logout,
   Person,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -66,6 +66,9 @@ const Header = () => {
 
       {/* Right side icons */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
         {/* Notifications */}
         <IconButton
           color="inherit"

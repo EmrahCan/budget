@@ -174,6 +174,7 @@ const fixedPaymentRoutes = require('./routes/fixedPayments');
 const installmentPaymentRoutes = require('./routes/installmentPayments');
 const reportRoutes = require('./routes/reports');
 const optimizedReportRoutes = require('./routes/optimizedReports');
+const enhancedReportRoutes = require('./routes/enhancedReports');
 const adminRoutes = require('./routes/admin');
 const aiRoutes = require('./routes/ai');
 
@@ -186,6 +187,7 @@ app.use('/api/installment-payments', installmentPaymentRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/reports/optimized', optimizedReportRoutes);
+app.use('/api/reports/enhanced', enhancedReportRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Catch-all for undefined API routes
