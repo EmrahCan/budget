@@ -1,5 +1,7 @@
 {
   "common": {
+    "appTitle": "Bütçe Yönetimi",
+    "noNotifications": "Henüz bildirim yok",
     "save": "Kaydet",
     "cancel": "İptal",
     "delete": "Sil",
@@ -64,6 +66,7 @@
     "profile": "Profil",
     "settings": "Ayarlar",
     "admin": "Yönetim",
+    "userManagement": "Kullanıcı Yönetimi",
     "logout": "Çıkış"
   },
   "pages": {

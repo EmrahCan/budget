@@ -18,11 +18,13 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationAnchor, setNotificationAnchor] = useState(null);
 
@@ -61,7 +63,7 @@ const Header = () => {
     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
       {/* App Title */}
       <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-        Bütçe Yönetimi
+        {t('common.appTitle')}
       </Typography>
 
       {/* Right side icons */}
@@ -138,14 +140,14 @@ const Header = () => {
           <ListItemIcon>
             <Person fontSize="small" />
           </ListItemIcon>
-          Profil
+          {t('navigation.profile')}
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
           </ListItemIcon>
-          Çıkış Yap
+          {t('navigation.logout')}
         </MenuItem>
       </Menu>
 
@@ -165,7 +167,7 @@ const Header = () => {
       >
         <MenuItem>
           <Typography variant="body2" color="textSecondary">
-            Henüz bildirim yok
+            {t('common.noNotifications')}
           </Typography>
         </MenuItem>
       </Menu>

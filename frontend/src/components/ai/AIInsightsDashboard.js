@@ -50,7 +50,8 @@ const AIInsightsDashboard = ({ timeframe = 'monthly' }) => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/ai/insights?timeframe=${timeframe}`, {
+      // YENİ ENDPOINT: /api/reports/enhanced/ai-analysis
+      const response = await fetch(`/api/reports/enhanced/ai-analysis?timeframe=${timeframe}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',

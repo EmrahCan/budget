@@ -1,5 +1,7 @@
 {
   "common": {
+    "appTitle": "Budget Management",
+    "noNotifications": "No notifications yet",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
@@ -64,6 +66,7 @@
     "profile": "Profile",
     "settings": "Settings",
     "admin": "Admin",
+    "userManagement": "User Management",
     "logout": "Logout"
   },
   "pages": {

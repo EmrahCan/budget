@@ -53,7 +53,8 @@ const AIRecommendations = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/ai/recommendations', {
+      // YENİ ENDPOINT: /api/reports/enhanced/ai-analysis (recommendations aynı endpoint'ten gelecek)
+      const response = await fetch('/api/reports/enhanced/ai-analysis', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -73,8 +74,22 @@ const AIRecommendations = () => {
       }
       
       if (data.success) {
-        setRecommendations(data.data.recommendations || []);
-        setTotalPotentialSavings(data.data.totalPotentialSavings || 0);
+        // Insights'ları recommendations olarak kullan (mock data için)
+        const insights = data.data.insights || [];
+        setRecommendations(insights.map((insight, index) => ({
+          id: index + 1,
+          type: insight.type === 'spending_pattern' ? 'cost_reduction' : 
+                insight.type === 'budget_alert' ? 'budget' : 
+                insight.type === 'saving_opportunity' ? 'saving' : 'budget',
+          title: insight.title,
+          description: insight.description,
+          priority: insight.severity === 'critical' ? 'high' : 
+                   insight.severity === 'warning' ? 'medium' : 'low',
+          estimatedSavings: 0,
+          timeframe: 'aylık',
+          actionSteps: insight.recommendations || []
+        })));
+        setTotalPotentialSavings(0);
       } else {
         throw new Error(data.message || 'AI önerileri alınamadı');
       }

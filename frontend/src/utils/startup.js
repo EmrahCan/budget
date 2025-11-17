@@ -1,6 +1,6 @@
 // Application startup utilities
 
-import environmentConfig from '../config/environment';
+import environmentConfig from '../config/environment.js';
 
 export const performStartupChecks = () => {
   console.log('🚀 Starting Budget App...');

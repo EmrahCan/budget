@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   List,
@@ -29,50 +30,50 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 
-const getMenuItems = (userRole) => {
+const getMenuItems = (userRole, t) => {
   const baseItems = [
     {
-      text: 'Dashboard',
+      text: t('navigation.dashboard'),
       icon: <Dashboard />,
       path: '/',
     },
     {
-      text: 'Hesaplarım',
+      text: t('navigation.accounts'),
       icon: <AccountBalance />,
       path: '/accounts',
     },
     {
-      text: 'Esnek Hesaplar',
+      text: t('navigation.overdrafts'),
       icon: <CreditCard />,
       path: '/overdrafts',
     },
     {
-      text: 'Kredi Kartlarım',
+      text: t('navigation.creditCards'),
       icon: <CreditCard />,
       path: '/credit-cards',
     },
     {
-      text: 'İşlemlerim',
+      text: t('navigation.transactions'),
       icon: <Receipt />,
       path: '/transactions',
     },
     {
-      text: 'Sabit Ödemeler',
+      text: t('navigation.fixedPayments'),
       icon: <Repeat />,
       path: '/fixed-payments',
     },
     {
-      text: 'Taksitli Ödemeler',
+      text: t('navigation.installmentPayments'),
       icon: <Payment />,
       path: '/installment-payments',
     },
     {
-      text: 'Ödeme Takvimi',
+      text: t('navigation.calendar'),
       icon: <CalendarToday />,
       path: '/payment-calendar',
     },
     {
-      text: 'Raporlar',
+      text: t('navigation.reports'),
       icon: <Assessment />,
       path: '/reports',
     },
@@ -82,12 +83,12 @@ const getMenuItems = (userRole) => {
   if (userRole === 'admin') {
     baseItems.push(
       {
-        text: 'Admin Panel',
+        text: t('navigation.admin'),
         icon: <AdminPanelSettings />,
         path: '/admin',
       },
       {
-        text: 'Kullanıcı Yönetimi',
+        text: t('navigation.userManagement'),
         icon: <People />,
         path: '/admin/users',
       }
@@ -101,8 +102,9 @@ const Sidebar = ({ onItemClick }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
 
-  const menuItems = getMenuItems(user?.role);
+  const menuItems = getMenuItems(user?.role, t);
 
   const handleItemClick = (path) => {
     navigate(path);
@@ -230,7 +232,7 @@ const Sidebar = ({ onItemClick }) => {
               <Person />
             </ListItemIcon>
             <ListItemText 
-              primary="Profil"
+              primary={t('navigation.profile')}
               primaryTypographyProps={{
                 fontSize: '0.875rem',
                 fontWeight: location.pathname === '/profile' ? 600 : 400,

@@ -4,7 +4,7 @@ class GeminiAIService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || 'AIzaSyC9JlhE9djALEg6lPurAbV0PpWY-KdAK1g';
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    const modelName = process.env.GEMINI_MODEL || 'gemini-pro';
     this.model = this.genAI.getGenerativeModel({ model: modelName });
     
     // Rate limiting
@@ -101,49 +101,54 @@ class GeminiAIService {
     }
   }
 
-  // Generate financial insights
-  async generateFinancialInsights(userData, timeframe = 'monthly') {
+  // Generate comprehensive financial insights with real data
+  async generateFinancialInsights(financialData) {
     try {
       this.checkRateLimit();
       
-      // Use mock data in development or when AI_USE_MOCK_DATA is true
-      if (process.env.NODE_ENV === 'development' || process.env.AI_USE_MOCK_DATA === 'true') {
-        return this.getMockInsights();
-      }
-      
-      // Real AI implementation for production
       const prompt = `
-        Analyze this financial data and provide insights in Turkish:
-        
-        User Data: ${JSON.stringify(userData)}
-        Timeframe: ${timeframe}
-        
-        Provide insights about:
-        1. Spending patterns
-        2. Budget performance
-        3. Unusual transactions
-        4. Recommendations for improvement
-        
-        Respond in JSON format:
-        {
-          "insights": [
-            {
-              "type": "spending_pattern|budget_alert|unusual_transaction|saving_opportunity|trend_analysis",
-              "title": "Insight title in Turkish",
-              "description": "Detailed description in Turkish",
-              "severity": "info|warning|critical",
-              "actionable": true,
-              "recommendations": ["rec1", "rec2"]
-            }
-          ],
-          "summary": "Overall financial health summary in Turkish"
-        }
-      `;
+Sen bir finansal danışman yapay zekasısın. Aşağıdaki finansal verileri analiz et ve Türkçe öngörüler sun:
+
+FINANSAL VERİLER:
+${JSON.stringify(financialData, null, 2)}
+
+Lütfen şu konularda detaylı analiz yap:
+1. Gelir-Gider Dengesi: Aylık gelir ve gider oranını değerlendir
+2. Kredi Kartı Kullanımı: Kredi kartı kullanım oranını analiz et (%30'un üzeri riskli)
+3. Borç Yükü: Toplam borç/varlık oranını değerlendir
+4. Harcama Patternleri: Kategori bazında harcama analizi
+5. Nakit Akışı: Aylık yükümlülükler vs gelir dengesi
+6. Tasarruf Potansiyeli: Tasarruf fırsatlarını belirle
+
+ZORUNLU JSON FORMAT (başka hiçbir metin ekleme):
+{
+  "insights": [
+    {
+      "type": "spending_pattern|budget_alert|debt_warning|saving_opportunity|cash_flow",
+      "title": "Kısa başlık (Türkçe)",
+      "description": "Detaylı açıklama (Türkçe, 2-3 cümle)",
+      "severity": "info|warning|critical",
+      "actionable": true,
+      "recommendations": ["Öneri 1", "Öneri 2", "Öneri 3"]
+    }
+  ],
+  "summary": "Genel finansal durum özeti (Türkçe, 3-4 cümle)",
+  "healthScore": 75,
+  "keyMetrics": {
+    "debtToAssetRatio": 0.25,
+    "savingsRate": 0.15,
+    "creditUtilization": 0.45
+  }
+}
+
+En az 4, en fazla 6 insight üret. Her insight için 2-3 actionable recommendation sun.
+`;
       
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
       
+      // Extract JSON from response
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
@@ -157,8 +162,11 @@ class GeminiAIService {
       
     } catch (error) {
       console.error('Gemini AI insights error:', error);
-      // Fallback to mock data on error
-      return this.getMockInsights();
+      return {
+        success: false,
+        error: error.message,
+        fallback: this.getMockInsights().data
+      };
     }
   }
 
