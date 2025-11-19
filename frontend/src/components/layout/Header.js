@@ -15,16 +15,20 @@ import {
   Notifications,
   Logout,
   Person,
+  Brightness4,
+  Brightness7,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
+import { useThemeMode } from '../../contexts/ThemeContext';
 
 const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { mode, toggleTheme } = useThemeMode();
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationAnchor, setNotificationAnchor] = useState(null);
 
@@ -70,6 +74,16 @@ const Header = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {/* Language Switcher */}
         <LanguageSwitcher />
+
+        {/* Dark Mode Toggle */}
+        <IconButton
+          color="inherit"
+          onClick={toggleTheme}
+          aria-label="toggle dark mode"
+          title={mode === 'light' ? 'Karanlık Mod' : 'Aydınlık Mod'}
+        >
+          {mode === 'light' ? <Brightness4 /> : <Brightness7 />}
+        </IconButton>
 
         {/* Notifications */}
         <IconButton
