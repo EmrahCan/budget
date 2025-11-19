@@ -38,6 +38,9 @@ jobs:
             echo "📂 Navigating to project directory..."
             cd ~/budget
             
+            echo "💾 Stashing local changes..."
+            git stash
+            
             echo "📥 Pulling latest changes from GitHub..."
             git fetch origin
             git pull origin main
