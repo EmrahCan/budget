@@ -13,10 +13,10 @@ export const useThemeMode = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  // localStorage'dan tema tercihini al, yoksa 'light' kullan
+  // localStorage'dan tema tercihini al, yoksa 'dark' kullan
   const [mode, setMode] = useState(() => {
     const savedMode = localStorage.getItem('themeMode');
-    return savedMode || 'light';
+    return savedMode || 'dark';
   });
 
   // Tema değiştiğinde localStorage'a kaydet
