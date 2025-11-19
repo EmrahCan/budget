@@ -80,6 +80,9 @@
     "loggingIn": "Giriş yapılıyor...",
     "loginSubtitle": "Hesabınıza giriş yapın",
     "register": "Kayıt Ol",
+    "registering": "Hesap oluşturuluyor...",
+    "registerSubtitle": "Yeni hesap oluşturun",
+    "createAccount": "Hesap Oluştur",
     "email": "E-posta",
     "password": "Şifre",
     "rememberMe": "Beni Hatırla",
@@ -347,3 +350,4 @@
     }
   }
 }
+

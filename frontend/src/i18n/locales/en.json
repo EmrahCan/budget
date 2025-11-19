@@ -51,13 +51,22 @@
     "from": "From",
     "to": "To",
     "startDate": "Start Date",
-    "endDate": "End Date"
+    "endDate": "End Date",
+    "perPage": "Per page",
+    "showing": "Showing",
+    "of": "of",
+    "entries": "entries",
+    "noData": "No data found",
+    "noResults": "No results found"
   },
   "auth": {
     "login": "Login",
     "loggingIn": "Logging in...",
     "loginSubtitle": "Sign in to your account",
     "register": "Register",
+    "registering": "Creating account...",
+    "registerSubtitle": "Create a new account",
+    "createAccount": "Create Account",
     "email": "Email",
     "password": "Password",
     "rememberMe": "Remember Me",
@@ -100,7 +109,11 @@
       "quickActions": "Quick Actions",
       "financialSummary": "Financial Summary",
       "insights": "Insights",
-      "noData": "No data available yet"
+      "noData": "No data available yet",
+      "viewAll": "View All",
+      "addTransaction": "Add Transaction",
+      "addAccount": "Add Account",
+      "addCard": "Add Card"
     },
     "accounts": {
       "title": "Accounts",
@@ -114,12 +127,27 @@
       "bankName": "Bank Name",
       "iban": "IBAN",
       "accountNumber": "Account Number",
+      "initialBalance": "Initial Balance",
+      "currentBalance": "Current Balance",
+      "lastUpdated": "Last Updated",
       "types": {
         "checking": "Checking",
         "savings": "Savings",
         "investment": "Investment",
         "other": "Other"
       }
+    },
+    "overdrafts": {
+      "title": "Overdrafts",
+      "addOverdraft": "Add Overdraft",
+      "editOverdraft": "Edit Overdraft",
+      "deleteOverdraft": "Delete Overdraft",
+      "overdraftName": "Account Name",
+      "limit": "Limit",
+      "usedAmount": "Used Amount",
+      "availableAmount": "Available Amount",
+      "interestRate": "Interest Rate",
+      "bankName": "Bank Name"
     },
     "creditCards": {
       "title": "Credit Cards",
@@ -134,7 +162,11 @@
       "statementDate": "Statement Date",
       "dueDate": "Due Date",
       "minimumPayment": "Minimum Payment",
-      "makePayment": "Make Payment"
+      "makePayment": "Make Payment",
+      "paymentAmount": "Payment Amount",
+      "paymentDate": "Payment Date",
+      "bankName": "Bank Name",
+      "lastFourDigits": "Last 4 Digits"
     },
     "transactions": {
       "title": "Transactions",
@@ -147,10 +179,23 @@
       "category": "Category",
       "description": "Description",
       "account": "Account",
+      "fromAccount": "From Account",
+      "toAccount": "To Account",
       "types": {
         "income": "Income",
         "expense": "Expense",
         "transfer": "Transfer"
+      },
+      "categories": {
+        "salary": "Salary",
+        "food": "Food",
+        "transport": "Transportation",
+        "shopping": "Shopping",
+        "bills": "Bills",
+        "entertainment": "Entertainment",
+        "health": "Health",
+        "education": "Education",
+        "other": "Other"
       }
     },
     "fixedPayments": {
@@ -162,14 +207,43 @@
       "amount": "Amount",
       "frequency": "Frequency",
       "nextPaymentDate": "Next Payment Date",
+      "lastPaymentDate": "Last Payment Date",
       "category": "Category",
       "autoPayment": "Auto Payment",
+      "account": "Account",
+      "markAsPaid": "Mark as Paid",
       "frequencies": {
         "daily": "Daily",
         "weekly": "Weekly",
         "monthly": "Monthly",
         "yearly": "Yearly"
       }
+    },
+    "installmentPayments": {
+      "title": "Installment Payments",
+      "addInstallment": "Add Installment",
+      "editInstallment": "Edit Installment",
+      "deleteInstallment": "Delete Installment",
+      "installmentName": "Installment Name",
+      "totalAmount": "Total Amount",
+      "installmentAmount": "Installment Amount",
+      "totalInstallments": "Total Installments",
+      "paidInstallments": "Paid Installments",
+      "remainingInstallments": "Remaining Installments",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "nextPaymentDate": "Next Payment Date",
+      "account": "Account",
+      "creditCard": "Credit Card"
+    },
+    "calendar": {
+      "title": "Payment Calendar",
+      "today": "Today",
+      "thisWeek": "This Week",
+      "thisMonth": "This Month",
+      "upcomingPayments": "Upcoming Payments",
+      "overduePayments": "Overdue Payments",
+      "noPayments": "No payments found"
     },
     "reports": {
       "title": "Reports",
@@ -183,7 +257,12 @@
       "lastMonth": "Last Month",
       "thisYear": "This Year",
       "lastYear": "Last Year",
-      "custom": "Custom"
+      "custom": "Custom",
+      "income": "Income",
+      "expense": "Expense",
+      "balance": "Balance",
+      "topCategories": "Top Spending Categories",
+      "monthlyTrend": "Monthly Trend"
     },
     "profile": {
       "title": "Profile",
@@ -197,7 +276,32 @@
       "newPassword": "New Password",
       "confirmPassword": "Confirm Password",
       "updateProfile": "Update Profile",
-      "deleteAccount": "Delete Account"
+      "deleteAccount": "Delete Account",
+      "accountSettings": "Account Settings",
+      "language": "Language",
+      "currency": "Currency",
+      "timezone": "Timezone"
+    },
+    "admin": {
+      "title": "Admin Panel",
+      "users": "Users",
+      "statistics": "Statistics",
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "totalAccounts": "Total Accounts",
+      "totalTransactions": "Total Transactions",
+      "userManagement": "User Management",
+      "addUser": "Add User",
+      "editUser": "Edit User",
+      "deleteUser": "Delete User",
+      "userName": "User Name",
+      "userEmail": "Email",
+      "userRole": "Role",
+      "userStatus": "Status",
+      "roles": {
+        "admin": "Administrator",
+        "user": "User"
+      }
     }
   },
   "validation": {
@@ -210,7 +314,11 @@
     "positive": "Must be a positive number",
     "integer": "Must be an integer",
     "passwordMatch": "Passwords do not match",
-    "invalidFormat": "Invalid format"
+    "invalidFormat": "Invalid format",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "invalidDate": "Invalid date",
+    "invalidAmount": "Invalid amount"
   },
   "messages": {
     "success": {
@@ -218,7 +326,10 @@
       "updated": "Successfully updated",
       "deleted": "Successfully deleted",
       "saved": "Successfully saved",
-      "loggedIn": "Successfully logged in"
+      "loggedIn": "Successfully logged in",
+      "loggedOut": "Successfully logged out",
+      "registered": "Registration successful",
+      "passwordChanged": "Password changed successfully"
     },
     "error": {
       "general": "An error occurred",
@@ -226,12 +337,16 @@
       "notFound": "Not found",
       "unauthorized": "Unauthorized access",
       "forbidden": "Access denied",
-      "validation": "Validation error"
+      "validation": "Validation error",
+      "serverError": "Server error",
+      "timeout": "Request timeout",
+      "invalidCredentials": "Invalid username or password"
     },
     "confirm": {
       "delete": "Are you sure you want to delete?",
       "cancel": "Are you sure you want to cancel?",
-      "logout": "Are you sure you want to logout?"
+      "logout": "Are you sure you want to logout?",
+      "deleteAccount": "Are you sure you want to delete your account? This action cannot be undone."
     }
   }
 }
