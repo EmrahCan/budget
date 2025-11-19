@@ -2,7 +2,7 @@ const aiConfig = {
   // Gemini AI Configuration
   gemini: {
     apiKey: process.env.GEMINI_API_KEY || 'AIzaSyC9JlhE9djALEg6lPurAbV0PpWY-KdAK1g',
-    model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+    model: process.env.GEMINI_MODEL || 'gemini-1.5-pro',
     maxTokens: parseInt(process.env.GEMINI_MAX_TOKENS) || 2048,
     temperature: parseFloat(process.env.GEMINI_TEMPERATURE) || 0.7,
   },

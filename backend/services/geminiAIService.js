@@ -4,7 +4,7 @@ class GeminiAIService {
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || 'AIzaSyC9JlhE9djALEg6lPurAbV0PpWY-KdAK1g';
     this.genAI = new GoogleGenerativeAI(this.apiKey);
-    const modelName = process.env.GEMINI_MODEL || 'gemini-pro';
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-pro';
     this.model = this.genAI.getGenerativeModel({ model: modelName });
     
     // Rate limiting
