@@ -114,6 +114,8 @@ postgres_data/
 # Deployment and setup scripts (local only)
 *.sh
 !scripts/*.sh
+!deploy-to-production.sh
+!rollback.sh
 
 # Local environment files
 .env.local-prod
