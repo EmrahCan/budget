@@ -28,6 +28,7 @@ import {
   Savings,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
 import { accountsAPI, creditCardsAPI, transactionsAPI, fixedPaymentsAPI, installmentPaymentsAPI, formatCurrency } from '../services/api';
 import { useNavigate } from 'react-router-dom';

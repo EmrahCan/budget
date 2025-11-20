@@ -103,5 +103,34 @@ build/
 *.sqlite
 *.db
 
+# Database backups and dumps
+*.sql
+prod_*.sql
+*_backup.sql
+
+# Docker volumes
+postgres_data/
+
+# Deployment and setup scripts (local only)
+*.sh
+!scripts/*.sh
+
+# Local environment files
+.env.local-prod
+.env.production
+
+# Documentation (keep only essential ones)
+*_OZETI.md
+*_TAMAMLANDI.md
+*_BILGILERI.md
+*_SETUP.md
+*_CREDENTIALS.md
+*_STATUS.md
+*_SYNC*.md
+*_FIXED.md
+HIZLI_*.md
+QUICK_*.md
+RUN_*.md
+
 # Kiro specs (optional - remove if you want to commit specs)
 .kiro/

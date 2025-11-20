@@ -24,11 +24,13 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useTranslation } from 'react-i18next';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
   const { showError, showSuccess } = useNotification();
+  const { t } = useTranslation();
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -63,40 +65,40 @@ const RegisterPage = () => {
 
     // First name validation
     if (!formData.firstName.trim()) {
-      newErrors.firstName = 'Ad gereklidir';
+      newErrors.firstName = t('validation.required');
     } else if (formData.firstName.trim().length < 2) {
-      newErrors.firstName = 'Ad en az 2 karakter olmalıdır';
+      newErrors.firstName = t('validation.minLength', { min: 2 });
     }
 
     // Last name validation
     if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Soyad gereklidir';
+      newErrors.lastName = t('validation.required');
     } else if (formData.lastName.trim().length < 2) {
-      newErrors.lastName = 'Soyad en az 2 karakter olmalıdır';
+      newErrors.lastName = t('validation.minLength', { min: 2 });
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email) {
-      newErrors.email = 'E-posta gereklidir';
+      newErrors.email = t('validation.required');
     } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Geçerli bir e-posta adresi giriniz';
+      newErrors.email = t('validation.email');
     }
 
     // Password validation
     if (!formData.password) {
-      newErrors.password = 'Şifre gereklidir';
+      newErrors.password = t('validation.required');
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Şifre en az 6 karakter olmalıdır';
+      newErrors.password = t('validation.minLength', { min: 6 });
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Şifre en az bir küçük harf, bir büyük harf ve bir rakam içermelidir';
+      newErrors.password = t('validation.passwordStrength');
     }
 
     // Confirm password validation
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Şifre tekrarı gereklidir';
+      newErrors.confirmPassword = t('validation.required');
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Şifreler eşleşmiyor';
+      newErrors.confirmPassword = t('validation.passwordMatch');
     }
 
     setErrors(newErrors);
@@ -121,14 +123,14 @@ const RegisterPage = () => {
       });
       
       if (result.success) {
-        showSuccess('Hesabınız başarıyla oluşturuldu!');
+        showSuccess(t('messages.success.registered'));
         navigate('/', { replace: true });
       } else {
         showError(result.message);
         setErrors({ general: result.message });
       }
     } catch (err) {
-      const errorMessage = 'Kayıt olurken beklenmeyen bir hata oluştu';
+      const errorMessage = t('messages.error.general');
       showError(errorMessage);
       setErrors({ general: errorMessage });
     } finally {
@@ -161,10 +163,10 @@ const RegisterPage = () => {
             <TrendingUp sx={{ fontSize: 48, color: 'primary.main' }} />
           </Box>
           <Typography variant="h4" component="h1" gutterBottom>
-            Bütçe Yönetimi
+            {t('common.appTitle')}
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Yeni hesap oluşturun
+            {t('auth.registerSubtitle')}
           </Typography>
         </Box>
 
@@ -181,7 +183,7 @@ const RegisterPage = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Ad"
+                    label={t('auth.firstName')}
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
@@ -202,7 +204,7 @@ const RegisterPage = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Soyad"
+                    label={t('auth.lastName')}
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
@@ -216,7 +218,7 @@ const RegisterPage = () => {
 
               <TextField
                 fullWidth
-                label="E-posta"
+                label={t('auth.email')}
                 name="email"
                 type="email"
                 value={formData.email}
@@ -237,7 +239,7 @@ const RegisterPage = () => {
 
               <TextField
                 fullWidth
-                label="Şifre"
+                label={t('auth.password')}
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 value={formData.password}
@@ -269,7 +271,7 @@ const RegisterPage = () => {
 
               <TextField
                 fullWidth
-                label="Şifre Tekrarı"
+                label={t('auth.confirmPassword')}
                 name="confirmPassword"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
@@ -307,19 +309,19 @@ const RegisterPage = () => {
                 disabled={loading}
                 sx={{ mb: 3, py: 1.5 }}
               >
-                {loading ? 'Hesap oluşturuluyor...' : 'Hesap Oluştur'}
+                {loading ? t('auth.registering') : t('auth.createAccount')}
               </Button>
             </form>
 
             <Divider sx={{ my: 3 }}>
               <Typography variant="body2" color="textSecondary">
-                veya
+                {t('auth.or')}
               </Typography>
             </Divider>
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="textSecondary">
-                Zaten hesabınız var mı?{' '}
+                {t('auth.alreadyHaveAccount')}{' '}
                 <Link
                   to="/login"
                   style={{
@@ -328,7 +330,7 @@ const RegisterPage = () => {
                     fontWeight: 600,
                   }}
                 >
-                  Giriş yapın
+                  {t('auth.login')}
                 </Link>
               </Typography>
             </Box>
