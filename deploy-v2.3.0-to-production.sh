@@ -17,7 +17,9 @@ NC='\033[0m' # No Color
 # Configuration
 REPO_URL="https://github.com/EmrahCan/budget.git"
 TAG="v2.3.0"
-PROJECT_DIR="/home/azureuser/budget"
+# Auto-detect home directory
+USER_HOME=$(eval echo ~$USER)
+PROJECT_DIR="$USER_HOME/budget"
 
 echo "📋 Deployment Configuration:"
 echo "   Repository: $REPO_URL"
@@ -28,10 +30,10 @@ echo ""
 
 # Step 1: Backup current version
 echo -e "${YELLOW}📦 Step 1: Creating backup...${NC}"
-cd /home/azureuser
+cd "$USER_HOME"
 BACKUP_DIR="budget_backup_$(date +%Y%m%d_%H%M%S)"
 cp -r budget "$BACKUP_DIR"
-echo -e "${GREEN}✅ Backup created: $BACKUP_DIR${NC}"
+echo -e "${GREEN}✅ Backup created: $USER_HOME/$BACKUP_DIR${NC}"
 echo ""
 
 # Step 2: Pull latest code
@@ -127,7 +129,7 @@ echo "🔗 Application URLs:"
 echo "   Frontend: http://your-domain.com"
 echo "   Backend API: http://your-domain.com/api"
 echo ""
-echo "📊 Backup location: /home/azureuser/$BACKUP_DIR"
+echo "📊 Backup location: $USER_HOME/$BACKUP_DIR"
 echo ""
 echo "💡 Useful commands:"
 echo "   View logs: docker-compose logs -f"
