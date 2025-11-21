@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Deploy v2.3.0 to Production
+# Deploy v2.3.0 to Production (Docker Environment)
 # This script deploys the new version with smart notifications and user management enhancements
 
 set -e  # Exit on error
 
-echo "🚀 Starting deployment of v2.3.0 to production..."
+echo "🚀 Starting deployment of v2.3.0 to production (Docker)..."
 echo ""
 
 # Colors for output
@@ -17,14 +17,13 @@ NC='\033[0m' # No Color
 # Configuration
 REPO_URL="https://github.com/EmrahCan/budget.git"
 TAG="v2.3.0"
-BACKEND_DIR="/home/azureuser/budget/backend"
-FRONTEND_DIR="/home/azureuser/budget/frontend"
+PROJECT_DIR="/home/azureuser/budget"
 
 echo "📋 Deployment Configuration:"
 echo "   Repository: $REPO_URL"
 echo "   Tag: $TAG"
-echo "   Backend: $BACKEND_DIR"
-echo "   Frontend: $FRONTEND_DIR"
+echo "   Project Directory: $PROJECT_DIR"
+echo "   Environment: Docker Compose"
 echo ""
 
 # Step 1: Backup current version
@@ -37,90 +36,79 @@ echo ""
 
 # Step 2: Pull latest code
 echo -e "${YELLOW}📥 Step 2: Pulling latest code...${NC}"
-cd /home/azureuser/budget
+cd "$PROJECT_DIR"
 git fetch --all --tags
 git checkout tags/$TAG
 echo -e "${GREEN}✅ Code updated to $TAG${NC}"
 echo ""
 
-# Step 3: Install dependencies
-echo -e "${YELLOW}📦 Step 3: Installing dependencies...${NC}"
-
-echo "   Installing backend dependencies..."
-cd "$BACKEND_DIR"
-npm install --production
-echo -e "${GREEN}   ✅ Backend dependencies installed${NC}"
-
-echo "   Installing frontend dependencies..."
-cd "$FRONTEND_DIR"
-npm install --production
-echo -e "${GREEN}   ✅ Frontend dependencies installed${NC}"
-echo ""
-
-# Step 4: Database migrations
-echo -e "${YELLOW}🗄️  Step 4: Running database migrations...${NC}"
+# Step 3: Database migrations
+echo -e "${YELLOW}🗄️  Step 3: Running database migrations...${NC}"
 echo "   Adding new columns to smart_notifications table..."
 
-psql -d budget_app << EOF
--- Add new columns for notification tracking
-ALTER TABLE smart_notifications 
-ADD COLUMN IF NOT EXISTS related_entity_id UUID,
-ADD COLUMN IF NOT EXISTS related_entity_type VARCHAR(50);
-
--- Verify columns were added
-\d smart_notifications
-EOF
+# Run migration file inside the database container
+docker-compose exec -T db psql -U postgres -d budget_app < backend/database/migrations/add_notification_tracking_columns.sql
 
 echo -e "${GREEN}✅ Database migrations completed${NC}"
 echo ""
 
-# Step 5: Build frontend
-echo -e "${YELLOW}🔨 Step 5: Building frontend...${NC}"
-cd "$FRONTEND_DIR"
-npm run build
-echo -e "${GREEN}✅ Frontend built successfully${NC}"
+# Step 4: Rebuild and restart containers
+echo -e "${YELLOW}🔨 Step 4: Rebuilding Docker containers...${NC}"
+
+echo "   Stopping containers..."
+docker-compose down
+echo -e "${GREEN}   ✅ Containers stopped${NC}"
+
+echo "   Building new images..."
+docker-compose build --no-cache
+echo -e "${GREEN}   ✅ Images built${NC}"
+
+echo "   Starting containers..."
+docker-compose up -d
+echo -e "${GREEN}   ✅ Containers started${NC}"
 echo ""
 
-# Step 6: Restart services
-echo -e "${YELLOW}🔄 Step 6: Restarting services...${NC}"
+# Step 5: Wait for services to be ready
+echo -e "${YELLOW}⏳ Step 5: Waiting for services to be ready...${NC}"
+sleep 10
 
-echo "   Restarting backend..."
-pm2 restart budget-backend
-sleep 3
-echo -e "${GREEN}   ✅ Backend restarted${NC}"
-
-echo "   Restarting frontend..."
-pm2 restart budget-frontend
-sleep 3
-echo -e "${GREEN}   ✅ Frontend restarted${NC}"
+# Check if backend is ready
+for i in {1..30}; do
+    if docker-compose exec -T backend curl -s http://localhost:5001/api/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Backend is ready${NC}"
+        break
+    fi
+    echo "   Waiting for backend... ($i/30)"
+    sleep 2
+done
 echo ""
 
-# Step 7: Generate initial notifications
-echo -e "${YELLOW}🔔 Step 7: Generating initial notifications...${NC}"
-cd "$BACKEND_DIR"
-node scripts/generate-notifications.js
+# Step 6: Generate initial notifications
+echo -e "${YELLOW}🔔 Step 6: Generating initial notifications...${NC}"
+docker-compose exec -T backend node scripts/generate-notifications.js
 echo -e "${GREEN}✅ Initial notifications generated${NC}"
 echo ""
 
-# Step 8: Verify deployment
-echo -e "${YELLOW}✅ Step 8: Verifying deployment...${NC}"
+# Step 7: Verify deployment
+echo -e "${YELLOW}✅ Step 7: Verifying deployment...${NC}"
+
+echo "   Checking container status..."
+docker-compose ps
+echo ""
 
 echo "   Checking backend health..."
-BACKEND_HEALTH=$(curl -s http://localhost:5001/api/health | jq -r '.status' 2>/dev/null || echo "error")
-if [ "$BACKEND_HEALTH" = "ok" ]; then
+BACKEND_HEALTH=$(docker-compose exec -T backend curl -s http://localhost:5001/api/health | grep -o '"status":"ok"' || echo "error")
+if [ "$BACKEND_HEALTH" != "error" ]; then
     echo -e "${GREEN}   ✅ Backend is healthy${NC}"
 else
     echo -e "${RED}   ❌ Backend health check failed${NC}"
 fi
-
-echo "   Checking PM2 status..."
-pm2 list | grep budget
 echo ""
 
-# Step 9: Show logs
-echo -e "${YELLOW}📋 Step 9: Recent logs...${NC}"
+# Step 8: Show logs
+echo -e "${YELLOW}📋 Step 8: Recent logs...${NC}"
 echo "   Backend logs (last 20 lines):"
-pm2 logs budget-backend --lines 20 --nostream
+docker-compose logs --tail=20 backend
 echo ""
 
 # Summary
@@ -140,5 +128,11 @@ echo "   Frontend: http://your-domain.com"
 echo "   Backend API: http://your-domain.com/api"
 echo ""
 echo "📊 Backup location: /home/azureuser/$BACKUP_DIR"
+echo ""
+echo "💡 Useful commands:"
+echo "   View logs: docker-compose logs -f"
+echo "   Check status: docker-compose ps"
+echo "   Restart: docker-compose restart"
+echo "   Stop: docker-compose down"
 echo ""
 echo -e "${YELLOW}⚠️  Remember to test all features before announcing the update!${NC}"

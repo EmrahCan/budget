@@ -1,4 +1,4 @@
-# Production Deployment Guide - v2.3.0
+# Production Deployment Guide - v2.3.0 (Docker)
 
 ## 🎯 Quick Deploy
 
@@ -29,51 +29,49 @@ git fetch --all --tags
 git checkout tags/v2.3.0
 ```
 
-#### 3. Install Dependencies
+#### 3. Database Migration
 ```bash
-# Backend
-cd backend
-npm install --production
-
-# Frontend
-cd ../frontend
-npm install --production
-```
-
-#### 4. Database Migration
-```bash
-psql -d budget_app << 'EOF'
+# Run migration inside the database container
+docker-compose exec -T db psql -U postgres -d budget_app << 'EOF'
 ALTER TABLE smart_notifications 
 ADD COLUMN IF NOT EXISTS related_entity_id UUID,
 ADD COLUMN IF NOT EXISTS related_entity_type VARCHAR(50);
 EOF
 ```
 
-#### 5. Build Frontend
+#### 4. Rebuild and Restart Containers
 ```bash
-cd /home/azureuser/budget/frontend
-npm run build
+cd /home/azureuser/budget
+
+# Stop containers
+docker-compose down
+
+# Rebuild images
+docker-compose build --no-cache
+
+# Start containers
+docker-compose up -d
 ```
 
-#### 6. Restart Services
+#### 5. Wait for Services
 ```bash
-pm2 restart budget-backend
-pm2 restart budget-frontend
+# Wait for backend to be ready
+sleep 10
+docker-compose exec backend curl http://localhost:5001/api/health
 ```
 
-#### 7. Generate Initial Notifications
+#### 6. Generate Initial Notifications
 ```bash
-cd /home/azureuser/budget/backend
-node scripts/generate-notifications.js
+docker-compose exec backend node scripts/generate-notifications.js
 ```
 
 ## ✅ Post-Deployment Verification
 
 ### 1. Check Services Status
 ```bash
-pm2 list
-pm2 logs budget-backend --lines 50
-pm2 logs budget-frontend --lines 50
+docker-compose ps
+docker-compose logs --tail=50 backend
+docker-compose logs --tail=50 frontend
 ```
 
 ### 2. Test New Features
@@ -106,14 +104,14 @@ pm2 logs budget-frontend --lines 50
 
 ### 3. Database Verification
 ```bash
-psql -d budget_app -c "\d smart_notifications"
-psql -d budget_app -c "SELECT COUNT(*) FROM smart_notifications WHERE is_dismissed = false;"
+docker-compose exec db psql -U postgres -d budget_app -c "\d smart_notifications"
+docker-compose exec db psql -U postgres -d budget_app -c "SELECT COUNT(*) FROM smart_notifications WHERE is_dismissed = false;"
 ```
 
 ### 4. API Health Check
 ```bash
-curl http://localhost:5001/api/health
-curl http://localhost:5001/api/notifications/test
+docker-compose exec backend curl http://localhost:5001/api/health
+docker-compose exec backend curl http://localhost:5001/api/notifications/test
 ```
 
 ## 🔄 Rollback Plan
@@ -121,16 +119,18 @@ curl http://localhost:5001/api/notifications/test
 If issues occur, rollback to previous version:
 
 ```bash
-# Stop services
-pm2 stop budget-backend budget-frontend
+# Stop containers
+cd /home/azureuser/budget
+docker-compose down
 
 # Restore backup
 cd /home/azureuser
 rm -rf budget
 cp -r budget_backup_YYYYMMDD_HHMMSS budget
 
-# Restart services
-pm2 restart budget-backend budget-frontend
+# Restart containers
+cd budget
+docker-compose up -d
 ```
 
 ## 📊 Monitoring
@@ -142,32 +142,32 @@ pm2 restart budget-backend budget-frontend
 - Error rates in logs
 
 ### Log Locations
-- Backend: `pm2 logs budget-backend`
-- Frontend: `pm2 logs budget-frontend`
-- Database: Check PostgreSQL logs
+- Backend: `docker-compose logs -f backend`
+- Frontend: `docker-compose logs -f frontend`
+- Database: `docker-compose logs -f db`
+- All services: `docker-compose logs -f`
 
 ## 🐛 Troubleshooting
 
 ### Notifications Not Showing
 ```bash
 # Check if notifications exist
-psql -d budget_app -c "SELECT COUNT(*) FROM smart_notifications;"
+docker-compose exec db psql -U postgres -d budget_app -c "SELECT COUNT(*) FROM smart_notifications;"
 
 # Regenerate notifications
-cd /home/azureuser/budget/backend
-node scripts/generate-notifications.js
+docker-compose exec backend node scripts/generate-notifications.js
 
 # Check API response
-curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:5001/api/notifications
+docker-compose exec backend curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:5001/api/notifications
 ```
 
 ### Database Migration Issues
 ```bash
 # Check if columns exist
-psql -d budget_app -c "\d smart_notifications"
+docker-compose exec db psql -U postgres -d budget_app -c "\d smart_notifications"
 
 # Manually add if missing
-psql -d budget_app << 'EOF'
+docker-compose exec -T db psql -U postgres -d budget_app << 'EOF'
 ALTER TABLE smart_notifications 
 ADD COLUMN IF NOT EXISTS related_entity_id UUID,
 ADD COLUMN IF NOT EXISTS related_entity_type VARCHAR(50);
@@ -177,26 +177,30 @@ EOF
 ### Service Won't Start
 ```bash
 # Check logs
-pm2 logs budget-backend --err
-pm2 logs budget-frontend --err
+docker-compose logs backend
+docker-compose logs frontend
 
-# Restart with fresh logs
-pm2 restart budget-backend --update-env
-pm2 restart budget-frontend --update-env
+# Restart containers
+docker-compose restart backend
+docker-compose restart frontend
+
+# Full restart if needed
+docker-compose down
+docker-compose up -d
 ```
 
 ## 📞 Support
 
 If you encounter issues:
-1. Check logs: `pm2 logs`
-2. Verify database: `psql -d budget_app`
-3. Check service status: `pm2 list`
+1. Check logs: `docker-compose logs -f`
+2. Verify database: `docker-compose exec db psql -U postgres -d budget_app`
+3. Check service status: `docker-compose ps`
 4. Review error messages in browser console
 
 ## 🎉 Success Criteria
 
 Deployment is successful when:
-- ✅ All services are running (pm2 list shows "online")
+- ✅ All containers are running (`docker-compose ps` shows "Up")
 - ✅ Notification bell appears in header
 - ✅ Dashboard widgets display data
 - ✅ User delete works in admin panel
@@ -204,6 +208,58 @@ Deployment is successful when:
 - ✅ No errors in logs
 - ✅ Database has new columns
 - ✅ Notifications are generated
+
+## 🐳 Docker-Specific Commands
+
+### View Container Status
+```bash
+docker-compose ps
+```
+
+### View Logs
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f db
+```
+
+### Execute Commands in Containers
+```bash
+# Backend
+docker-compose exec backend npm run <command>
+
+# Database
+docker-compose exec db psql -U postgres -d budget_app
+
+# Shell access
+docker-compose exec backend sh
+```
+
+### Restart Services
+```bash
+# Restart all
+docker-compose restart
+
+# Restart specific service
+docker-compose restart backend
+```
+
+### Clean Rebuild
+```bash
+# Stop and remove containers
+docker-compose down
+
+# Remove images
+docker-compose down --rmi all
+
+# Rebuild and start
+docker-compose build --no-cache
+docker-compose up -d
+```
 
 ---
 
