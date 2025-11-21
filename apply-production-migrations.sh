@@ -23,7 +23,7 @@ APP_DIR="$HOME/budget"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="budget_db_backup_${TIMESTAMP}.sql"
 DB_CONTAINER="budget_database_prod"
-DB_NAME="budget_app"
+DB_NAME="budget_app_prod"
 DB_USER="postgres"
 
 # Fonksiyonlar
