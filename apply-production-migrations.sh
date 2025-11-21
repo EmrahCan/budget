@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 
 # Değişkenler
 BACKUP_DIR="$HOME/db-backups"
-APP_DIR="$HOME/budget-app"
+APP_DIR="$HOME/budget"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="budget_db_backup_${TIMESTAMP}.sql"
 DB_CONTAINER="budget_database_prod"
