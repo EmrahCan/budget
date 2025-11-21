@@ -54,7 +54,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - REACT_APP_API_URL=http://localhost:5001/api
+        - REACT_APP_API_URL=/api
         - REACT_APP_ENVIRONMENT=production
         - GENERATE_SOURCEMAP=false
     container_name: budget_frontend_prod
