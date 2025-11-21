@@ -32,6 +32,8 @@ import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
 import { accountsAPI, creditCardsAPI, transactionsAPI, fixedPaymentsAPI, installmentPaymentsAPI, formatCurrency } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import UpcomingPaymentsWidget from '../components/notifications/UpcomingPaymentsWidget';
+import OverduePaymentsWidget from '../components/notifications/OverduePaymentsWidget';
 
 const DashboardClean = () => {
   const { user } = useAuth();
@@ -51,6 +53,12 @@ const DashboardClean = () => {
     totalCreditDebt: 0,
     monthlyFixedPayments: 0,
   });
+  const [debtData, setDebtData] = useState({
+    creditCardDebt: 0,
+    overdraftDebt: 0,
+    totalDebt: 0,
+    debtBreakdown: null
+  });
 
   useEffect(() => {
     loadDashboardData();
@@ -60,12 +68,13 @@ const DashboardClean = () => {
     try {
       setLoading(true);
       
-      const [accountsRes, creditCardsRes, transactionsRes, fixedPaymentsRes, installmentPaymentsRes] = await Promise.allSettled([
+      const [accountsRes, creditCardsRes, transactionsRes, fixedPaymentsRes, installmentPaymentsRes, debtSummaryRes] = await Promise.allSettled([
         accountsAPI.getAll(),
         creditCardsAPI.getAll(),
         transactionsAPI.getRecent({ limit: 5 }),
         fixedPaymentsAPI.getAll(),
         installmentPaymentsAPI.getAll(),
+        accountsAPI.getDebtSummary(),
       ]);
 
       // Log any failed requests for debugging
@@ -74,6 +83,7 @@ const DashboardClean = () => {
       if (transactionsRes.status === 'rejected') console.error('Transactions API failed:', transactionsRes.reason);
       if (fixedPaymentsRes.status === 'rejected') console.error('Fixed Payments API failed:', fixedPaymentsRes.reason);
       if (installmentPaymentsRes.status === 'rejected') console.error('Installment Payments API failed:', installmentPaymentsRes.reason);
+      if (debtSummaryRes.status === 'rejected') console.error('Debt Summary API failed:', debtSummaryRes.reason);
 
       // Safely extract data from API responses
       const accounts = accountsRes.status === 'fulfilled' ? 
@@ -91,6 +101,27 @@ const DashboardClean = () => {
       
       const installmentPayments = installmentPaymentsRes.status === 'fulfilled' ? 
         (installmentPaymentsRes.value.data.data || []) : [];
+      
+      // Extract debt summary data
+      const debtSummary = debtSummaryRes.status === 'fulfilled' ? 
+        (debtSummaryRes.value.data.data || {
+          creditCardDebt: 0,
+          overdraftDebt: 0,
+          totalDebt: 0,
+          debtBreakdown: null
+        }) : {
+          creditCardDebt: 0,
+          overdraftDebt: 0,
+          totalDebt: 0,
+          debtBreakdown: null
+        };
+      
+      // Debug debt summary response
+      console.log('Debt Summary Response:', {
+        status: debtSummaryRes.status,
+        rawData: debtSummaryRes.status === 'fulfilled' ? debtSummaryRes.value.data : null,
+        parsedData: debtSummary
+      });
       
       // Debug installment payments response
       console.log('Installment Payments Response:', {
@@ -148,6 +179,7 @@ const DashboardClean = () => {
 
       console.log('Setting dashboard data:', newDashboardData);
       setDashboardData(newDashboardData);
+      setDebtData(debtSummary);
     } catch (error) {
       console.error('Dashboard loading error:', error);
       showError('Dashboard verileri yüklenirken hata oluştu: ' + (error.message || 'Bilinmeyen hata'));
@@ -196,8 +228,11 @@ const DashboardClean = () => {
       trend: dashboardData.totalBalance >= 0 ? 'up' : 'down',
     },
     {
-      title: 'Kredi Kartı Borcu',
-      value: formatCurrency(dashboardData.totalCreditDebt),
+      title: 'Toplam Borç',
+      value: formatCurrency(debtData.totalDebt),
+      subtitle: debtData.debtBreakdown ? 
+        `KK: ${formatCurrency(debtData.creditCardDebt)} + KM: ${formatCurrency(debtData.overdraftDebt)}` : 
+        null,
       icon: <CreditCard />,
       color: 'error',
       trend: 'down',
@@ -211,10 +246,10 @@ const DashboardClean = () => {
     },
     {
       title: 'Net Durum',
-      value: formatCurrency(dashboardData.totalBalance - dashboardData.totalCreditDebt),
+      value: formatCurrency(dashboardData.totalBalance - debtData.totalDebt),
       icon: <Assessment />,
-      color: (dashboardData.totalBalance - dashboardData.totalCreditDebt) >= 0 ? 'success' : 'error',
-      trend: (dashboardData.totalBalance - dashboardData.totalCreditDebt) >= 0 ? 'up' : 'down',
+      color: (dashboardData.totalBalance - debtData.totalDebt) >= 0 ? 'success' : 'error',
+      trend: (dashboardData.totalBalance - debtData.totalDebt) >= 0 ? 'up' : 'down',
     },
   ];
 
@@ -290,6 +325,11 @@ const DashboardClean = () => {
                       <Typography variant="h5" component="div" fontWeight="bold">
                         {card.value}
                       </Typography>
+                      {card.subtitle && (
+                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mt: 0.5 }}>
+                          {card.subtitle}
+                        </Typography>
+                      )}
                     </Box>
                     {card.trend === 'up' && <TrendingUp color="success" />}
                     {card.trend === 'down' && <TrendingDown color="error" />}
@@ -337,6 +377,19 @@ const DashboardClean = () => {
             ))}
           </Grid>
         </Paper>
+
+        {/* Notifications Widgets */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {/* Overdue Payments Widget */}
+          <Grid item xs={12} md={6}>
+            <OverduePaymentsWidget />
+          </Grid>
+          
+          {/* Upcoming Payments Widget */}
+          <Grid item xs={12} md={6}>
+            <UpcomingPaymentsWidget />
+          </Grid>
+        </Grid>
 
         {/* Recent Activity */}
         <Grid container spacing={3}>

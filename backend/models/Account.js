@@ -141,6 +141,26 @@ class Account {
     }
   }
 
+  // Calculate total overdraft debt for a user
+  static async calculateOverdraftDebt(userId) {
+    try {
+      const query = `
+        SELECT COALESCE(SUM(overdraft_used), 0) as total_overdraft_debt
+        FROM accounts
+        WHERE user_id = $1
+          AND type = 'overdraft'
+          AND is_active = true
+          AND overdraft_used > 0
+      `;
+
+      const result = await DatabaseUtils.query(query, [userId]);
+      return parseFloat(result.rows[0].total_overdraft_debt) || 0;
+    } catch (error) {
+      console.error('Error calculating overdraft debt:', error);
+      throw error;
+    }
+  }
+
   // Update account
   async update(updateData) {
     try {

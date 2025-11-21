@@ -56,10 +56,8 @@ import { turkishBanks, getBankById, popularBanks, searchBanks, bankTypes } from 
 // Account summary component
 const AccountSummaryCard = ({ accounts }) => {
   const getTotalBalance = () => accounts.reduce((total, account) => total + account.balance, 0);
-  const getTotalOverdraftDebt = () => accounts
-    .filter(account => account.type === 'overdraft' && account.balance < 0)
-    .reduce((total, account) => total + Math.abs(account.balance), 0);
-  const getNetBalance = () => getTotalBalance() - getTotalOverdraftDebt();
+  const getAccountCount = () => accounts.length;
+  const getActiveAccountCount = () => accounts.filter(acc => acc.isActive).length;
 
   return (
     <Card sx={{ mb: 3 }}>
@@ -68,7 +66,7 @@ const AccountSummaryCard = ({ accounts }) => {
           Hesap Özeti
         </Typography>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
                 {formatCurrency(getTotalBalance())}
@@ -78,26 +76,13 @@ const AccountSummaryCard = ({ accounts }) => {
               </Typography>
             </Box>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="error.main">
-                {formatCurrency(getTotalOverdraftDebt())}
+              <Typography variant="h4" color="success.main">
+                {getActiveAccountCount()}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Esnek Hesap Borcu
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography 
-                variant="h4" 
-                color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
-              >
-                {formatCurrency(getNetBalance())}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Net Durum
+                Aktif Hesap Sayısı
               </Typography>
             </Box>
           </Grid>
@@ -381,7 +366,9 @@ const AccountsDashboard = () => {
     try {
       setLoading(true);
       const response = await accountsAPI.getAll();
-      setAccounts(response.data.data.accounts);
+      // Filter out overdraft accounts - they have their own page
+      const filteredAccounts = response.data.data.accounts.filter(acc => acc.type !== 'overdraft');
+      setAccounts(filteredAccounts);
     } catch (error) {
       showError(handleApiError(error));
     } finally {

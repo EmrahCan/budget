@@ -1,5 +1,6 @@
 const InstallmentPayment = require('../models/InstallmentPayment');
 const { validationResult } = require('express-validator');
+const notificationManager = require('../services/notificationManager');
 
 class InstallmentPaymentController {
   // Get all installment payments for the authenticated user
@@ -184,6 +185,18 @@ class InstallmentPaymentController {
       const paymentData = req.body;
       
       const result = await InstallmentPayment.recordPayment(id, userId, paymentData);
+      
+      // Auto-dismiss related notifications
+      try {
+        await notificationManager.autoDismissPaymentNotifications(
+          id,
+          'installment_payment',
+          userId
+        );
+      } catch (notifError) {
+        console.error('Error auto-dismissing notifications:', notifError);
+        // Don't fail the request if notification dismissal fails
+      }
       
       res.json({
         success: true,

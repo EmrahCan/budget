@@ -38,6 +38,7 @@ import {
   Add,
   Lock,
   VpnKey,
+  Delete,
 } from '@mui/icons-material';
 import { useNotification } from '../../contexts/NotificationContext';
 import { adminAPI, formatDate, handleApiError } from '../../services/api';
@@ -53,6 +54,7 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [createAdminDialogOpen, setCreateAdminDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
   
@@ -186,6 +188,22 @@ const UserManagement = () => {
     navigator.clipboard.writeText(text).then(() => {
       showSuccess('Şifre panoya kopyalandı');
     });
+  };
+
+  const handleOpenDeleteDialog = (user) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteUser = async () => {
+    try {
+      await adminAPI.deleteUser(selectedUser.id);
+      showSuccess('Kullanıcı başarıyla silindi');
+      setDeleteDialogOpen(false);
+      loadUsers();
+    } catch (error) {
+      showError(handleApiError(error));
+    }
   };
 
   const getInitials = (firstName, lastName) => {
@@ -359,6 +377,14 @@ const UserManagement = () => {
                           title={user.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                         >
                           {user.isActive ? <Block /> : <CheckCircle />}
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleOpenDeleteDialog(user)}
+                          title="Kullanıcıyı Sil"
+                        >
+                          <Delete />
                         </IconButton>
                       </TableCell>
                     </TableRow>
@@ -554,6 +580,42 @@ const UserManagement = () => {
               variant="contained"
             >
               Oluştur
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete User Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Kullanıcıyı Sil</DialogTitle>
+          <DialogContent>
+            {selectedUser && (
+              <Box sx={{ pt: 2 }}>
+                <Typography variant="body1" gutterBottom>
+                  <strong>{selectedUser.firstName} {selectedUser.lastName}</strong> kullanıcısını silmek istediğinizden emin misiniz?
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  E-posta: {selectedUser.email}
+                </Typography>
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'error.50', borderRadius: 1, border: 1, borderColor: 'error.main' }}>
+                  <Typography variant="body2" color="error.main" fontWeight="bold">
+                    ⚠️ Uyarı: Bu işlem geri alınamaz!
+                  </Typography>
+                  <Typography variant="caption" color="error.main" sx={{ display: 'block', mt: 1 }}>
+                    Kullanıcının tüm verileri (hesaplar, işlemler, kredi kartları vb.) kalıcı olarak silinecektir.
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialogOpen(false)}>İptal</Button>
+            <Button
+              onClick={handleDeleteUser}
+              variant="contained"
+              color="error"
+              startIcon={<Delete />}
+            >
+              Kullanıcıyı Sil
             </Button>
           </DialogActions>
         </Dialog>

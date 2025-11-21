@@ -101,9 +101,14 @@
       "welcome": "Hoş Geldiniz",
       "totalBalance": "Toplam Bakiye",
       "totalDebt": "Toplam Borç",
+      "creditCardDebt": "Kredi Kartı Borcu",
+      "overdraftDebt": "Kredili Mevduat Borcu",
+      "debtBreakdown": "Borç Dağılımı",
       "monthlyIncome": "Aylık Gelir",
       "monthlyExpense": "Aylık Gider",
       "netWorth": "Net Değer",
+      "netStatus": "Net Durum",
+      "monthlyFixedPayments": "Aylık Sabit Ödemeler",
       "recentTransactions": "Son İşlemler",
       "upcomingPayments": "Yaklaşan Ödemeler",
       "quickActions": "Hızlı İşlemler",
@@ -347,6 +352,33 @@
       "cancel": "İptal etmek istediğinizden emin misiniz?",
       "logout": "Çıkış yapmak istediğinizden emin misiniz?",
       "deleteAccount": "Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "noNotifications": "Yeni bildirim yok",
+      "markAllAsRead": "Tümünü Okundu İşaretle",
+      "markAsRead": "Okundu İşaretle",
+      "dismiss": "Kapat",
+      "viewAll": "Tümünü Görüntüle",
+      "upcomingPayments": "Yaklaşan Ödemeler ve Uyarılar",
+      "allPaymentsUnderControl": "Tüm ödemeleriniz kontrol altında!",
+      "checkNotificationsOnTime": "Bildirimleri zamanında kontrol ederek ödemelerinizi kaçırmayın.",
+      "priority": {
+        "high": "Acil",
+        "medium": "Önemli",
+        "low": "Bilgi"
+      },
+      "types": {
+        "fixedPayment": "Sabit Ödeme",
+        "creditCard": "Kredi Kartı",
+        "budget": "Bütçe"
+      },
+      "timeAgo": {
+        "now": "Şimdi",
+        "minutesAgo": "{{count}} dakika önce",
+        "hoursAgo": "{{count}} saat önce",
+        "daysAgo": "{{count}} gün önce"
+      }
     }
   }
 }

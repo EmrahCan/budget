@@ -196,3 +196,846 @@
     '    at process.processTicksAndRejections (node:internal/process/task_queues:106:32)',
   timestamp: '2025-11-04 21:28:37'
 }
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:42:12',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:42:12',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:43:05',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:43:05',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:43:19',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:43:19',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:43:50',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:44:44',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:44:44',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:45:53',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:45:53',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:46:17',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:46:18',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  error: {
+    message: 'column "frequency" does not exist',
+    stack: 'error: column "frequency" does not exist\n' +
+      '    at /Users/emrahcercioglu/ButceAPP/budget/backend/node_modules/pg-pool/index.js:45:11\n' +
+      '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+      '    at async /Users/emrahcercioglu/ButceAPP/budget/backend/routes/ai.js:880:33',
+    name: 'error'
+  },
+  context: {},
+  timestamp: '2025-11-21 16:46:18',
+  level: 'error',
+  message: 'Unhandled error:'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:08:05'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:08:12'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:09:36'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:10:09'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:12:29'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:13:27'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue fixed payments',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error detecting overdue payments',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Error getting overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "payment_date" does not exist',
+  level: 'error',
+  message: 'Failed to fetch overdue summary',
+  timestamp: '2025-11-21 18:13:40'
+}
+{
+  service: 'budget-backend',
+  userId: '6cebf8cf-ec38-4c10-a852-48f1f3ea5716',
+  cardId: 'b95ccc71-4238-47b7-b477-58099585df7e',
+  error: 'column "related_entity_id" does not exist',
+  level: 'error',
+  message: 'Error creating overdue credit card notification',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  userId: '6cebf8cf-ec38-4c10-a852-48f1f3ea5716',
+  error: 'column "related_entity_id" does not exist',
+  level: 'error',
+  message: 'Error checking overdue payments',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  userId: '6cebf8cf-ec38-4c10-a852-48f1f3ea5716',
+  error: 'column "related_entity_id" does not exist',
+  level: 'error',
+  message: 'Error generating notifications for user',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  error: 'column "related_entity_id" does not exist',
+  data: {
+    userId: '111e346e-035d-4cf9-8fca-d4381ffa3b3c',
+    type: 'fixed_payment_today',
+    title: 'Amazon Prime - Bugün ödeme günü!',
+    message: 'Amazon Prime ödemesi bugün yapılmalı - 50.00 TL',
+    priority: 'high',
+    relatedEntityId: '45737450-ca73-4168-8121-726c41c26611',
+    relatedEntityType: 'fixed_payment'
+  },
+  level: 'error',
+  message: 'Error creating notification',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  userId: '111e346e-035d-4cf9-8fca-d4381ffa3b3c',
+  error: 'column "related_entity_id" does not exist',
+  level: 'error',
+  message: 'Error checking fixed payments',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  userId: '111e346e-035d-4cf9-8fca-d4381ffa3b3c',
+  error: 'column "related_entity_id" does not exist',
+  level: 'error',
+  message: 'Error generating notifications for user',
+  timestamp: '2025-11-21 18:35:15'
+}
+{
+  service: 'budget-backend',
+  error: 'column "related_entity_id" does not exist',
+  data: {
+    userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+    type: 'fixed_payment_today',
+    title: 'Amazon Prime - Bugün ödeme günü!',
+    message: 'Amazon Prime ödemesi bugün yapılmalı - 50.00 TL',
+    priority: 'high',
+    relatedEntityId: '423206f8-599e-4d20-9f50-f984dff8542c',
+    relatedEntityType: 'fixed_payment'
+  },
+  level: 'error',
+  message: 'Error creating notification',
+  timestamp: '2025-11-21 18:35:15'
+}

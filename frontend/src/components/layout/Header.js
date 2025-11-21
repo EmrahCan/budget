@@ -8,11 +8,9 @@ import {
   Avatar,
   Divider,
   ListItemIcon,
-  Badge,
 } from '@mui/material';
 import {
   AccountCircle,
-  Notifications,
   Logout,
   Person,
   Brightness4,
@@ -23,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import { useThemeMode } from '../../contexts/ThemeContext';
+import NotificationBell from '../notifications/NotificationBell';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -30,7 +29,6 @@ const Header = () => {
   const { t } = useTranslation();
   const { mode, toggleTheme } = useThemeMode();
   const [anchorEl, setAnchorEl] = useState(null);
-  const [notificationAnchor, setNotificationAnchor] = useState(null);
 
   const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -38,14 +36,6 @@ const Header = () => {
 
   const handleProfileMenuClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleNotificationMenuOpen = (event) => {
-    setNotificationAnchor(event.currentTarget);
-  };
-
-  const handleNotificationMenuClose = () => {
-    setNotificationAnchor(null);
   };
 
   const handleLogout = async () => {
@@ -86,15 +76,7 @@ const Header = () => {
         </IconButton>
 
         {/* Notifications */}
-        <IconButton
-          color="inherit"
-          onClick={handleNotificationMenuOpen}
-          aria-label="notifications"
-        >
-          <Badge badgeContent={0} color="error">
-            <Notifications />
-          </Badge>
-        </IconButton>
+        <NotificationBell />
 
         {/* Profile Menu */}
         <IconButton
@@ -165,26 +147,6 @@ const Header = () => {
         </MenuItem>
       </Menu>
 
-      {/* Notifications Menu */}
-      <Menu
-        anchorEl={notificationAnchor}
-        open={Boolean(notificationAnchor)}
-        onClose={handleNotificationMenuClose}
-        PaperProps={{
-          sx: {
-            width: 320,
-            maxHeight: 400,
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <MenuItem>
-          <Typography variant="body2" color="textSecondary">
-            {t('common.noNotifications')}
-          </Typography>
-        </MenuItem>
-      </Menu>
     </Box>
   );
 };

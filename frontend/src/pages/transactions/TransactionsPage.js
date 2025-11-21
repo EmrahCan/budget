@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -42,6 +42,9 @@ import {
   SwapHoriz,
   Payment,
   Receipt,
+  AutoAwesome,
+  ThumbUp,
+  ThumbDown,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -49,6 +52,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { tr } from 'date-fns/locale';
 import { useNotification } from '../../contexts/NotificationContext';
 import { transactionsAPI, accountsAPI, creditCardsAPI, formatCurrency, formatDate, handleApiError } from '../../services/api';
+import { debounce } from 'lodash';
 
 const TRANSACTION_TYPES = [
   { value: 'income', label: 'Gelir', icon: <TrendingUp />, color: 'success' },
@@ -82,6 +86,10 @@ const TransactionsPage = () => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  
+  // AI Categorization
+  const [aiSuggestion, setAiSuggestion] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Filters
   const [filters, setFilters] = useState({
@@ -97,6 +105,53 @@ const TransactionsPage = () => {
   useEffect(() => {
     loadInitialData();
   }, []);
+  
+  // AI Categorization
+  const getAISuggestion = useCallback(
+    debounce(async (description, amount) => {
+      if (!description || description.length < 3 || !amount) {
+        setAiSuggestion(null);
+        return;
+      }
+
+      try {
+        setAiLoading(true);
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+        const response = await fetch(`${apiUrl}/ai/categorize`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            description,
+            amount: parseFloat(amount),
+          }),
+        });
+
+        const data = await response.json();
+        if (data.success && data.data) {
+          setAiSuggestion(data.data);
+        }
+      } catch (error) {
+        console.error('AI categorization error:', error);
+      } finally {
+        setAiLoading(false);
+      }
+    }, 800),
+    []
+  );
+  
+  const handleAcceptAISuggestion = () => {
+    if (aiSuggestion) {
+      setFormData(prev => ({ ...prev, category: aiSuggestion.category }));
+      setAiSuggestion(null);
+    }
+  };
+  
+  const handleRejectAISuggestion = () => {
+    setAiSuggestion(null);
+  };
 
   useEffect(() => {
     loadTransactions();
@@ -530,7 +585,12 @@ const TransactionsPage = () => {
                   label="Tutar"
                   type="number"
                   value={formData.amount}
-                  onChange={(e) => handleFormChange('amount', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({ ...prev, amount: value }));
+                    setFormErrors(prev => ({ ...prev, amount: '' }));
+                    getAISuggestion(formData.description, value);
+                  }}
                   error={!!formErrors.amount}
                   helperText={formErrors.amount}
                   InputProps={{
@@ -543,7 +603,12 @@ const TransactionsPage = () => {
                   fullWidth
                   label="Açıklama"
                   value={formData.description}
-                  onChange={(e) => handleFormChange('description', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFormData(prev => ({ ...prev, description: value }));
+                    setFormErrors(prev => ({ ...prev, description: '' }));
+                    getAISuggestion(value, formData.amount);
+                  }}
                   error={!!formErrors.description}
                   helperText={formErrors.description}
                   sx={{ mb: 3 }}
@@ -553,9 +618,54 @@ const TransactionsPage = () => {
                   fullWidth
                   label="Kategori"
                   value={formData.category}
-                  onChange={(e) => handleFormChange('category', e.target.value)}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, category: e.target.value }));
+                    setFormErrors(prev => ({ ...prev, category: '' }));
+                  }}
                   sx={{ mb: 3 }}
+                  InputProps={{
+                    endAdornment: aiLoading && (
+                      <InputAdornment position="end">
+                        <CircularProgress size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
+                
+                {aiSuggestion && (
+                  <Alert 
+                    severity="info" 
+                    sx={{ mb: 3 }}
+                    icon={<AutoAwesome />}
+                    action={
+                      <Box>
+                        <IconButton
+                          size="small"
+                          color="success"
+                          onClick={handleAcceptAISuggestion}
+                          title="Kabul Et"
+                        >
+                          <ThumbUp fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={handleRejectAISuggestion}
+                          title="Reddet"
+                        >
+                          <ThumbDown fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    }
+                  >
+                    <Typography variant="body2" fontWeight="bold">
+                      AI Önerisi: {aiSuggestion.category}
+                    </Typography>
+                    <Typography variant="caption" display="block">
+                      Güven: %{aiSuggestion.confidence} - {aiSuggestion.reasoning}
+                    </Typography>
+                  </Alert>
+                )}
 
                 {formData.type !== 'payment' ? (
                   <FormControl fullWidth sx={{ mb: 3 }} error={!!formErrors.account}>

@@ -12,6 +12,7 @@ router.use(authenticateToken);
 // Account CRUD routes
 router.get('/', queryValidation.pagination, AccountController.getAllAccounts);
 router.get('/summary', AccountController.getAccountSummary);
+router.get('/debt-summary', AccountController.getDebtSummary);
 router.get('/:id', paramValidation.id, AccountController.getAccount);
 router.post('/', accountValidation.create, AccountController.createAccount);
 router.put('/:id', paramValidation.id, accountValidation.update, AccountController.updateAccount);

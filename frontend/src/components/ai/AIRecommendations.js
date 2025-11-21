@@ -53,8 +53,9 @@ const AIRecommendations = () => {
       setLoading(true);
       setError(null);
       
-      // YENİ ENDPOINT: /api/reports/enhanced/ai-analysis (recommendations aynı endpoint'ten gelecek)
-      const response = await fetch('/api/reports/enhanced/ai-analysis', {
+      // AI Analysis endpoint for recommendations
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
+      const response = await fetch(`${apiUrl}/reports/enhanced/ai-analysis`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',

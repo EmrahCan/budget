@@ -1,6 +1,7 @@
 const CreditCard = require('../models/CreditCard');
 const InterestCalculator = require('../services/InterestCalculator');
 const PaymentScheduler = require('../services/PaymentScheduler');
+const notificationManager = require('../services/notificationManager');
 
 class CreditCardController {
   // Get all credit cards for the authenticated user
@@ -166,6 +167,18 @@ class CreditCardController {
       }
 
       const result = await creditCard.recordPayment(amount, description);
+
+      // Auto-dismiss related notifications
+      try {
+        await notificationManager.autoDismissPaymentNotifications(
+          id,
+          'credit_card',
+          userId
+        );
+      } catch (notifError) {
+        console.error('Error auto-dismissing notifications:', notifError);
+        // Don't fail the request if notification dismissal fails
+      }
 
       res.json({
         success: true,

@@ -102,7 +102,9 @@ const AccountsPage = () => {
     try {
       setLoading(true);
       const response = await accountsAPI.getAll();
-      setAccounts(response.data.data.accounts);
+      // Filter out overdraft accounts - they have their own page
+      const filteredAccounts = response.data.data.accounts.filter(acc => acc.type !== 'overdraft');
+      setAccounts(filteredAccounts);
     } catch (error) {
       showError(handleApiError(error));
     } finally {
@@ -274,22 +276,6 @@ const AccountsPage = () => {
     return accounts.reduce((total, account) => total + account.balance, 0);
   };
 
-  const getTotalOverdraftDebt = () => {
-    return accounts
-      .filter(account => account.type === 'overdraft' && account.balance < 0)
-      .reduce((total, account) => total + Math.abs(account.balance), 0);
-  };
-
-  const getTotalOverdraftLimit = () => {
-    return accounts
-      .filter(account => account.type === 'overdraft')
-      .reduce((total, account) => total + (account.overdraftLimit || 0), 0);
-  };
-
-  const getNetBalance = () => {
-    return getTotalBalance() - getTotalOverdraftDebt();
-  };
-
 
 
   if (loading) {
@@ -353,7 +339,7 @@ const AccountsPage = () => {
             <Card sx={{ mb: 4 }}>
               <CardContent>
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={6}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h6" color="textSecondary" gutterBottom>
                         Toplam Bakiye
@@ -363,27 +349,13 @@ const AccountsPage = () => {
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid item xs={12} md={6}>
                     <Box sx={{ textAlign: 'center' }}>
                       <Typography variant="h6" color="textSecondary" gutterBottom>
-                        Esnek Hesap Borcu
+                        Aktif Hesap Sayısı
                       </Typography>
-                      <Typography variant="h3" component="div" color="error.main">
-                        {formatCurrency(getTotalOverdraftDebt())}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="h6" color="textSecondary" gutterBottom>
-                        Net Durum
-                      </Typography>
-                      <Typography 
-                        variant="h3" 
-                        component="div" 
-                        color={getNetBalance() >= 0 ? 'success.main' : 'error.main'}
-                      >
-                        {formatCurrency(getNetBalance())}
+                      <Typography variant="h3" component="div" color="success.main">
+                        {accounts.filter(acc => acc.isActive).length}
                       </Typography>
                     </Box>
                   </Grid>

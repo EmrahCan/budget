@@ -5,6 +5,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import './i18n/config'; // Initialize i18n
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AIProvider } from './contexts/AIContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/auth/AdminRoute';
 import Layout from './components/layout/Layout';
@@ -45,9 +46,10 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-          <Router>
-            <Routes>
-              {/* Public routes */}
+          <AIProvider>
+            <Router>
+              <Routes>
+                {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               
@@ -84,6 +86,7 @@ function App() {
               autoHide={process.env.NODE_ENV === 'production'}
             />
           </Router>
+          </AIProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

@@ -108,6 +108,24 @@ class CreditCard {
     }
   }
 
+  // Calculate total credit card debt for a user
+  static async calculateTotalDebt(userId) {
+    try {
+      const query = `
+        SELECT COALESCE(SUM(current_balance), 0) as total_credit_card_debt
+        FROM credit_cards
+        WHERE user_id = $1
+          AND is_active = true
+      `;
+
+      const result = await DatabaseUtils.query(query, [userId]);
+      return parseFloat(result.rows[0].total_credit_card_debt) || 0;
+    } catch (error) {
+      console.error('Error calculating credit card debt:', error);
+      throw error;
+    }
+  }
+
   // Update credit card
   async update(updateData) {
     try {

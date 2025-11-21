@@ -426,6 +426,50 @@ En az 4, en fazla 6 insight üret. Her insight için 2-3 actionable recommendati
       };
     }
   }
+
+  // Generic content generation
+  async generateContent(prompt) {
+    try {
+      this.checkRateLimit();
+      
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Try to parse JSON if present
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            success: true,
+            data: parsed,
+            rawText: text
+          };
+        } catch (e) {
+          // If JSON parsing fails, return raw text
+          return {
+            success: true,
+            data: { text },
+            rawText: text
+          };
+        }
+      }
+      
+      return {
+        success: true,
+        data: { text },
+        rawText: text
+      };
+      
+    } catch (error) {
+      console.error('Gemini AI generation error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 module.exports = new GeminiAIService();

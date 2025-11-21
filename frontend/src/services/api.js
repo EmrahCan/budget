@@ -58,6 +58,7 @@ export const accountsAPI = {
   update: (id, data) => api.put(`/accounts/${id}`, data),
   delete: (id) => api.delete(`/accounts/${id}`),
   getSummary: () => api.get('/accounts/summary'),
+  getDebtSummary: () => api.get('/accounts/debt-summary'),
   getTransactions: (id, params) => api.get(`/accounts/${id}/transactions`, { params }),
   addIncome: (id, data) => api.post(`/accounts/${id}/income`, data),
   addExpense: (id, data) => api.post(`/accounts/${id}/expense`, data),
@@ -420,6 +421,7 @@ export const adminAPI = {
   updateUserRole: (userId, data) => api.put(`/admin/users/${userId}/role`, data),
   resetUserPassword: (userId, data) => api.put(`/admin/users/${userId}/reset-password`, data),
   generateUserPassword: (userId) => api.post(`/admin/users/${userId}/generate-password`),
+  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
   createAdmin: (data) => api.post('/admin/create-admin', data),
 };
 
@@ -578,6 +580,43 @@ const aggregateMockData = (filters) => {
     },
     processedAt: new Date().toISOString()
   };
+};
+
+// AI API
+export const aiAPI = {
+  // Health check
+  healthCheck: () => api.get('/ai/health'),
+  
+  // Categorization
+  categorizeTransaction: (data) => api.post('/ai/categorize', data),
+  sendCategorizationFeedback: (data) => api.post('/ai/categorize/feedback', data),
+  getCategorizationStats: () => api.get('/ai/categorize/stats'),
+  getCategorySuggestions: (description) => api.get('/ai/categorize/suggestions', { 
+    params: { description } 
+  }),
+  batchCategorize: (transactions) => api.post('/ai/categorize/batch', { transactions }),
+  clearLearningData: (category) => api.delete('/ai/categorize/learning', { 
+    params: { category } 
+  }),
+  
+  // Natural Language Query
+  processQuery: (query, language = 'tr') => api.post('/ai/query', { query, language }),
+  
+  // Insights and Recommendations
+  getInsights: (timeframe = 'monthly') => api.get('/ai/insights', { 
+    params: { timeframe } 
+  }),
+  getRecommendations: (includeInvestments = false) => api.get('/ai/recommendations', { 
+    params: { includeInvestments } 
+  }),
+  
+  // Rate Limit and Cache
+  getRateLimitStatus: () => api.get('/ai/rate-limit'),
+  getCacheStats: () => api.get('/ai/cache/stats'),
+  clearCache: () => api.delete('/ai/cache'),
+  
+  // Stats
+  getStats: () => api.get('/ai/stats'),
 };
 
 export default api;

@@ -1,6 +1,7 @@
 const FixedPayment = require('../models/FixedPayment');
 const FixedPaymentHistory = require('../models/FixedPaymentHistory');
 const { validationResult } = require('express-validator');
+const notificationManager = require('../services/notificationManager');
 
 class FixedPaymentController {
   // Get all fixed payments for the authenticated user
@@ -426,6 +427,18 @@ class FixedPaymentController {
           notes
         }
       );
+      
+      // Auto-dismiss related notifications
+      try {
+        await notificationManager.autoDismissPaymentNotifications(
+          id,
+          'fixed_payment',
+          userId
+        );
+      } catch (notifError) {
+        console.error('Error auto-dismissing notifications:', notifError);
+        // Don't fail the request if notification dismissal fails
+      }
       
       res.json({
         success: true,

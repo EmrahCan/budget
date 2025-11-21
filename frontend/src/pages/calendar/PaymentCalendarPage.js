@@ -116,9 +116,9 @@ const PaymentCalendarPage = () => {
         })
       ]);
 
-      const fixedPayments = fixedRes.status === 'fulfilled' ? fixedRes.value.data : [];
-      const installmentPayments = installmentRes.status === 'fulfilled' ? installmentRes.value.data : [];
-      const transactions = transactionsRes.status === 'fulfilled' ? transactionsRes.value.data : [];
+      const fixedPayments = fixedRes.status === 'fulfilled' ? (fixedRes.value.data.data || fixedRes.value.data || []) : [];
+      const installmentPayments = installmentRes.status === 'fulfilled' ? (installmentRes.value.data.data || installmentRes.value.data || []) : [];
+      const transactions = transactionsRes.status === 'fulfilled' ? (transactionsRes.value.data.data?.transactions || transactionsRes.value.data || []) : [];
 
       // Combine all payments into calendar format
       const calendarItems = [];

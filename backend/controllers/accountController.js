@@ -1,4 +1,5 @@
 const Account = require('../models/Account');
+const CreditCard = require('../models/CreditCard');
 
 class AccountController {
   // Get all accounts for the authenticated user
@@ -441,6 +442,56 @@ class AccountController {
       res.status(500).json({
         success: false,
         message: 'Hesap özeti alınırken hata oluştu'
+      });
+    }
+  }
+
+  // Get debt summary for dashboard
+  static async getDebtSummary(req, res) {
+    try {
+      const userId = req.user.id;
+
+      // Calculate debts in parallel
+      const [creditCardDebt, overdraftDebt] = await Promise.all([
+        CreditCard.calculateTotalDebt(userId),
+        Account.calculateOverdraftDebt(userId)
+      ]);
+
+      const totalDebt = creditCardDebt + overdraftDebt;
+
+      // Get counts for breakdown
+      const creditCards = await CreditCard.findByUserId(userId, { includeInactive: false });
+      const overdraftAccounts = await Account.findByUserId(userId, { 
+        includeInactive: false, 
+        type: 'overdraft' 
+      });
+
+      const activeOverdraftWithDebt = overdraftAccounts.filter(acc => acc.getOverdraftUsed() > 0);
+
+      res.json({
+        success: true,
+        data: {
+          creditCardDebt: Math.round(creditCardDebt * 100) / 100,
+          overdraftDebt: Math.round(overdraftDebt * 100) / 100,
+          totalDebt: Math.round(totalDebt * 100) / 100,
+          debtBreakdown: {
+            creditCards: {
+              count: creditCards.length,
+              totalDebt: Math.round(creditCardDebt * 100) / 100
+            },
+            overdraftAccounts: {
+              count: activeOverdraftWithDebt.length,
+              totalDebt: Math.round(overdraftDebt * 100) / 100
+            }
+          },
+          currency: 'TRY'
+        }
+      });
+    } catch (error) {
+      console.error('Get debt summary error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Borç özeti alınırken hata oluştu'
       });
     }
   }

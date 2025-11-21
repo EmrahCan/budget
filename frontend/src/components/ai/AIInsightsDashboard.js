@@ -50,8 +50,9 @@ const AIInsightsDashboard = ({ timeframe = 'monthly' }) => {
       setLoading(true);
       setError(null);
       
-      // YENİ ENDPOINT: /api/reports/enhanced/ai-analysis
-      const response = await fetch(`/api/reports/enhanced/ai-analysis?timeframe=${timeframe}`, {
+      // AI Analysis endpoint
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5002/api';
+      const response = await fetch(`${apiUrl}/reports/enhanced/ai-analysis?timeframe=${timeframe}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',

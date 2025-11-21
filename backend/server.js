@@ -2,11 +2,15 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cron = require('node-cron');
 require('dotenv').config();
 
 // Import performance services - temporarily disabled
 // const reportPerformanceService = require('./services/reportPerformanceService');
 const logger = require('./utils/logger');
+
+// Import notification generator service
+const notificationGeneratorService = require('./services/notificationGeneratorService');
 
 // Import health monitoring
 const {
@@ -63,6 +67,7 @@ app.use(cors({
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:3003',
+      'http://localhost:3004',
       // Production domain
       'https://budgetapp.site',
       'https://www.budgetapp.site',
@@ -178,6 +183,7 @@ const optimizedReportRoutes = require('./routes/optimizedReports');
 const enhancedReportRoutes = require('./routes/enhancedReports');
 const adminRoutes = require('./routes/admin');
 const aiRoutes = require('./routes/ai');
+const notificationRoutes = require('./routes/notifications');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/credit-cards', creditCardRoutes);
@@ -186,6 +192,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/fixed-payments', fixedPaymentRoutes);
 app.use('/api/installment-payments', installmentPaymentRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/reports/optimized', optimizedReportRoutes);
 app.use('/api/reports/enhanced', enhancedReportRoutes);
@@ -221,6 +228,22 @@ app.use('*', (req, res) => {
 // Initialize services - simplified for stability
 async function initializeServices() {
   try {
+    // Initialize scheduled notification job
+    // Runs daily at 6:00 AM
+    cron.schedule('0 6 * * *', async () => {
+      logger.info('Running scheduled notification generation job');
+      try {
+        await notificationGeneratorService.generateDailyNotifications();
+        logger.info('Scheduled notification generation completed successfully');
+      } catch (error) {
+        logger.error('Scheduled notification generation failed', {
+          error: error.message,
+          stack: error.stack,
+        });
+      }
+    });
+
+    logger.info('Scheduled notification job initialized (runs daily at 6:00 AM)');
     logger.info('Basic services initialized successfully');
   } catch (error) {
     logger.errorWithContext('Failed to initialize services', error);

@@ -101,9 +101,14 @@
       "welcome": "Welcome",
       "totalBalance": "Total Balance",
       "totalDebt": "Total Debt",
+      "creditCardDebt": "Credit Card Debt",
+      "overdraftDebt": "Overdraft Debt",
+      "debtBreakdown": "Debt Breakdown",
       "monthlyIncome": "Monthly Income",
       "monthlyExpense": "Monthly Expense",
       "netWorth": "Net Worth",
+      "netStatus": "Net Status",
+      "monthlyFixedPayments": "Monthly Fixed Payments",
       "recentTransactions": "Recent Transactions",
       "upcomingPayments": "Upcoming Payments",
       "quickActions": "Quick Actions",
@@ -347,6 +352,33 @@
       "cancel": "Are you sure you want to cancel?",
       "logout": "Are you sure you want to logout?",
       "deleteAccount": "Are you sure you want to delete your account? This action cannot be undone."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "noNotifications": "No new notifications",
+      "markAllAsRead": "Mark All as Read",
+      "markAsRead": "Mark as Read",
+      "dismiss": "Dismiss",
+      "viewAll": "View All",
+      "upcomingPayments": "Upcoming Payments and Alerts",
+      "allPaymentsUnderControl": "All your payments are under control!",
+      "checkNotificationsOnTime": "Check notifications on time to avoid missing payments.",
+      "priority": {
+        "high": "Urgent",
+        "medium": "Important",
+        "low": "Info"
+      },
+      "types": {
+        "fixedPayment": "Fixed Payment",
+        "creditCard": "Credit Card",
+        "budget": "Budget"
+      },
+      "timeAgo": {
+        "now": "Now",
+        "minutesAgo": "{{count}} minutes ago",
+        "hoursAgo": "{{count}} hours ago",
+        "daysAgo": "{{count}} days ago"
+      }
     }
   }
 }

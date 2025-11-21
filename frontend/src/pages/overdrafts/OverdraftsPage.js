@@ -60,7 +60,7 @@ const overdraftsAPI = {
 // Overdraft summary component
 const OverdraftSummaryCard = ({ overdrafts }) => {
   const getTotalLimit = () => overdrafts.reduce((total, od) => total + (od.overdraftLimit || 0), 0);
-  const getTotalUsed = () => overdrafts.reduce((total, od) => total + (od.overdraftUsed || 0), 0);
+  const getTotalUsed = () => overdrafts.reduce((total, od) => total + (od.overdraftUsed || od.currentBalance || 0), 0);
   const getTotalAvailable = () => getTotalLimit() - getTotalUsed();
 
   return (
@@ -112,7 +112,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
   const [selectedOverdraft, setSelectedOverdraft] = useState(null);
 
   const getStatusInfo = (overdraft) => {
-    const used = overdraft.overdraftUsed || 0;
+    const used = overdraft.overdraftUsed || overdraft.currentBalance || 0;
     const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
     
     if (utilizationRate >= 90) {
@@ -154,7 +154,7 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
         <List>
           {overdrafts.map((overdraft, index) => {
             const statusInfo = getStatusInfo(overdraft);
-            const used = overdraft.overdraftUsed || 0;
+            const used = overdraft.overdraftUsed || overdraft.currentBalance || 0;
             const available = (overdraft.overdraftLimit || 0) - used;
             const utilizationRate = overdraft.overdraftLimit > 0 ? (used / overdraft.overdraftLimit) * 100 : 0;
             
@@ -293,19 +293,19 @@ const OverdraftsList = ({ overdrafts, onEdit, onDelete }) => {
 const QuickStats = ({ overdrafts }) => {
   const getStats = () => {
     const criticalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = od.overdraftUsed || od.currentBalance || 0;
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate >= 90;
     });
     
     const warningOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = od.overdraftUsed || od.currentBalance || 0;
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate >= 70 && utilizationRate < 90;
     });
     
     const normalOverdrafts = overdrafts.filter(od => {
-      const used = od.overdraftUsed || 0;
+      const used = od.overdraftUsed || od.currentBalance || 0;
       const utilizationRate = od.overdraftLimit > 0 ? (used / od.overdraftLimit) * 100 : 0;
       return utilizationRate < 70;
     });
