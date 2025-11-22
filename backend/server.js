@@ -28,13 +28,23 @@ const PORT = process.env.PORT || 5000;
 // Security middleware
 app.use(helmet());
 
-// Rate limiting (more relaxed for development)
+// Rate limiting - very relaxed for production stability
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // increased limit for development
-  message: 'Too many requests from this IP, please try again later.'
+  windowMs: 1 * 60 * 1000, // 1 minute window
+  max: 100, // 100 requests per minute per IP
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for health checks
+  skip: (req) => req.path === '/health' || req.path === '/api/health'
 });
-app.use(limiter);
+
+// Apply rate limiting only to auth routes (most sensitive)
+app.use('/api/auth', rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // 20 login attempts per minute
+  message: 'Too many login attempts, please try again later.'
+}));
 
 // Parse additional allowed origins from environment
 const additionalOrigins = process.env.ALLOWED_ORIGINS 
@@ -97,7 +107,8 @@ app.use(cors({
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      callback(null, false);
+      // Explicitly reject with error to prevent any middleware override
+      callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
