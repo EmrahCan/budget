@@ -361,9 +361,9 @@ class NotificationGeneratorService {
       if (!isOverdueNotification) {
         const existingResult = await db.query(
           `SELECT id FROM smart_notifications
-           WHERE user_id = $1 AND notification_type = $2
+           WHERE user_id = $1 AND type = $2
              AND related_entity_id = $3 AND is_dismissed = false
-             AND DATE(scheduled_for) = CURRENT_DATE`,
+             AND DATE(created_at) = CURRENT_DATE`,
           [userId, type, relatedEntityId]
         );
 
@@ -380,16 +380,16 @@ class NotificationGeneratorService {
       // Create new notification
       const insertResult = await db.query(
         `INSERT INTO smart_notifications
-         (user_id, notification_type, title, message, priority, 
-          related_entity_id, related_entity_type, data, scheduled_for, sent_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+         (user_id, type, title, message, priority, 
+          related_entity_id, related_entity_type, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id`,
         [
           userId,
           type,
           title,
           message,
-          priority,
+          priority || 'medium',
           relatedEntityId,
           relatedEntityType,
           additionalData ? JSON.stringify(additionalData) : null,

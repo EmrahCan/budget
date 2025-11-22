@@ -19,7 +19,23 @@ router.get('/', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     
     const result = await db.query(`
-      SELECT * FROM smart_notifications
+      SELECT 
+        id,
+        user_id,
+        type as notification_type,
+        title,
+        message,
+        priority,
+        is_read,
+        is_dismissed,
+        action_url,
+        metadata,
+        created_at,
+        read_at,
+        dismissed_at,
+        related_entity_id,
+        related_entity_type
+      FROM smart_notifications
       WHERE user_id = $1 AND is_dismissed = false
       ORDER BY 
         CASE priority
@@ -27,7 +43,7 @@ router.get('/', authenticateToken, async (req, res) => {
           WHEN 'medium' THEN 2
           WHEN 'low' THEN 3
         END,
-        scheduled_for ASC
+        created_at DESC
       LIMIT 50
     `, [userId]);
 
