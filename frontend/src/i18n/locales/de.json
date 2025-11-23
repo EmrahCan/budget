@@ -1,0 +1,57 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "confirm": "Bestätigen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "submit": "Absenden",
+    "reset": "Zurücksetzen",
+    "clear": "Löschen",
+    "select": "Auswählen",
+    "all": "Alle",
+    "none": "Keine",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "rememberMe": "Angemeldet bleiben",
+    "loginSuccess": "Erfolgreich angemeldet",
+    "logoutSuccess": "Erfolgreich abgemeldet",
+    "registerSuccess": "Erfolgreich registriert"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Willkommen, {{name}}!",
+    "overview": "Übersicht",
+    "statistics": "Statistiken",
+    "recentActivity": "Letzte Aktivitäten"
+  },
+  "errors": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "passwordTooShort": "Passwort muss mindestens 6 Zeichen lang sein",
+    "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+    "somethingWentWrong": "Etwas ist schief gelaufen",
+    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut."
+  }
+}

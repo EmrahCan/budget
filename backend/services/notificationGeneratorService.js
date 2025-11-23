@@ -361,7 +361,7 @@ class NotificationGeneratorService {
       if (!isOverdueNotification) {
         const existingResult = await db.query(
           `SELECT id FROM smart_notifications
-           WHERE user_id = $1 AND type = $2
+           WHERE user_id = $1 AND notification_type = $2
              AND related_entity_id = $3 AND is_dismissed = false
              AND DATE(created_at) = CURRENT_DATE`,
           [userId, type, relatedEntityId]

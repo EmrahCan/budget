@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async (req, res) => {
       SELECT 
         id,
         user_id,
-        type as notification_type,
+        notification_type,
         title,
         message,
         priority,
