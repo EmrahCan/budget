@@ -1,47 +1,32 @@
-# Build stage
+# Stage 1: Build
 FROM node:18-alpine AS builder
 
 WORKDIR /app
-
-# Build arguments
-ARG REACT_APP_API_URL
-ARG REACT_APP_ENVIRONMENT
-ARG GENERATE_SOURCEMAP
-
-# Set as environment variables for build
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-ENV REACT_APP_ENVIRONMENT=$REACT_APP_ENVIRONMENT
-ENV GENERATE_SOURCEMAP=$GENERATE_SOURCEMAP
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --legacy-peer-deps
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the app
+# Build frontend
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
+# Stage 2: Serve with nginx
+FROM nginx:alpine
 
-WORKDIR /app
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY default.conf /etc/nginx/conf.d/default.conf
 
-# Install serve
-RUN npm install -g serve
+# Copy built files from builder stage
+COPY --from=builder /app/build /usr/share/nginx/html
 
-# Copy build from builder
-COPY --from=builder /app/build ./build
+# Expose port 3003
+EXPOSE 3003
 
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
-
-# Start the app
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

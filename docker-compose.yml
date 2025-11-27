@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: butce-frontend
+    ports:
+      - "3003:3003"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+      - NODE_ENV=development
+    networks:
+      - butce-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: butce-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - DATABASE_URL=postgresql://butce_user:password@db:5432/butce_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    networks:
+      - butce-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: butce-db
+    environment:
+      - POSTGRES_USER=butce_user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=butce_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - butce-db-data:/var/lib/postgresql/data
+    networks:
+      - butce-network
+    restart: unless-stopped
+
+volumes:
+  butce-db-data:
+
+networks:
+  butce-network:
+    driver: bridge

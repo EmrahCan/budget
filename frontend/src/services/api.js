@@ -3,7 +3,7 @@ import { reportCache, metadataCache, cacheMonitor } from './cacheManager';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5001/api',
+  baseURL: process.env.REACT_APP_API_URL || '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -24,16 +24,27 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Guarded redirect to avoid reload loop when many requests get 401
+const redirectToLoginOnce = () => {
+  try {
+    const key = 'app_redirect_to_login';
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    if (window.location.pathname !== '/login') {
+      window.location.replace('/login');
+    }
+  } catch (e) {
+    if (window.location.pathname !== '/login') window.location.replace('/login');
+  }
+};
+
+// Attach response interceptor if not already present
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+  response => response,
+  error => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      redirectToLoginOnce();
     }
     return Promise.reject(error);
   }

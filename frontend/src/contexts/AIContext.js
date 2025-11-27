@@ -6,14 +6,15 @@ const AIContext = createContext();
 export const useAI = () => {
   const context = useContext(AIContext);
   if (!context) {
-    throw new Error('useAI must be used within an AIProvider');
+    throw new Error('useAI must be used within AIProvider');
   }
   return context;
 };
 
-export const AIProvider = ({ children }) => {
+export function AIProvider({ children }) {
   // AI Feature States
   const [aiEnabled, setAiEnabled] = useState(true);
+  const [apiKeyRevoked, setApiKeyRevoked] = useState(false);
   const [features, setFeatures] = useState({
     categorization: true,
     naturalLanguage: true,
@@ -74,11 +75,30 @@ export const AIProvider = ({ children }) => {
    */
   useEffect(() => {
     const initialize = async () => {
+      // use window.location as safe fallback so this hook can run outside a Router
+      const path = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '/';
+      if (path === '/login' || path === '/register' || path.startsWith('/auth')) {
+        console.debug('AIContext: skipping init on auth page:', path);
+        return;
+      }
+
+      if (apiKeyRevoked) {
+        console.warn('AIContext: API key revoked, skipping initialization');
+        setAiEnabled(false);
+        return;
+      }
+
       try {
+        if (!aiAPI || typeof aiAPI.healthCheck !== 'function') {
+          console.warn('AIContext: aiAPI not available');
+          setAiEnabled(false);
+          return;
+        }
+
         // Check AI health
         const healthResponse = await aiAPI.healthCheck();
         if (healthResponse.data?.data) {
-          setFeatures(healthResponse.data.data.features || features);
+          setFeatures(prev => ({ ...prev, ...healthResponse.data.data.features }));
           setAiEnabled(healthResponse.data.data.status === 'healthy');
         }
 
@@ -91,12 +111,34 @@ export const AIProvider = ({ children }) => {
         // Load rate limit status
         await updateRateLimitStatus();
       } catch (error) {
+        const status = error?.response?.status;
+        const message = error?.response?.data?.message || error?.message || '';
+        
+        // Handle leaked/revoked API key (403)
+        if (status === 403 && message.toLowerCase().includes('leaked')) {
+          console.error('AI API key revoked/leaked detected:', message);
+          setApiKeyRevoked(true);
+          setAiEnabled(false);
+          try { sessionStorage.setItem('ai_api_key_revoked', '1'); } catch (e) {}
+          return;
+        }
+
         console.error('AI initialization error:', error);
         setAiEnabled(false);
       }
     };
 
     initialize();
+  }, [apiKeyRevoked]);
+
+  // Restore apiKeyRevoked flag from sessionStorage on mount
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('ai_api_key_revoked')) {
+        setApiKeyRevoked(true);
+        setAiEnabled(false);
+      }
+    } catch (e) {}
   }, []);
 
   /**
@@ -110,20 +152,35 @@ export const AIProvider = ({ children }) => {
    * Update rate limit status
    */
   const updateRateLimitStatus = useCallback(async () => {
+    if (apiKeyRevoked) return;
     try {
       const response = await aiAPI.getRateLimitStatus();
       if (response.data?.data) {
         setRateLimitStatus(response.data.data);
       }
     } catch (error) {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || error?.message || '';
+      
+      // Handle 403 leaked key
+      if (status === 403 && message.toLowerCase().includes('leaked')) {
+        setApiKeyRevoked(true);
+        setAiEnabled(false);
+        try { sessionStorage.setItem('ai_api_key_revoked', '1'); } catch (e) {}
+        return;
+      }
+
       console.error('Failed to update rate limit status:', error);
     }
-  }, []);
+  }, [apiKeyRevoked]);
 
   /**
    * Categorize transaction with caching
    */
   const categorizeTransaction = useCallback(async (description, amount, context = {}) => {
+    if (apiKeyRevoked) {
+      return { success: false, error: 'AI API key invalid/revoked. Contact admin.' };
+    }
     if (!aiEnabled || !features.categorization) {
       return { success: false, error: 'AI categorization is disabled' };
     }
@@ -198,6 +255,9 @@ export const AIProvider = ({ children }) => {
    * Process natural language query
    */
   const processQuery = useCallback(async (query, language = 'tr') => {
+    if (apiKeyRevoked) {
+      return { success: false, error: 'AI API key invalid/revoked. Contact admin.' };
+    }
     if (!aiEnabled || !features.naturalLanguage) {
       return { success: false, error: 'Natural language queries are disabled' };
     }
@@ -239,6 +299,9 @@ export const AIProvider = ({ children }) => {
    * Get AI insights
    */
   const getInsights = useCallback(async (timeframe = 'monthly', forceRefresh = false) => {
+    if (apiKeyRevoked) {
+      return { success: false, error: 'AI API key invalid/revoked. Contact admin.' };
+    }
     if (!aiEnabled) {
       return { success: false, error: 'AI is disabled' };
     }
@@ -274,6 +337,9 @@ export const AIProvider = ({ children }) => {
    * Get AI recommendations
    */
   const getRecommendations = useCallback(async (includeInvestments = false, forceRefresh = false) => {
+    if (apiKeyRevoked) {
+      return { success: false, error: 'AI API key invalid/revoked. Contact admin.' };
+    }
     if (!aiEnabled) {
       return { success: false, error: 'AI is disabled' };
     }
@@ -392,7 +458,11 @@ export const AIProvider = ({ children }) => {
     setFeatures,
   };
 
-  return <AIContext.Provider value={value}>{children}</AIContext.Provider>;
-};
+  return (
+    <AIContext.Provider value={value}>
+      {children}
+    </AIContext.Provider>
+  );
+}
 
 export default AIContext;

@@ -1235,3 +1235,35 @@
   message: 'Failed to fetch notifications',
   timestamp: '2025-11-24 00:28:49'
 }
+{
+  service: 'budget-backend',
+  error: 'column "type" of relation "smart_notifications" does not exist',
+  data: {
+    userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+    type: 'fixed_payment_3day',
+    title: 'BES Emrah - 3 gün sonra',
+    message: 'BES Emrah ödemesi 3 gün sonra (28 Kasım) - 13500.00 TL',
+    priority: 'medium',
+    relatedEntityId: '12ac0fab-e624-40ec-8527-26c39666164d',
+    relatedEntityType: 'fixed_payment'
+  },
+  level: 'error',
+  message: 'Error creating notification',
+  timestamp: '2025-11-25 06:00:00'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "type" of relation "smart_notifications" does not exist',
+  level: 'error',
+  message: 'Error checking fixed payments',
+  timestamp: '2025-11-25 06:00:00'
+}
+{
+  service: 'budget-backend',
+  userId: '5f10819f-a875-4ebd-ad4c-72ebd3b19e87',
+  error: 'column "type" of relation "smart_notifications" does not exist',
+  level: 'error',
+  message: 'Error generating notifications for user',
+  timestamp: '2025-11-25 06:00:00'
+}
