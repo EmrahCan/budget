@@ -12,7 +12,7 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/api/*"]
+    "exclude": ["/images/*.{png,jpg,gif}", "/css/*", "/js/*", "/static/*", "/api/*", "/*.js", "/*.css", "/*.json", "/*.ico", "/*.png", "/*.jpg", "/*.gif", "/*.svg"]
   },
   "responseOverrides": {
     "404": {
